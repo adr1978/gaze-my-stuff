@@ -1,0 +1,68 @@
+{
+  "6fd8025b-cee4-48fb-b695-1ab0c7ce8979": {
+    "dc1dc0b5c44fa91ce938d891ad117f79": {
+      "status": "booked",
+      "synced_at": "2025-11-04T18:12:34.414733",
+      "booking_date": "2025-10-30",
+      "amount": 11.71,
+      "notion_page_id": "2a1170f9-ea2e-810e-967d-d6273b12daee"
+    },
+    "8884234bb6c3463b36aa1578023493f9": {
+      "status": "booked",
+      "synced_at": "2025-11-04T18:12:34.837925",
+      "booking_date": "2025-10-30",
+      "amount": 10.96,
+      "notion_page_id": "2a1170f9-ea2e-81f5-abe1-c76ee1d3fad8"
+    },
+    "faa8062880b1333d552b7df4ee4d9336": {
+      "status": "booked",
+      "synced_at": "2025-11-04T18:12:35.264481",
+      "booking_date": "2025-10-29",
+      "amount": 57.93,
+      "notion_page_id": "2a1170f9-ea2e-81cc-a465-d64b9cc16bbb"
+    },
+    "1183ddade6618baa03d8df7ab2a0733f": {
+      "status": "booked",
+      "synced_at": "2025-11-04T18:12:35.731204",
+      "booking_date": "2025-10-29",
+      "amount": 20.0,
+      "notion_page_id": "2a1170f9-ea2e-8104-8656-d16dc8586cf3"
+    },
+    "7eb6f892e640cdc25ee8123fd03e3ecc": {
+      "status": "booked",
+      "synced_at": "2025-11-04T18:12:36.238668",
+      "booking_date": "2025-10-29",
+      "amount": 39.86,
+      "notion_page_id": "2a1170f9-ea2e-81ef-928d-c8481cf0680d"
+    },
+    "7fa51a2ae661a45e26822a48198ac2d9": {
+      "status": "booked",
+      "synced_at": "2025-11-04T18:12:36.767512",
+      "booking_date": "2025-10-28",
+      "amount": 13.99,
+      "notion_page_id": "2a1170f9-ea2e-81db-9620-f461d38adef2"
+    },
+    "736cb9984e89800a964e129cdaaf4835": {
+      "status": "booked",
+      "synced_at": "2025-11-04T18:12:37.145301",
+      "booking_date": "2025-10-28",
+      "amount": 9.99,
+      "notion_page_id": "2a1170f9-ea2e-81c7-8541-d35f042600ae"
+    },
+    "6b33d430df0e0534908043fcedd87033": {
+      "status": "booked",
+      "synced_at": "2025-11-04T18:12:37.654251",
+      "booking_date": "2025-10-28",
+      "amount": 34.0,
+      "notion_page_id": "2a1170f9-ea2e-81cb-baac-f814143013e6"
+    },
+    "18bebd88dfc354daabcff9b9d7aa49a6": {
+      "status": "pending",
+      "synced_at": "2025-11-04T18:12:38.291697",
+      "booking_date": "2025-10-30",
+      "amount": 29.45,
+      "notion_page_id": "2a1170f9-ea2e-8181-9321-e560703f1332",
+      "updated_at": "2025-11-04T20:07:17.897633"
+    }
+  }
+}
