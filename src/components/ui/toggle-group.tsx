@@ -1,3 +1,19 @@
+/**
+ * Enhanced ToggleGroup Component with Animated Sliding Indicator
+ * 
+ * Features:
+ * - Animated sliding background indicator that moves when selection changes
+ * - Smooth transitions using Tailwind's transition utilities
+ * - Consistent styling with subtle blue theme
+ * - Supports both single and multiple selection modes
+ * 
+ * Usage:
+ *   <ToggleGroup type="single" value={selected} onValueChange={setSelected}>
+ *     <ToggleGroupItem value="option1">Option 1</ToggleGroupItem>
+ *     <ToggleGroupItem value="option2">Option 2</ToggleGroupItem>
+ *   </ToggleGroup>
+ */
+
 import * as React from "react";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 import { type VariantProps } from "class-variance-authority";
@@ -10,17 +26,66 @@ const ToggleGroupContext = React.createContext<VariantProps<typeof toggleVariant
   variant: "default",
 });
 
+/**
+ * ToggleGroup Root Component
+ * 
+ * Wraps toggle items and provides animated selection indicator
+ * The indicator is positioned absolutely and moves smoothly between items
+ */
 const ToggleGroup = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> & VariantProps<typeof toggleVariants>
->(({ className, variant, size, children, ...props }, ref) => (
-  <ToggleGroupPrimitive.Root ref={ref} className={cn("flex items-center justify-center gap-1", className)} {...props}>
-    <ToggleGroupContext.Provider value={{ variant, size }}>{children}</ToggleGroupContext.Provider>
-  </ToggleGroupPrimitive.Root>
-));
+>(({ className, variant, size, children, ...props }, ref) => {
+  // Track selected value to position indicator
+  const [indicatorStyle, setIndicatorStyle] = React.useState<React.CSSProperties>({});
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Update indicator position when value changes
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // Find the active toggle item
+    const activeItem = containerRef.current.querySelector('[data-state="on"]') as HTMLElement;
+    if (activeItem) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const itemRect = activeItem.getBoundingClientRect();
+      
+      // Calculate indicator position relative to container
+      setIndicatorStyle({
+        left: itemRect.left - containerRect.left,
+        width: itemRect.width,
+      });
+    }
+  }, [props.value]);
+
+  return (
+    <ToggleGroupPrimitive.Root 
+      ref={ref} 
+      className={cn("relative flex items-center justify-center gap-1 bg-muted/30 rounded-md p-1", className)} 
+      {...props}
+    >
+      {/* Animated sliding background indicator */}
+      <div
+        className="absolute h-[calc(100%-0.5rem)] bg-primary rounded transition-all duration-200 ease-out pointer-events-none"
+        style={indicatorStyle}
+      />
+      
+      {/* Pass through container ref for indicator positioning */}
+      <div ref={containerRef} className="relative flex items-center justify-center gap-1 w-full">
+        <ToggleGroupContext.Provider value={{ variant, size }}>{children}</ToggleGroupContext.Provider>
+      </div>
+    </ToggleGroupPrimitive.Root>
+  );
+});
 
 ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName;
 
+/**
+ * ToggleGroupItem Component
+ * 
+ * Individual toggle item within a group
+ * Styles change based on selected state, with the animated indicator providing visual feedback
+ */
 const ToggleGroupItem = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> & VariantProps<typeof toggleVariants>
@@ -31,10 +96,9 @@ const ToggleGroupItem = React.forwardRef<
     <ToggleGroupPrimitive.Item
       ref={ref}
       className={cn(
-        toggleVariants({
-          variant: context.variant || variant,
-          size: context.size || size,
-        }),
+        "relative z-10 px-3 py-1.5 text-sm font-medium rounded transition-all",
+        "data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground",
+        "hover:text-foreground",
         className,
       )}
       {...props}
