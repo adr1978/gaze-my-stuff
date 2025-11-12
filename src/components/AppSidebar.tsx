@@ -11,6 +11,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 
@@ -47,6 +49,8 @@ const navigationItems = [
  */
 export function AppSidebar() {
   const location = useLocation();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   return (
     <Sidebar className="border-r border-border" collapsible="icon">
@@ -57,12 +61,17 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link to="/">
-                      <Home className="h-4 w-4" />
-                      <span>Home</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  <div className="flex items-center justify-between">
+                    <SidebarMenuButton asChild className="flex-1">
+                      <Link to="/">
+                        <Home className="h-4 w-4" />
+                        <span>Home</span>
+                      </Link>
+                    </SidebarMenuButton>
+                    {!isCollapsed && (
+                      <SidebarTrigger className="ml-2" />
+                    )}
+                  </div>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
@@ -95,9 +104,11 @@ export function AppSidebar() {
             </SidebarGroup>
           ))}
         </div>
-        <div className="mt-4 p-4">
+        {!isCollapsed && (
+          <div className="mt-4 p-4">
             <ThemeToggle />
-        </div>
+          </div>
+        )}
       </SidebarContent>
     </Sidebar>
   );
