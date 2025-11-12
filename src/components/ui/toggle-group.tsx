@@ -60,20 +60,17 @@ const ToggleGroup = React.forwardRef<
 
   return (
     <ToggleGroupPrimitive.Root 
-      ref={ref} 
-      className={cn("relative flex items-center justify-center gap-1 bg-muted/30 rounded-md p-1", className)} 
+      ref={containerRef}
+      className={cn("relative flex items-center justify-center gap-1 bg-muted/70 rounded-md p-1", className)} 
       {...props}
     >
       {/* Animated sliding background indicator */}
       <div
-        className="absolute h-[calc(100%-0.5rem)] bg-primary rounded transition-all duration-200 ease-out pointer-events-none"
+        className="absolute top-1 h-[calc(100%-0.5rem)] bg-primary rounded transition-all duration-200 ease-out pointer-events-none"
         style={indicatorStyle}
       />
       
-      {/* Pass through container ref for indicator positioning */}
-      <div ref={containerRef} className="relative flex items-center justify-center gap-1 w-full">
-        <ToggleGroupContext.Provider value={{ variant, size }}>{children}</ToggleGroupContext.Provider>
-      </div>
+      <ToggleGroupContext.Provider value={{ variant, size }}>{children}</ToggleGroupContext.Provider>
     </ToggleGroupPrimitive.Root>
   );
 });
@@ -96,7 +93,7 @@ const ToggleGroupItem = React.forwardRef<
     <ToggleGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "relative z-10 px-3 py-1.5 text-sm font-medium rounded transition-all",
+        "relative z-10 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded transition-all",
         "data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground",
         "hover:text-foreground",
         className,
