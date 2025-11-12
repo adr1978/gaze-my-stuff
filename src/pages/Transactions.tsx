@@ -27,6 +27,29 @@ export default function Transactions() {
     refetchInterval: 30000,
   });
 
+  // Apply client-side filters for search and status
+  const filteredLogs = logs?.filter((run) => {
+    // Status filter
+    if (filters.status !== "all" && run.status !== filters.status) {
+      return false;
+    }
+
+    // Search filter (run ID or error messages)
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      const matchesRunId = run.run_id.toLowerCase().includes(query);
+      const matchesError = run.accounts_processed.some((acc) => 
+        acc.error_body?.message?.toLowerCase().includes(query) ||
+        acc.notion_upload?.error_body?.message?.toLowerCase().includes(query)
+      );
+      if (!matchesRunId && !matchesError) {
+        return false;
+      }
+    }
+
+    return true;
+  }) || [];
+
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -40,7 +63,7 @@ export default function Transactions() {
         <StatsOverview stats={stats} isLoading={statsLoading} />
         <StatusHealth stats={stats} latestRun={logs?.[0]} isLoading={statsLoading || logsLoading} />
         <LogFilters filters={filters} onFiltersChange={setFilters} onRefresh={() => refetch()} />
-        <LogTable runs={logs || []} isLoading={logsLoading} />
+        <LogTable runs={filteredLogs} isLoading={logsLoading} />
       </div>
     </div>
   );
