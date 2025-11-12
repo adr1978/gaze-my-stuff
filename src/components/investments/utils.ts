@@ -106,7 +106,11 @@ export function aggregateDataByInterval(data: any[], purchases: SharePurchase[],
       monthlyData[monthKey].push(day);
     });
 
-    return Object.values(monthlyData).map(monthDays => {
+    // Sort months chronologically to ensure all months appear in order
+    const sortedMonthKeys = Object.keys(monthlyData).sort();
+    
+    return sortedMonthKeys.map(monthKey => {
+      const monthDays = monthlyData[monthKey];
       const lastDay = monthDays[monthDays.length - 1];
       const totalShares = getTotalSharesUpToDate(purchases, lastDay.date);
       const purchasesInMonth = purchases.filter(p =>
