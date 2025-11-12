@@ -59,6 +59,16 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isHovered, setIsHovered] = React.useState(false);
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
+
+  // Track transition state to keep trigger visible during animation
+  React.useEffect(() => {
+    if (isCollapsed) {
+      setIsTransitioning(true);
+      const timer = setTimeout(() => setIsTransitioning(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isCollapsed]);
 
   return (
     <TooltipProvider>
@@ -96,13 +106,13 @@ export function AppSidebar() {
                           </SidebarMenuButton>
                         </TooltipTrigger>
                         {isCollapsed && (
-                          <TooltipContent side="right">
+                          <TooltipContent side="right" className="z-50">
                             <p>Home</p>
                           </TooltipContent>
                         )}
                       </Tooltip>
-                      {!isCollapsed && isHovered && (
-                        <SidebarTrigger className="mr-2 transition-opacity duration-300 delay-100" />
+                      {!isCollapsed && (isHovered || isTransitioning) && (
+                        <SidebarTrigger className="mr-2 transition-opacity duration-300" />
                       )}
                     </div>
                   </SidebarMenuItem>
