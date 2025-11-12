@@ -114,6 +114,7 @@ export function ChartingCard({
             type="single"
             value={interval}
             onValueChange={(value) => value && onIntervalChange(value as ChartInterval)}
+            size="sm"
           >
             <ToggleGroupItem value="Week">Week</ToggleGroupItem>
             <ToggleGroupItem value="Month">Month</ToggleGroupItem>

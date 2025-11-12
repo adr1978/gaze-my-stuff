@@ -88,14 +88,24 @@ const ToggleGroupItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> & VariantProps<typeof toggleVariants>
 >(({ className, children, variant, size, ...props }, ref) => {
   const context = React.useContext(ToggleGroupContext);
+  const itemSize = size ?? context.size;
+
+  // Define size-specific classes
+  const sizeClasses = {
+    default: "px-3 py-2",
+    sm: "px-2.5 py-1.5 text-xs",
+    lg: "px-4 py-2.5",
+  };
 
   return (
     <ToggleGroupPrimitive.Item
       ref={ref}
       className={cn(
-        "relative z-10 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded transition-all",
+        "relative z-10 flex items-center justify-center gap-2 font-medium rounded transition-all",
         "data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground",
-        "hover:text-foreground hover:bg-background/40",
+        "hover:text-foreground hover:bg-muted/50",
+        sizeClasses[itemSize || "default"],
+        itemSize === "sm" ? "text-xs" : "text-sm",
         className,
       )}
       {...props}
