@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,7 +51,7 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
         // Redirect the user to the GoCardless auth page
         window.location.href = data.link;
       } else {
-        toast.error("Could not get bank authorization link.");
+        toast.error("Could not get bank authorisation link.");
       }
       queryClient.invalidateQueries({ queryKey: ["requisitions"] });
       onOpenChange(false);
@@ -76,11 +77,14 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 gap-0 rounded-2xl">
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
-          <DialogTitle className="text-2xl font-bold text-primary">
+          <DialogTitle className="text-2xl font-bold text-foreground">
             Select Your Bank
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Choose your bank to connect an account.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="px-6 space-y-4">
@@ -111,7 +115,7 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
                 placeholder="Search banks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 rounded-lg"
+                className="pl-10 rounded-lg bg-card"
                 disabled={createRequisitionMutation.isPending}
               />
             </div>
