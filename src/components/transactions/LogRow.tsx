@@ -1,0 +1,40 @@
+import { ChevronRight, CheckCircle2, AlertCircle, XCircle, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { NotionUploadRow } from "./NotionUploadRow";
+import type { SyncRun } from "./types";
+
+interface LogRowProps {
+  run: SyncRun;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}
+
+export function LogRow({ run, isExpanded, onToggleExpand }: LogRowProps) {
+  const statusIcon = run.status === "success" ? CheckCircle2 : run.status === "warning" ? AlertCircle : XCircle;
+  const StatusIcon = statusIcon;
+
+  return (
+    <div className="hover:bg-muted/50 transition-colors">
+      <div className="p-4 flex items-center justify-between gap-4 cursor-pointer" onClick={onToggleExpand}>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+          <StatusIcon className={`h-5 w-5 flex-shrink-0 ${run.status === "success" ? "text-emerald-600" : run.status === "warning" ? "text-amber-600" : "text-rose-600"}`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{format(new Date(run.timestamp), "HH:mm:ss")}</p>
+            <p className="text-xs text-muted-foreground">{run.accounts_processed.length} accounts</p>
+          </div>
+          <Badge variant={run.status === "success" ? "default" : run.status === "warning" ? "secondary" : "destructive"}>{run.status}</Badge>
+        </div>
+      </div>
+      {isExpanded && (
+        <div className="border-t border-border bg-muted/30">
+          {run.accounts_processed.map((account) => (
+            <NotionUploadRow key={account.account_id} account={account} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

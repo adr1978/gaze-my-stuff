@@ -1,0 +1,14 @@
+{
+  "today": {
+    "date": "2025-01-16",
+    "total_transactions": 87,
+    "successful_runs": 3,
+    "failed_runs": 0,
+    "last_run": "2025-01-16T08:15:00Z",
+    "next_run": "2025-01-16T12:00:00Z",
+    "duration_ms": 3240
+  },
+  "active_accounts": 4,
+  "last_7_days_success_rate": 0.96,
+  "last_updated": "2025-01-16T08:15:03Z"
+}

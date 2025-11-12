@@ -1,0 +1,18 @@
+{
+  "cron_schedule": "0 */6 * * *",
+  "cron_description": "4 times daily at 00:00, 06:00, 12:00, 18:00 UTC",
+  "enabled_accounts": [
+    "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "7cb85f64-5717-4562-b3fc-2c963f66afa9",
+    "9db85f64-5717-4562-b3fc-2c963f66afb1",
+    "2ab85f64-5717-4562-b3fc-2c963f66afc3"
+  ],
+  "next_run_times": [
+    "2025-01-16T12:00:00Z",
+    "2025-01-16T18:00:00Z",
+    "2025-01-17T00:00:00Z",
+    "2025-01-17T06:00:00Z"
+  ],
+  "timezone": "Europe/London",
+  "log_retention_days": 90
+}

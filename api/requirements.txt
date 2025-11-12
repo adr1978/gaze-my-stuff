@@ -1,0 +1,15 @@
+# FastAPI and server dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Date and time utilities
+python-dateutil==2.8.2
+
+# HTTP requests for GoCardless API integration
+requests==2.31.0
+
+# Notion API client (for future integration)
+notion-client==2.2.1
+
+# Environment variable management
+python-dotenv==1.0.0
