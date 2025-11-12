@@ -106,7 +106,7 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
           </div>
           <div className="space-y-2">
             <Label htmlFor="search" className="text-sm font-medium">
-              Search banks
+              Search Banks
             </Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -115,7 +115,7 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
                 placeholder="Search banks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 rounded-lg bg-card"
+                className="pl-10 rounded-lg"
                 disabled={createRequisitionMutation.isPending}
               />
             </div>
