@@ -13,12 +13,13 @@ export default function Documentation() {
         </p>
 
         <Tabs defaultValue="design" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6 bg-muted/70 p-1">
+          <TabsList className="grid w-full grid-cols-6 mb-6 bg-muted/70 p-1">
             <TabsTrigger value="design">Design Guide</TabsTrigger>
             <TabsTrigger value="notion">Notion Studio</TabsTrigger>
             <TabsTrigger value="recipe">Recipe Importer</TabsTrigger>
             <TabsTrigger value="investments">Investments</TabsTrigger>
             <TabsTrigger value="bank">Bank Connections</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
           </TabsList>
 
           {/* Global Design Style Guide */}
@@ -389,6 +390,283 @@ export default function Documentation() {
                       <li>6. View account details and balances by clicking accounts</li>
                       <li>7. Reconfirm connection if expired using reconfirm button</li>
                     </ul>
+                  </section>
+                </div>
+              </ScrollArea>
+            </Card>
+          </TabsContent>
+
+          {/* Transaction Sync System Documentation */}
+          <TabsContent value="transactions" className="space-y-6">
+            <Card className="p-6">
+              <h2 className="text-2xl font-bold text-foreground mb-4">Transaction Sync System</h2>
+              <p className="text-muted-foreground mb-6">
+                Automated bank transaction synchronisation with Notion database integration and comprehensive monitoring dashboard
+              </p>
+              <ScrollArea className="h-[calc(100vh-16rem)]">
+                <div className="space-y-6 pr-4">
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">System Overview</h3>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      The Transaction Sync System is an automated workflow that fetches bank transactions from GoCardless, 
+                      enriches the data with custom processing logic, and uploads formatted records to a Notion database. 
+                      The dashboard provides real-time monitoring of sync operations with detailed logging and debugging capabilities.
+                    </p>
+                    <div className="bg-muted/30 border border-border rounded-md p-4 mt-4">
+                      <p className="text-sm font-semibold mb-2">Architecture Flow:</p>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        Cron Scheduler → fetch_transactions.py → GoCardless API → Data Enrichment → 
+                        enrich_and_upload.py → Notion API → Log Files → Dashboard Display
+                      </p>
+                    </div>
+                  </section>
+
+                  <Separator />
+
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">Dashboard Features</h3>
+                    <ul className="space-y-2 text-muted-foreground text-sm">
+                      <li><strong>Stats Overview:</strong> Four key metric cards showing transactions today, next scheduled run, 7-day success rate, and active connections</li>
+                      <li><strong>Status Health:</strong> Large status indicator with last run information and duration</li>
+                      <li><strong>Log Filters:</strong> Date picker, status dropdown (all/success/warning/error), and search functionality</li>
+                      <li><strong>Expandable Log Table:</strong> Parent rows (bank fetch) with nested child rows (Notion uploads)</li>
+                      <li><strong>Auto-Expand Errors:</strong> Notion upload rows automatically expand when errors occur</li>
+                      <li><strong>Log Details Modal:</strong> Full request/response debugging data with syntax highlighting</li>
+                      <li><strong>Auto-Refresh:</strong> 30-second polling interval for live updates</li>
+                    </ul>
+                  </section>
+
+                  <Separator />
+
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">Data Structure & Storage</h3>
+                    <div className="space-y-3 text-muted-foreground text-sm">
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Daily Log Files:</p>
+                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactions/logs/YYYY-MM-DD.json</code></p>
+                        <p className="mb-2">Each file contains an array of sync runs with nested account processing details:</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Run metadata (run_id, timestamp, status, duration)</li>
+                          <li>Account fetch results (status, HTTP code, transaction counts, errors)</li>
+                          <li>Notion upload results (status, uploaded count, duration, errors)</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Summary File:</p>
+                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactions/summary.json</code></p>
+                        <p>Contains aggregated statistics: today's totals, last/next run times, success rates</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Configuration File:</p>
+                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactions/config.json</code></p>
+                        <p>Stores cron schedule, enabled accounts, timezone settings</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <Separator />
+
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">Python Scripts Architecture</h3>
+                    <div className="space-y-3 text-muted-foreground text-sm">
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">fetch_transactions.py:</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Main orchestration script triggered by cron</li>
+                          <li>Loads enabled accounts from config.json</li>
+                          <li>Fetches transactions from GoCardless API for each account</li>
+                          <li>Calls enrich_and_upload.py for each account's transaction set</li>
+                          <li>Writes detailed logs to daily log files</li>
+                          <li>Updates summary.json with aggregated statistics</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">enrich_and_upload.py:</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Receives raw GoCardless transaction data</li>
+                          <li>Enriches transactions with custom business logic (categorisation, merchant mapping, etc.)</li>
+                          <li>Formats data according to Notion database schema</li>
+                          <li>Uploads formatted records to Notion API</li>
+                          <li>Returns upload results (success count, errors) to caller</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Script Locations:</p>
+                        <p className="mb-1"><code className="text-xs bg-muted px-1 py-0.5 rounded">api/scripts/fetch_transactions.py</code></p>
+                        <p><code className="text-xs bg-muted px-1 py-0.5 rounded">api/scripts/enrich_and_upload.py</code></p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <Separator />
+
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">API Endpoints</h3>
+                    <p className="text-muted-foreground text-sm mb-3">
+                      FastAPI backend running on <code className="text-xs bg-muted px-1 py-0.5 rounded">http://192.168.1.70:6059</code>
+                    </p>
+                    <div className="space-y-3 text-muted-foreground text-sm">
+                      <div className="bg-muted/30 border border-border rounded-md p-3">
+                        <p className="font-semibold text-foreground mb-1">GET /api/transactions/stats</p>
+                        <p className="text-xs mb-2">Returns summary statistics for dashboard overview</p>
+                        <p className="text-xs"><strong>Response:</strong> SyncStats object with today's metrics and 7-day success rate</p>
+                      </div>
+                      <div className="bg-muted/30 border border-border rounded-md p-3">
+                        <p className="font-semibold text-foreground mb-1">GET /api/transactions/logs?date=YYYY-MM-DD&limit=20</p>
+                        <p className="text-xs mb-2">Returns paginated log entries for specified date</p>
+                        <p className="text-xs"><strong>Response:</strong> Array of SyncRun objects with account processing details</p>
+                      </div>
+                      <div className="bg-muted/30 border border-border rounded-md p-3">
+                        <p className="font-semibold text-foreground mb-1">GET /api/transactions/logs/{"{run_id}"}</p>
+                        <p className="text-xs mb-2">Returns detailed request/response data for specific run</p>
+                        <p className="text-xs"><strong>Response:</strong> LogDetails object with full API debugging information</p>
+                      </div>
+                      <div className="bg-muted/30 border border-border rounded-md p-3">
+                        <p className="font-semibold text-foreground mb-1">GET /api/transactions/config</p>
+                        <p className="text-xs mb-2">Returns cron schedule and enabled account configuration</p>
+                        <p className="text-xs"><strong>Response:</strong> SyncConfig object with schedule details</p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <Separator />
+
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">Integration Steps: Live API Setup</h3>
+                    <div className="space-y-4 text-muted-foreground text-sm">
+                      <div className="bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 rounded-md p-4">
+                        <p className="font-semibold text-amber-900 dark:text-amber-200 mb-2">⚠️ Current State: Dummy Data</p>
+                        <p className="text-xs text-amber-800 dark:text-amber-300">
+                          All endpoints currently return dummy/fallback data. Follow these steps to connect live APIs.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Step 1: Configure GoCardless Credentials</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Obtain GoCardless API secret key from dashboard</li>
+                          <li>Add to environment variables or config file</li>
+                          <li>Update fetch_transactions.py to use real credentials</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Step 2: Configure Notion Integration</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Create Notion integration at <a href="https://www.notion.so/my-integrations" className="text-primary hover:underline">notion.so/my-integrations</a></li>
+                          <li>Copy internal integration secret</li>
+                          <li>Share target database with integration</li>
+                          <li>Update enrich_and_upload.py with database ID and secret</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Step 3: Set Up Cron Scheduling</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Edit crontab on QNAP NAS or within Docker container</li>
+                          <li>Example: <code className="text-xs bg-muted px-1 py-0.5 rounded">0 */6 * * * /path/to/fetch_transactions.py</code></li>
+                          <li>Ensure script has execute permissions</li>
+                          <li>Update config.json with matching cron schedule</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Step 4: Enable Accounts for Sync</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Edit config.json enabled_accounts array</li>
+                          <li>Add account IDs from gc_metadata.json</li>
+                          <li>Verify accounts have sync_enabled: true in Bank Connections page</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Step 5: Test End-to-End</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Run fetch_transactions.py manually first</li>
+                          <li>Check daily log files for errors</li>
+                          <li>Verify transactions appear in Notion database</li>
+                          <li>Confirm dashboard displays real data</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Step 6: Set Up Error Notifications (Optional)</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li>Configure SMTP settings in Python scripts</li>
+                          <li>Add email notification on fetch/upload failures</li>
+                          <li>Include error details and run_id in email body</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </section>
+
+                  <Separator />
+
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">Component Architecture</h3>
+                    <div className="space-y-2 text-muted-foreground text-sm">
+                      <p className="font-semibold text-foreground mb-2">Frontend Components:</p>
+                      <ul className="list-disc pl-6 space-y-1">
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/pages/Transactions.tsx</code> - Main page orchestrator with React Query integration</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/StatsOverview.tsx</code> - Four metric cards with icons</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/StatusHealth.tsx</code> - Health indicator with last run info</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/LogFilters.tsx</code> - Date, status, search filters</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/LogTable.tsx</code> - Table wrapper with pagination</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/LogRow.tsx</code> - Expandable parent row (bank fetch)</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/NotionUploadRow.tsx</code> - Child row (Notion upload)</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/LogDetailsModal.tsx</code> - Full debugging modal with JSON</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/lib/transactionsApi.ts</code> - API client with typed functions</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/types.ts</code> - TypeScript interfaces</li>
+                      </ul>
+                    </div>
+                  </section>
+
+                  <Separator />
+
+                  <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">Troubleshooting Common Issues</h3>
+                    <div className="space-y-3 text-muted-foreground text-sm">
+                      <div>
+                        <p className="font-semibold text-foreground mb-1">Dashboard shows "No sync runs found":</p>
+                        <ul className="list-disc pl-6">
+                          <li>Verify daily log file exists for selected date</li>
+                          <li>Check FastAPI backend is running on port 6059</li>
+                          <li>Inspect browser console for API errors</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-1">GoCardless fetch fails with 401:</p>
+                        <ul className="list-disc pl-6">
+                          <li>Access token has expired - need to reconfirm requisition</li>
+                          <li>Visit Bank Connections page and click "Reconfirm" button</li>
+                          <li>Complete bank authentication flow</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-1">Notion upload fails with 503 (rate limited):</p>
+                        <ul className="list-disc pl-6">
+                          <li>Notion API has rate limits (3 requests/second)</li>
+                          <li>Add throttling/retry logic in enrich_and_upload.py</li>
+                          <li>Consider batch processing in larger groups</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-1">Duplicate transactions in Notion:</p>
+                        <ul className="list-disc pl-6">
+                          <li>Implement deduplication logic using transaction IDs</li>
+                          <li>Query Notion before uploading to check for existing entries</li>
+                          <li>Use GoCardless transaction_id as unique identifier</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground mb-1">Cron job not executing:</p>
+                        <ul className="list-disc pl-6">
+                          <li>Check cron service is running: <code className="text-xs bg-muted px-1 py-0.5 rounded">systemctl status cron</code></li>
+                          <li>Verify script has execute permissions</li>
+                          <li>Check cron logs: <code className="text-xs bg-muted px-1 py-0.5 rounded">/var/log/cron</code></li>
+                        </ul>
+                      </div>
+                    </div>
                   </section>
                 </div>
               </ScrollArea>
