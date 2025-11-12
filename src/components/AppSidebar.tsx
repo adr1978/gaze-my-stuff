@@ -1,4 +1,5 @@
 // Import icons from lucide-react library for sidebar navigation
+import React from "react";
 import { Landmark, Receipt, UtensilsCrossed, Home, BookOpen, TrendingUp, Image } from "lucide-react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "@/components/sidebar/ThemeToggle";
@@ -57,37 +58,43 @@ export function AppSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const [isHovered, setIsHovered] = React.useState(false);
 
   return (
     <TooltipProvider>
-      <Sidebar className="border-r border-border" collapsible="icon">
+      <Sidebar 
+        className="border-r border-border" 
+        collapsible="icon"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         <SidebarContent>
-          {/* Trigger button - always visible */}
-          <div className="flex justify-end p-2">
-            <SidebarTrigger />
-          </div>
-          
           <div className="flex-1">
             {/* Home navigation item - always at the top, no active state */}
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton asChild>
-                          <Link to="/">
-                            <Home className="h-4 w-4" />
-                            <span>Home</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </TooltipTrigger>
-                      {isCollapsed && (
-                        <TooltipContent side="right">
-                          <p>Home</p>
-                        </TooltipContent>
+                    <div className="flex items-center justify-between w-full">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton asChild>
+                            <Link to="/">
+                              <Home className="h-4 w-4" />
+                              <span>Home</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        {isCollapsed && (
+                          <TooltipContent side="right">
+                            <p>Home</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                      {!isCollapsed && isHovered && (
+                        <SidebarTrigger className="mr-2" />
                       )}
-                    </Tooltip>
+                    </div>
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
