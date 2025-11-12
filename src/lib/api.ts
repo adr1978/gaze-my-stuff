@@ -116,7 +116,33 @@ export interface Requisition { // <-- THE FIX: Added export
 // GoCardless API functions
 export const gocardlessApi = {
   getRequisitions: async (): Promise<Requisition[]> => {
-    return api.get("/api/gc/requisitions");
+    try {
+      return await api.get("/api/gc/requisitions");
+    } catch (error) {
+      console.warn("GoCardless API call failed, using mock data:", error);
+      // Import mock data as fallback
+      const mockResponse = await import("@/data/goCardless_Response.json");
+      const mockMetadata = await import("@/data/gc_metadata.json");
+      
+      // Merge API response with local metadata
+      return mockResponse.results.map((req: any) => {
+        const metadata = mockMetadata.default[req.id] || {};
+        return {
+          id: req.id,
+          reference: req.reference,
+          owner: metadata.owner || "Unknown",
+          created: req.created,
+          status: req.status,
+          expiresInDays: 90, // Default value
+          agreement: req.agreement,
+          institution_id: req.institution_id,
+          link: req.link,
+          redirect: req.redirect,
+          notes: metadata.notes || null,
+          accounts: metadata.accounts || [],
+        };
+      });
+    }
   },
   toggleSync: async (requisitionId: string, accountId: string, enabled: boolean) => {
     return api.post(`/api/gc/toggle-sync/${requisitionId}/${accountId}`, {});

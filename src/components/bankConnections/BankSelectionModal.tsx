@@ -79,7 +79,7 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
-          <DialogTitle className="text-2xl font-bold text-foreground">
+          <DialogTitle>
             Select Your Bank
           </DialogTitle>
           <DialogDescription className="sr-only">
