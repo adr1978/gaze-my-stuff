@@ -1,4 +1,4 @@
-import { PatternType } from "@/components/PatternControls";
+import { PatternType } from "@/components/notionCoverStudio/PatternControls";
 
 // Stores the random x/y, rotation, and scale for pattern generation
 export type RandomPatternData = {
