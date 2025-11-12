@@ -28,7 +28,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
 import { DatePickerPopover } from "./DatePickerPopover";
 import { SharePurchase } from "./types";
 
@@ -60,14 +59,11 @@ export function AddPurchaseDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
-        {/* Modal header with plus icon for new purchases */}
+        {/* Modal header */}
         <DialogHeader>
-          <div className="flex items-center gap-2">
-            {!editingPurchase && <Plus className="h-5 w-5 text-primary" />}
-            <DialogTitle>
-              {editingPurchase ? 'Edit Purchase' : 'Add Purchase'}
-            </DialogTitle>
-          </div>
+          <DialogTitle>
+            {editingPurchase ? 'Edit Purchase' : 'Add Purchase'}
+          </DialogTitle>
           <DialogDescription>
             {editingPurchase
               ? 'Update the purchase details'

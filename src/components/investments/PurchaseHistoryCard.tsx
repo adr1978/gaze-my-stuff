@@ -77,7 +77,7 @@ export function PurchaseHistoryCard({
         </div>
 
         {/* Add Purchase button with plus icon */}
-        <Button onClick={onAddPurchase} className="w-full">
+        <Button onClick={onAddPurchase}>
           <Plus className="h-4 w-4" />
           Add Purchase
         </Button>
