@@ -108,8 +108,8 @@ export function ChartingCard({
         <CardTitle>{fundName}</CardTitle>
         <CardDescription>Historical investment value since 1st January 2024</CardDescription>
 
-        {/* Interval Toggle Group - positioned to align right edge with chart */}
-        <div className="absolute top-6 right-6">
+        {/* Interval Toggle Group - positioned to align right edge with chart grid */}
+        <div className="absolute top-6 right-[44px]">
           <ToggleGroup
             type="single"
             value={interval}
