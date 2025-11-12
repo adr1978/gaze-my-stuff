@@ -103,7 +103,7 @@ const ToggleGroupItem = React.forwardRef<
       className={cn(
         "relative z-10 flex items-center justify-center gap-2 font-medium rounded transition-all",
         "data-[state=on]:text-primary-foreground data-[state=off]:text-muted-foreground",
-        "hover:text-foreground hover:bg-muted/50",
+        "data-[state=off]:hover:text-foreground data-[state=off]:hover:bg-accent/60",
         sizeClasses[itemSize || "default"],
         itemSize === "sm" ? "text-xs" : "text-sm",
         className,

@@ -73,13 +73,14 @@ export default function GoCardless() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-2">
           <h1 className="text-4xl font-bold text-foreground">Bank Connections</h1>
           <Button onClick={() => setIsBankModalOpen(true)} className="rounded-full">
             <Plus className="h-4 w-4 mr-2" />
             Add Connection
           </Button>
         </div>
+        <p className="text-muted-foreground mb-6">Connect and manage your bank accounts via open banking</p>
 
         <div className="space-y-6">
           {/* --- NEW: Handle loading state --- */}

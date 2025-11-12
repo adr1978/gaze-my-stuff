@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import {
   Upload,
   Download,
-  Info,
   CheckCircle2,
   XCircle,
   AlertCircle,
@@ -22,7 +21,6 @@ import { CanvasControls } from "@/components/notionCoverStudio/CanvasControls";
 import { ImageControls } from "@/components/notionCoverStudio/ImageControls";
 import { PatternControls, PatternType } from "@/components/notionCoverStudio/PatternControls";
 import { getCanvasDimensions } from "@/components/notionCoverStudio/CanvasSizeConfig";
-import { DesignGuideDialog } from "@/components/notionCoverStudio/DesignGuideDialog";
 import { LayerState, RandomPatternData, LayerInitialState } from "@/types"; // Import new type
 import { Card } from "@/components/ui/card";
 import { LayerManager } from "@/components/notionCoverStudio/LayerManager"; // Import LayerManager
@@ -37,7 +35,6 @@ const Index = () => {
   // --- GLOBAL STATE ---
   const [backgroundColor, setBackgroundColor] = useState<string>("transparent");
   const [canvasSize, setCanvasSize] = useState<string>("notion");
-  const [designGuideOpen, setDesignGuideOpen] = useState(false);
   const [outputQuality, setOutputQuality] = useState(1);
   const [outputFormat, setOutputFormat] = useState<"png" | "jpg">("png");
 
@@ -449,8 +446,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-foreground mb-4">Notion Cover Studio</h1>
-        <p className="text-muted-foreground mb-8">Design beautiful Notion cover images with ease.  Upload and manipulate up to five images.</p>
+        <h1 className="text-4xl font-bold text-foreground mb-2">Notion Cover Studio</h1>
+        <p className="text-muted-foreground mb-6">Design beautiful Notion cover images with ease.  Upload and manipulate up to five images.</p>
 
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
 
@@ -532,14 +529,6 @@ const Index = () => {
           />
         </div>
 
-        <DesignGuideDialog open={designGuideOpen} onOpenChange={setDesignGuideOpen} />
-
-        <div className="flex justify-center pt-6">
-          <Button variant="outline" size="sm" onClick={() => setDesignGuideOpen(true)} className="bg-card text-card-foreground border">
-            <Info className="h-4 w-4 mr-2" />
-            Design & Feature Documentation
-          </Button>
-        </div>
       </div>
     </div>
   );

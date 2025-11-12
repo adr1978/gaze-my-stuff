@@ -56,6 +56,7 @@ export function RecipeSourceCard({
             type="single" 
             value={extractionMethod} 
             onValueChange={(value) => value && setExtractionMethod(value as ExtractionMethod)}
+            size="sm"
           >
             <ToggleGroupItem value="ai">
               <Wand2 className="h-4 w-4 mr-1.5" />

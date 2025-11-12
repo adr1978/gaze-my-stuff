@@ -36,7 +36,6 @@ import { RecipeDataCard } from "@/components/recipeImporter/RecipeDataCard";
 import { MetadataCard } from "@/components/recipeImporter/MetadataCard";
 import { JsonViewerModal } from "@/components/recipeImporter/JsonViewerModal";
 import { EditRecipeModal } from "@/components/recipeImporter/EditRecipeModal";
-import { RecipeDocumentation } from "@/components/recipeImporter/RecipeDocumentation";
 
 // Recipe data structure interface
 interface RecipeData {
@@ -380,10 +379,6 @@ export default function RecipeAnalyser() {
           )}
         </div>
 
-        {/* Documentation button at bottom of page */}
-        <div className="mt-8 flex justify-center">
-          <RecipeDocumentation />
-        </div>
 
         {/* JSON viewer modal */}
         <JsonViewerModal

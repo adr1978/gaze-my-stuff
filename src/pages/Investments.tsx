@@ -32,7 +32,6 @@ import { AccountSelectionCard } from "@/components/investments/AccountSelectionC
 import { ChartingCard } from "@/components/investments/ChartingCard";
 import { PurchaseHistoryCard } from "@/components/investments/PurchaseHistoryCard";
 import { AddPurchaseDialog } from "@/components/investments/AddPurchaseDialog";
-import { InvestmentDocumentation } from "@/components/investments/InvestmentDocumentation";
 import { FundAccount, SharePurchase, ChartInterval } from "@/components/investments/types";
 import { aggregateDataByInterval, generateHistoricalData } from "@/components/investments/utils";
 
@@ -249,10 +248,6 @@ export default function Investments() {
           />
         </div>
 
-        {/* Documentation button at bottom of page */}
-        <div className="flex justify-center pt-6">
-          <InvestmentDocumentation />
-        </div>
       </div>
     </div>
   );

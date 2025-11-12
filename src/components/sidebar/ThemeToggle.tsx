@@ -1,4 +1,4 @@
-import { Moon, Sun, Eclipse } from "lucide-react";
+import { Moon, Sun, SunMoon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -14,7 +14,7 @@ export const ThemeToggle = () => {
         <Moon className="h-4 w-4" />
       </ToggleGroupItem>
       <ToggleGroupItem value="system" aria-label="Auto mode">
-        <Eclipse className="h-4 w-4" />
+        <SunMoon className="h-4 w-4" />
       </ToggleGroupItem>
     </ToggleGroup>
   );
