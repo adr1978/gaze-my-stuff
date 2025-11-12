@@ -70,11 +70,21 @@ export function AppSidebar() {
       >
         <SidebarContent>
           <div className="flex-1">
-            {/* Home navigation item - always at the top, no active state */}
+            {/* Toggle button and Home - swap positions with smooth transition */}
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem>
+                  {/* Trigger button in first position when collapsed */}
+                  <SidebarMenuItem className={`transition-all duration-300 ${isCollapsed ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-12 h-0 overflow-hidden'}`}>
+                    <SidebarMenuButton asChild>
+                      <div>
+                        <SidebarTrigger />
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  
+                  {/* Home link - shifts down when collapsed */}
+                  <SidebarMenuItem className={`transition-all duration-300 ${isCollapsed ? 'translate-y-0' : 'translate-y-0'}`}>
                     <div className="flex items-center justify-between w-full">
                       <Tooltip>
                         <TooltipTrigger asChild>
