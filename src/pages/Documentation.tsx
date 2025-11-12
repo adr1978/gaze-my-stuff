@@ -344,7 +344,7 @@ export default function Documentation() {
                     <h3 className="text-lg font-semibold mb-3 text-foreground">Overview</h3>
                     <p className="text-muted-foreground text-sm mb-4">
                       The Bank Connections page allows users to securely connect their bank accounts through open banking providers.
-                      It manages bank requisitions, displays account details, and controls transaction synchronization.
+                      It manages bank requisitions, displays account details, and controls transaction synchronisation.
                     </p>
                   </section>
 
@@ -356,7 +356,7 @@ export default function Documentation() {
                       <li><strong>Bank Selection:</strong> Modal interface for choosing banks from available institutions</li>
                       <li><strong>Requisition Cards:</strong> Display connected banks with status indicators and account lists</li>
                       <li><strong>Account Details:</strong> View balances, account numbers, and transaction sync status</li>
-                      <li><strong>Sync Control:</strong> Toggle transaction synchronization per account with API integration</li>
+                      <li><strong>Sync Control:</strong> Toggle transaction synchronisation per account with API integration</li>
                       <li><strong>Reconfirmation:</strong> Refresh expired connections through secure reconfirmation flow</li>
                       <li><strong>Loading States:</strong> Skeleton components during data fetching</li>
                     </ul>
@@ -385,7 +385,7 @@ export default function Documentation() {
                       <li>2. Search and select bank from available institutions</li>
                       <li>3. Complete bank authorization in new tab</li>
                       <li>4. Return to see new requisition card with connected accounts</li>
-                      <li>5. Toggle sync switches to control transaction synchronization</li>
+                      <li>5. Toggle sync switches to control transaction synchronisation</li>
                       <li>6. View account details and balances by clicking accounts</li>
                       <li>7. Reconfirm connection if expired using reconfirm button</li>
                     </ul>

@@ -83,6 +83,7 @@ export function AddPurchaseDialog({
               placeholder="0.00"
               value={newShares}
               onChange={(e) => onSharesChange(e.target.value)}
+              className="bg-card"
             />
           </div>
 

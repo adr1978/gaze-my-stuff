@@ -80,7 +80,7 @@ export function InvestmentDocumentation() {
             <section>
               <h3 className="text-lg font-semibold mb-3 text-foreground">Investment Chart Card</h3>
               <ul className="space-y-2 text-muted-foreground">
-                <li><strong>Purpose:</strong> Visualize investment value over time with configurable intervals</li>
+                <li><strong>Purpose:</strong> Visualise investment value over time with configurable intervals</li>
                 <li><strong>Chart Library:</strong> Recharts library (LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Line)</li>
                 <li><strong>Data Aggregation:</strong> Historical daily prices aggregated by selected interval (Week/Month/Year)</li>
                 <li><strong>Interval Selector:</strong> Three-button toggle in top-right corner (Week, Month, Year) with active state styling</li>

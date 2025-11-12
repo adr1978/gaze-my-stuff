@@ -15,7 +15,7 @@ export default function Home() {
               Welcome to Your Dashboard
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl">
-              Manage your financial connections, track transactions, and organize your recipes all in one place.
+              Manage your financial connections, track transactions, and organise your recipes all in one place.
             </p>
           </div>
         </div>

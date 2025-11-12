@@ -45,9 +45,9 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 gap-0 rounded-2xl">
+      <DialogContent className="sm:max-w-[600px] p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
-          <DialogTitle className="text-2xl font-bold text-primary">
+          <DialogTitle className="text-2xl font-bold text-foreground">
             Select Your Bank
           </DialogTitle>
         </DialogHeader>
@@ -79,7 +79,7 @@ export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalPro
                 placeholder="Search banks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 rounded-lg"
+                className="pl-10 rounded-lg bg-card"
               />
             </div>
           </div>
