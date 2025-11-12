@@ -102,7 +102,7 @@ export function AppSidebar() {
                         )}
                       </Tooltip>
                       {!isCollapsed && isHovered && (
-                        <SidebarTrigger className="mr-2" />
+                        <SidebarTrigger className="mr-2 transition-opacity duration-300 delay-100" />
                       )}
                     </div>
                   </SidebarMenuItem>
