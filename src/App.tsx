@@ -48,7 +48,7 @@ const App = () => (
               {/* Finance section pages */}
               <Route path="/bank-connections" element={<BankConnections />} />
               <Route path="/investments" element={<Investments />} />
-              <Route path="/transactions-monitor" element={<TransactionsMonitor />} />
+              <Route path="/transactions-monitor2" element={<TransactionsMonitor />} />
               
               {/* Tools section pages */}
               <Route path="/recipe-importer" element={<RecipeImporter />} />
