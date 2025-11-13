@@ -11,7 +11,7 @@ import {
   SyncStats,
   SyncRun,
   SyncConfig,
-} from "@/components/transactions/types";
+} from "@/components/transactionsMonitor/types";
 
 /**
  * Detect the appropriate API base URL based on current environment
@@ -47,7 +47,7 @@ const API_BASE_URL = getApiBaseUrl();
 /**
  * Generic fetch wrapper with error handling
  * 
- * @param endpoint - API endpoint path (e.g., "/api/transactions/stats")
+ * @param endpoint - API endpoint path (e.g., "/api/transactionsMonitor/stats")
  * @param options - Fetch options (method, headers, body, etc.)
  * @returns Parsed JSON response
  * @throws Error with descriptive message if request fails
@@ -103,7 +103,7 @@ async function apiRequest<T>(
  */
 export async function fetchSyncStats(): Promise<SyncStats> {
   try {
-    return await apiRequest<SyncStats>("/api/transactions/stats");
+    return await apiRequest<SyncStats>("/api/transactionsMonitor/stats");
   } catch (error) {
     // Fallback dummy data when backend is unavailable
     console.warn("Using fallback data for stats:", error);
@@ -141,7 +141,7 @@ export async function fetchSyncLogs(
   if (date) params.append("date", date);
   params.append("limit", limit.toString());
 
-  const endpoint = `/api/transactions/logs?${params.toString()}`;
+  const endpoint = `/api/transactionsMonitor/logs?${params.toString()}`;
   
   try {
     return await apiRequest<SyncRun[]>(endpoint);
@@ -169,7 +169,7 @@ export async function fetchSyncLogs(
                 timestamp: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
                 call_type: "gocardless_fetch",
                 http_method: "GET",
-                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_starling_8246/transactions/",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_starling_8246/transactionsMonitor/",
                 http_status: 200,
                 duration_ms: 1200,
                 request: {
@@ -216,7 +216,7 @@ export async function fetchSyncLogs(
                 timestamp: new Date(now - 2 * 60 * 60 * 1000 + 2000).toISOString(),
                 call_type: "gocardless_fetch",
                 http_method: "GET",
-                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_monzo_1234/transactions/",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_monzo_1234/transactionsMonitor/",
                 http_status: 200,
                 duration_ms: 980,
                 request: {
@@ -254,7 +254,7 @@ export async function fetchSyncLogs(
                 timestamp: new Date(now - 4 * 60 * 60 * 1000).toISOString(),
                 call_type: "gocardless_fetch",
                 http_method: "GET",
-                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_hsbc_5678/transactions/",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_hsbc_5678/transactionsMonitor/",
                 http_status: 429,
                 duration_ms: 850,
                 request: {
@@ -292,7 +292,7 @@ export async function fetchSyncLogs(
                 timestamp: new Date(now - 6 * 60 * 60 * 1000).toISOString(),
                 call_type: "gocardless_fetch",
                 http_method: "GET",
-                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_natwest_9999/transactions/",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_natwest_9999/transactionsMonitor/",
                 http_status: 0,
                 duration_ms: 5000,
                 request: {
@@ -330,7 +330,7 @@ export async function fetchSyncLogs(
                 timestamp: new Date(now - 8 * 60 * 60 * 1000).toISOString(),
                 call_type: "gocardless_fetch",
                 http_method: "GET",
-                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_barclays_4321/transactions/",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_barclays_4321/transactionsMonitor/",
                 http_status: 200,
                 duration_ms: 1100,
                 request: {
@@ -387,7 +387,7 @@ export async function fetchSyncLogs(
                 timestamp: new Date(now - 10 * 60 * 60 * 1000).toISOString(),
                 call_type: "gocardless_fetch",
                 http_method: "GET",
-                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_revolut_7777/transactions/",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_revolut_7777/transactionsMonitor/",
                 http_status: 200,
                 duration_ms: 1450,
                 request: {
@@ -434,7 +434,7 @@ export async function fetchSyncLogs(
                 timestamp: new Date(now - 10 * 60 * 60 * 1000 + 4000).toISOString(),
                 call_type: "gocardless_fetch",
                 http_method: "GET",
-                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_amex_3333/transactions/",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_amex_3333/transactionsMonitor/",
                 http_status: 200,
                 duration_ms: 1320,
                 request: {
@@ -482,7 +482,7 @@ export async function fetchLogDetails(runId: string): Promise<never> {
  * @returns Promise<SyncConfig> Configuration object
  */
 export async function fetchSyncConfig(): Promise<SyncConfig> {
-  return apiRequest<SyncConfig>("/api/transactions/config");
+  return apiRequest<SyncConfig>("/api/transactionsMonitor/config");
 }
 
 /**

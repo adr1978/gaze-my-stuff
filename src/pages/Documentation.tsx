@@ -443,7 +443,7 @@ export default function Documentation() {
                     <div className="space-y-3 text-muted-foreground text-sm">
                       <div>
                         <p className="font-semibold text-foreground mb-2">Daily Log Files:</p>
-                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactions/logs/YYYY-MM-DD.json</code></p>
+                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactionsMonitor/logs/YYYY-MM-DD.json</code></p>
                         <p className="mb-2">Each file contains an array of sync runs with nested account processing details:</p>
                         <ul className="list-disc pl-6 space-y-1">
                           <li>Run metadata (run_id, timestamp, status, duration)</li>
@@ -453,12 +453,12 @@ export default function Documentation() {
                       </div>
                       <div>
                         <p className="font-semibold text-foreground mb-2">Summary File:</p>
-                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactions/summary.json</code></p>
+                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactionsMonitor/summary.json</code></p>
                         <p>Contains aggregated statistics: today's totals, last/next run times, success rates</p>
                       </div>
                       <div>
                         <p className="font-semibold text-foreground mb-2">Configuration File:</p>
-                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactions/config.json</code></p>
+                        <p className="mb-2">Location: <code className="text-xs bg-muted px-1 py-0.5 rounded">api/data/transactionsMonitor/config.json</code></p>
                         <p>Stores cron schedule, enabled accounts, timezone settings</p>
                       </div>
                     </div>
@@ -507,22 +507,22 @@ export default function Documentation() {
                     </p>
                     <div className="space-y-3 text-muted-foreground text-sm">
                       <div className="bg-muted/30 border border-border rounded-md p-3">
-                        <p className="font-semibold text-foreground mb-1">GET /api/transactions/stats</p>
+                        <p className="font-semibold text-foreground mb-1">GET /api/transactionsMonitor/stats</p>
                         <p className="text-xs mb-2">Returns summary statistics for dashboard overview</p>
                         <p className="text-xs"><strong>Response:</strong> SyncStats object with today's metrics and 7-day success rate</p>
                       </div>
                       <div className="bg-muted/30 border border-border rounded-md p-3">
-                        <p className="font-semibold text-foreground mb-1">GET /api/transactions/logs?date=YYYY-MM-DD&limit=20</p>
+                        <p className="font-semibold text-foreground mb-1">GET /api/transactionsMonitor/logs?date=YYYY-MM-DD&limit=20</p>
                         <p className="text-xs mb-2">Returns paginated log entries for specified date</p>
                         <p className="text-xs"><strong>Response:</strong> Array of SyncRun objects with account processing details</p>
                       </div>
                       <div className="bg-muted/30 border border-border rounded-md p-3">
-                        <p className="font-semibold text-foreground mb-1">GET /api/transactions/logs/{"{run_id}"}</p>
+                        <p className="font-semibold text-foreground mb-1">GET /api/transactionsMonitor/logs/{"{run_id}"}</p>
                         <p className="text-xs mb-2">Returns detailed request/response data for specific run</p>
                         <p className="text-xs"><strong>Response:</strong> LogDetails object with full API debugging information</p>
                       </div>
                       <div className="bg-muted/30 border border-border rounded-md p-3">
-                        <p className="font-semibold text-foreground mb-1">GET /api/transactions/config</p>
+                        <p className="font-semibold text-foreground mb-1">GET /api/transactionsMonitor/config</p>
                         <p className="text-xs mb-2">Returns cron schedule and enabled account configuration</p>
                         <p className="text-xs"><strong>Response:</strong> SyncConfig object with schedule details</p>
                       </div>
@@ -687,15 +687,15 @@ export default function Documentation() {
                       <p className="font-semibold text-foreground mb-2">Frontend Components:</p>
                       <ul className="list-disc pl-6 space-y-1">
                         <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/pages/Transactions.tsx</code> - Main page orchestrator with React Query integration</li>
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/StatsOverview.tsx</code> - Four metric cards with icons</li>
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/StatusHealth.tsx</code> - Health indicator with last run info</li>
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/LogFilters.tsx</code> - Date, status, search filters</li>
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/LogTable.tsx</code> - Table wrapper with pagination</li>
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/LogRow.tsx</code> - Expandable parent row (bank fetch)</li>
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/NotionUploadRow.tsx</code> - Child row (Notion upload)</li>
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/LogDetailsModal.tsx</code> - Full debugging modal with JSON</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/StatsOverview.tsx</code> - Four metric cards with icons</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/StatusHealth.tsx</code> - Health indicator with last run info</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/LogFilters.tsx</code> - Date, status, search filters</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/LogTable.tsx</code> - Table wrapper with pagination</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/LogRow.tsx</code> - Expandable parent row (bank fetch)</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/NotionUploadRow.tsx</code> - Child row (Notion upload)</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/LogDetailsModal.tsx</code> - Full debugging modal with JSON</li>
                         <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/lib/transactionsApi.ts</code> - API client with typed functions</li>
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactions/types.ts</code> - TypeScript interfaces</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/types.ts</code> - TypeScript interfaces</li>
                       </ul>
                     </div>
                   </section>

@@ -7,7 +7,7 @@
  * - Success Rate: Percentage with colour coding
  * - Active Connections: Count of enabled accounts
  * 
- * Data is fetched from /api/transactions/stats endpoint via React Query
+ * Data is fetched from /api/transactionsMonitor/stats endpoint via React Query
  */
 
 import { TrendingUp, Clock, CheckCircle2, Link } from "lucide-react";
