@@ -180,28 +180,15 @@ export default function RecipeAnalyser() {
         return;
       }
 
-      // AI Extraction method - calls Supabase edge function
-      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-recipe`;
-      const resp = await fetch(functionUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ url }),
+      // AI Extraction method - calls Lovable Cloud edge function
+      const { data, error } = await supabase.functions.invoke("analyze-recipe", {
+        body: { url },
       });
 
-      if (!resp.ok) {
-        if (resp.status === 429) {
-          showToast.error("Rate Limited", "Too many requests. Please try again shortly.");
-        } else if (resp.status === 402) {
-          showToast.error("Payment Required", "Please add credits to your workspace.");
-        }
-        const t = await resp.text().catch(() => "");
-        throw new Error(`analyze-recipe HTTP ${resp.status} ${t}`);
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
       }
-
-      const data = await resp.json();
 
       // Decode HTML entities in extracted data
       const decodedData = {

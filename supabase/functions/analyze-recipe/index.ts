@@ -90,11 +90,18 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
+    console.log('Fetching recipe page:', url);
+
     // Fetch the recipe page content
     const pageResponse = await fetch(url);
+    if (!pageResponse.ok) {
+      throw new Error(`Failed to fetch page: ${pageResponse.status}`);
+    }
     const html = await pageResponse.text();
 
-    // Use AI to extract recipe data
+    console.log('Calling Lovable AI to extract recipe data');
+
+    // Use Lovable AI to extract recipe data
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -116,9 +123,32 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Lovable AI error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Payment required. Please add credits to your workspace.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      throw new Error(`AI gateway error: ${response.status}`);
+    }
+
     const data = await response.json();
     const content = data.choices[0].message.content;
     
+    console.log('AI response received, parsing JSON');
+
     // Parse the JSON response
     let recipeData;
     try {
@@ -144,11 +174,13 @@ serve(async (req) => {
       instructions: extractInstructions(recipeData.instructions).map((inst: string) => decodeHtmlEntities(inst)),
     };
 
+    console.log('Recipe extraction successful');
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error in analyse-recipe function:', error);
+    console.error('Error in analyze-recipe function:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
