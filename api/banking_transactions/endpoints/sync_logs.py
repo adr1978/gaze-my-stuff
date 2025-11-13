@@ -7,7 +7,7 @@ Returns detailed log entries for sync runs, including:
 - Notion upload status
 - Error details
 
-Data is loaded from daily log files in api/data/transactions/logs/
+Data is loaded from daily log files in api/banking_transactions/data/logs/
 """
 
 from fastapi import APIRouter, Query
@@ -44,7 +44,7 @@ async def get_sync_logs(
         date = datetime.now().strftime("%Y-%m-%d")
     
     # Path to daily log file
-    log_file = f"api/data/transactions/logs/{date}.json"
+    log_file = f"api/banking_transactions/data/logs/{date}.json"
     
     # Try to load real log data
     if os.path.exists(log_file):

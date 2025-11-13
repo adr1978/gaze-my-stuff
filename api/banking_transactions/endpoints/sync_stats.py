@@ -5,9 +5,9 @@ Returns summary statistics for the transaction sync dashboard:
 - Today's transaction count
 - Success/failure rates
 - Next scheduled run time
-- Active account count
+- Active account count (dynamically fetched from gc_metadata.json)
 
-Data is loaded from api/data/transactions/summary.json with fallback to dummy data.
+Data is loaded from api/banking_transactions/data/summary.json with fallback to dummy data.
 """
 
 from fastapi import APIRouter
@@ -35,7 +35,7 @@ async def get_sync_stats():
         dict: Statistics object with current and historical data
     """
     # Path to summary data file (updated by sync scripts)
-    data_path = "api/data/transactions/summary.json"
+    data_path = "api/banking_transactions/data/summary.json"
     
     # Try to load real data from file
     if os.path.exists(data_path):

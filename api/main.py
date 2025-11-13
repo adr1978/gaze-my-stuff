@@ -9,7 +9,7 @@ Development server: http://192.168.1.70:6059
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from endpoints.transactions import sync_logs, sync_stats, sync_config
+from banking_transactions.endpoints import sync_logs, sync_stats, sync_config
 
 # Initialize FastAPI application
 app = FastAPI(
