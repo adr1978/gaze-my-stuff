@@ -4,7 +4,7 @@
  * Displays 4 key metrics at the top of the Transactions dashboard:
  * - Transactions Today: Total count with trend indicator
  * - Next Scheduled Run: Countdown to next sync
- * - Success Rate (7d): Percentage with colour coding
+ * - Success Rate: Percentage with colour coding
  * - Active Connections: Count of enabled accounts
  * 
  * Data is fetched from /api/transactions/stats endpoint via React Query
@@ -108,13 +108,13 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
         </CardContent>
       </Card>
 
-      {/* Success Rate (7d) Card */}
+      {/* Success Rate Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-1">
-                Success Rate (7d)
+                Success Rate
               </p>
               <p className={`text-3xl font-bold ${successRateColour}`}>
                 {successRate}%

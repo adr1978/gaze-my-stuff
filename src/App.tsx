@@ -10,7 +10,7 @@ import { Layout } from "./components/Layout";
 import Investments from "./pages/Investments";
 import Home from "./pages/Home";
 import BankConnections from "./pages/BankConnections";
-import Transactions from "./pages/Transactions";
+import TransactionsMonitor from "./pages/TransactionsMonitor";
 import RecipeImporter from "./pages/RecipeImporter";
 import NotionCoverStudio from "./pages/NotionCoverStudio";
 import Documentation from "./pages/Documentation";
@@ -48,7 +48,7 @@ const App = () => (
               {/* Finance section pages */}
               <Route path="/bank-connections" element={<BankConnections />} />
               <Route path="/investments" element={<Investments />} />
-              <Route path="/transactions" element={<Transactions />} />
+              <Route path="/transactions-monitor" element={<TransactionsMonitor />} />
               
               {/* Tools section pages */}
               <Route path="/recipe-importer" element={<RecipeImporter />} />
