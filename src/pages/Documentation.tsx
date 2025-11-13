@@ -686,7 +686,7 @@ export default function Documentation() {
                     <div className="space-y-2 text-muted-foreground text-sm">
                       <p className="font-semibold text-foreground mb-2">Frontend Components:</p>
                       <ul className="list-disc pl-6 space-y-1">
-                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/pages/Transactions.tsx</code> - Main page orchestrator with React Query integration</li>
+                        <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/pages/TransactionsMonitor.tsx</code> - Main page orchestrator with React Query integration</li>
                         <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/StatsOverview.tsx</code> - Four metric cards with icons</li>
                         <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/StatusHealth.tsx</code> - Health indicator with last run info</li>
                         <li><code className="text-xs bg-muted px-1 py-0.5 rounded">src/components/transactionsMonitor/LogFilters.tsx</code> - Date, status, search filters</li>
