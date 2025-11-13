@@ -2,23 +2,36 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogRow } from "./LogRow";
-import type { SyncRun } from "./types";
+import type { SyncRun, AccountSync } from "./types";
 
 interface LogTableProps {
   runs: SyncRun[];
   isLoading: boolean;
 }
 
-export function LogTable({ runs, isLoading }: LogTableProps) {
-  const [expandedRuns, setExpandedRuns] = useState<Set<string>>(new Set());
+// Flatten runs into accounts for display
+interface AccountWithTimestamp extends AccountSync {
+  timestamp: string;
+}
 
-  const toggleExpanded = (runId: string) => {
-    setExpandedRuns((prev) => {
+export function LogTable({ runs, isLoading }: LogTableProps) {
+  const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
+
+  // Flatten all accounts from all runs
+  const accounts: AccountWithTimestamp[] = runs.flatMap((run) =>
+    run.accounts_processed.map((account) => ({
+      ...account,
+      timestamp: run.timestamp,
+    }))
+  );
+
+  const toggleExpanded = (accountId: string) => {
+    setExpandedAccounts((prev) => {
       const next = new Set(prev);
-      if (next.has(runId)) {
-        next.delete(runId);
+      if (next.has(accountId)) {
+        next.delete(accountId);
       } else {
-        next.add(runId);
+        next.add(accountId);
       }
       return next;
     });
@@ -36,7 +49,7 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
     );
   }
 
-  if (runs.length === 0) {
+  if (accounts.length === 0) {
     return (
       <Card>
         <CardContent className="p-12 text-center text-muted-foreground">
@@ -50,12 +63,12 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
     <Card>
       <CardContent className="p-0">
         <div className="divide-y divide-border">
-          {runs.map((run) => (
+          {accounts.map((account) => (
             <LogRow
-              key={run.run_id}
-              run={run}
-              isExpanded={expandedRuns.has(run.run_id)}
-              onToggleExpand={() => toggleExpanded(run.run_id)}
+              key={account.account_id}
+              account={account}
+              isExpanded={expandedAccounts.has(account.account_id)}
+              onToggleExpand={() => toggleExpanded(account.account_id)}
             />
           ))}
         </div>
