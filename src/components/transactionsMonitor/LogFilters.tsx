@@ -1,4 +1,4 @@
-import { Search, X } from "lucide-react";
+import { Search, Eraser } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -72,8 +72,7 @@ export function LogFilters({ filters, onFiltersChange }: LogFiltersProps) {
             </Select>
           </div>
           <Button onClick={handleReset} variant="outline" className="h-10 bg-muted hover:bg-muted/80">
-            <X className="h-4 w-4 mr-1.5" />
-            Reset
+            <Eraser className="h-4 w-4 mr-1.5" />
           </Button>
         </div>
       </CardContent>
