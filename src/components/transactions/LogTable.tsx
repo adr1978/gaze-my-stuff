@@ -53,7 +53,7 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
     return (
       <Card>
         <CardContent className="p-12 text-center text-muted-foreground">
-          <p>No sync runs found for this date</p>
+          <p>No sync runs found for this filter</p>
         </CardContent>
       </Card>
     );
