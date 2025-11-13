@@ -29,6 +29,11 @@ export default function TransactionsMonitor() {
   // Apply client-side filters: status at account-level, search at run-level
   const filteredLogs = (logs || [])
     .filter((run) => {
+      // Date filter: match run's date (YYYY-MM-DD) to selected date
+      if (filters.date) {
+        const runDate = new Date(run.timestamp).toISOString().split('T')[0];
+        if (runDate !== filters.date) return false;
+      }
       // Search filter (run ID, account names, or error messages)
       if (filters.searchQuery) {
         const query = filters.searchQuery.toLowerCase();
