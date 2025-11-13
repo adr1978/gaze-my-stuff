@@ -603,6 +603,85 @@ export default function Documentation() {
                   <Separator />
 
                   <section>
+                    <h3 className="text-lg font-semibold mb-3 text-foreground">Email Notifications</h3>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      Automated email alerts for transaction sync failures and daily summary reports with beautifully designed HTML templates featuring the Broomfield crest.
+                    </p>
+                    <div className="space-y-4 text-muted-foreground text-sm">
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Configuration (.env settings):</p>
+                        <div className="bg-muted/30 border border-border rounded-md p-3 font-mono text-xs space-y-1">
+                          <p>SMTP_HOST="smtp.gmail.com"</p>
+                          <p>SMTP_PORT="587"</p>
+                          <p>SMTP_USERNAME="your-email@gmail.com"</p>
+                          <p>SMTP_PASSWORD="your-app-password"</p>
+                          <p>SMTP_FROM_EMAIL="your-email@gmail.com"</p>
+                          <p>SMTP_TO_EMAIL="recipient@example.com"</p>
+                          <p className="pt-2">EMAIL_NOTIFICATIONS_ENABLED="true"</p>
+                          <p>EMAIL_IMMEDIATE_ERRORS="true"</p>
+                          <p>EMAIL_DAILY_DIGEST="true"</p>
+                          <p>EMAIL_DAILY_DIGEST_TIME="18:00"</p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Email Types:</p>
+                        <ul className="list-disc pl-6 space-y-2">
+                          <li>
+                            <strong className="text-foreground">Immediate Error Alerts:</strong> Sent when GoCardless fetch fails or Notion upload encounters errors. 
+                            Features red/urgent styling with 🚨 icon, detailed error information, and affected account details.
+                          </li>
+                          <li>
+                            <strong className="text-foreground">Daily Digest:</strong> Scheduled summary email sent at configured time (default 6pm). 
+                            Shows stats overview with ✅ success indicators, transaction counts, run summaries, and performance metrics.
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Email Design Features:</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li><strong>Hero Image:</strong> Broomfield crest displayed at top (hosted at hub.broomfield.family)</li>
+                          <li><strong>Color Scheme:</strong> Uses design system colors - primary blue (#4B9BFF), success green, destructive red, warning orange</li>
+                          <li><strong>Responsive Layout:</strong> Card-based HTML design with proper spacing and typography</li>
+                          <li><strong>Status Icons:</strong> Visual indicators (🚨, 📊, ✅, ⚠️, ✗) for quick status recognition</li>
+                          <li><strong>Call-to-Actions:</strong> Color-coded buttons linking to dashboard for detailed analysis</li>
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Testing Email Notifications:</p>
+                        <ol className="list-decimal pl-6 space-y-2">
+                          <li>Configure SMTP settings in .env file (see configuration above)</li>
+                          <li>Set EMAIL_NOTIFICATIONS_ENABLED="true"</li>
+                          <li>Run test script: <code className="bg-muted px-1 py-0.5 rounded">python api/scripts/test_email_notifications.py</code></li>
+                          <li>Check inbox for both immediate error alert and daily digest samples</li>
+                          <li>Review email design and content formatting</li>
+                        </ol>
+                      </div>
+
+                      <div>
+                        <p className="font-semibold text-foreground mb-2">Implementation Files:</p>
+                        <ul className="list-disc pl-6 space-y-1">
+                          <li><code className="text-xs bg-muted px-1 py-0.5 rounded">api/banking_transactions/email_notifications.py</code> - Email sending logic and HTML templates</li>
+                          <li><code className="text-xs bg-muted px-1 py-0.5 rounded">api/scripts/test_email_notifications.py</code> - Test script for sending sample emails</li>
+                          <li><code className="text-xs bg-muted px-1 py-0.5 rounded">.env</code> - SMTP and notification configuration</li>
+                        </ul>
+                      </div>
+
+                      <div className="bg-blue-100 dark:bg-blue-950 border border-blue-300 dark:border-blue-800 rounded-md p-4 mt-3">
+                        <p className="font-semibold text-blue-900 dark:text-blue-200 mb-2">💡 Gmail App Passwords</p>
+                        <p className="text-xs text-blue-800 dark:text-blue-300">
+                          If using Gmail, you must create an App Password (not your regular password). 
+                          Visit Google Account → Security → 2-Step Verification → App Passwords to generate one.
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+
+                  <Separator />
+
+                  <section>
                     <h3 className="text-lg font-semibold mb-3 text-foreground">Component Architecture</h3>
                     <div className="space-y-2 text-muted-foreground text-sm">
                       <p className="font-semibold text-foreground mb-2">Frontend Components:</p>
