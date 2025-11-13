@@ -28,7 +28,7 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
   // Determine overall status based on errors
   const hasErrors = account.summary.errors > 0;
   const hasWarnings = account.summary.skipped > 0;
-  const status = hasErrors ? "error" : hasWarnings ? "warning" : "success";
+  const status = hasErrors ? "ERROR" : hasWarnings ? "WARNING" : "SUCCESS";
 
   return (
     <>
