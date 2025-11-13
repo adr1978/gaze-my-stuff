@@ -137,13 +137,11 @@ export async function fetchSyncLogs(
   date?: string,
   limit: number = 20
 ): Promise<SyncRun[]> {
-  const params = new URLSearchParams();
-  if (date) params.append("date", date);
-  params.append("limit", limit.toString());
-
-  const endpoint = `/api/transactionsMonitor/logs?${params.toString()}`;
-  
   try {
+    const params = new URLSearchParams();
+    if (date) params.append("date", date);
+    params.append("limit", limit.toString());
+    const endpoint = `/api/transactionsMonitor/logs?${params.toString()}`;
     return await apiRequest<SyncRun[]>(endpoint);
   } catch (error) {
     console.warn("Using fallback data for logs:", error);
@@ -284,21 +282,17 @@ export async function fetchSyncLogs(
       return [runSuccess, runWarning, runError];
     };
 
-    // Build a 5-day dataset for variety when no date is selected
-    const baseDate = new Date(`${targetDateStr}T00:00:00`);
-    const days = [0, -1, -2, -3, -4];
-    const allRuns = days.flatMap((offset, idx) => {
-      const d = new Date(baseDate);
-      d.setDate(baseDate.getDate() + offset);
-      return generateRunsForDate(d, idx === 0);
-    });
+    // Generate runs for today and 4 previous days
+    const today = new Date();
+    const allRuns: SyncRun[] = [];
+    
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      allRuns.push(...generateRunsForDate(d, i === 0));
+    }
 
-    // If a date is specified, filter to that date. Otherwise return variety.
-    const filtered = date
-      ? allRuns.filter((r) => r.timestamp.split("T")[0] === targetDateStr)
-      : allRuns;
-
-    return filtered.slice(0, limit);
+    return allRuns.slice(0, limit);
   }
 }
 

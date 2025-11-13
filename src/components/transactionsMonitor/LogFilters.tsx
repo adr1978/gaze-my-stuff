@@ -12,14 +12,20 @@ interface LogFiltersProps {
 }
 
 export function LogFilters({ filters, onFiltersChange }: LogFiltersProps) {
-  // Convert date string to Date object for the picker, or undefined if empty
-  const dateValue = filters.date ? new Date(filters.date) : undefined;
+  // Convert date string (dd/MM/yyyy) to Date object for the picker
+  const dateValue = filters.date ? (() => {
+    const [day, month, year] = filters.date.split('/').map(Number);
+    return new Date(year, month - 1, day);
+  })() : undefined;
 
-  const handleDateChange = (date: Date | undefined) => {
-    onFiltersChange({
-      ...filters,
-      date: date ? date.toISOString().split('T')[0] : ''
-    });
+  const handleDateChange = (selectedDate: Date | undefined) => {
+    if (!selectedDate) {
+      onFiltersChange({ ...filters, date: '' });
+      return;
+    }
+    // Format as dd/MM/yyyy to match display format
+    const formattedDate = `${String(selectedDate.getDate()).padStart(2, '0')}/${String(selectedDate.getMonth() + 1).padStart(2, '0')}/${selectedDate.getFullYear()}`;
+    onFiltersChange({ ...filters, date: formattedDate });
   };
 
   const handleReset = () => {
