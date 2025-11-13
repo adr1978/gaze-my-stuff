@@ -36,14 +36,16 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
         <div className="p-4 flex items-center justify-between gap-4 cursor-pointer" onClick={onToggleExpand}>
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0">
               <p className="text-xs font-semibold truncate">
                 {account.owner} - {account.institution_name} ({account.last_four})
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {format(new Date(account.timestamp), "dd/MM/yyyy")}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+            </div>
+            <div className="flex-1 flex items-center justify-center min-w-0 px-4">
+              <p className="text-xs text-muted-foreground">
                 {account.summary.fetched} fetched • {account.summary.new} new • {account.summary.updated} updated
                 {account.summary.skipped > 0 && ` • ${account.summary.skipped} skipped`}
               </p>
