@@ -6,72 +6,73 @@
  */
 
 /**
- * Notion upload status for a single account
- * Child relationship to account fetch
+ * Error response body structure
  */
-export interface NotionUpload {
-  /** Overall status of Notion upload */
-  status: "success" | "warning" | "error" | "skipped";
-  /** Duration of upload operation in milliseconds */
-  duration_ms: number;
-  /** Number of transactions successfully uploaded */
-  uploaded_count: number;
-  /** HTTP status code from Notion API */
+export interface ErrorBody {
+  error?: string;
+  message?: string;
+  code?: string;
+}
+
+/**
+ * Account summary statistics
+ */
+export interface AccountSummary {
+  fetched: number;
+  new: number;
+  updated: number;
+  skipped: number;
+  errors: number;
+}
+
+/**
+ * Individual API call (GoCardless fetch or Notion create/update)
+ */
+export interface ApiCall {
+  call_id: string;
+  timestamp: string;
+  call_type: "gocardless_fetch" | "notion_create" | "notion_update";
+  transaction_id?: string;
+  http_method: string;
+  url: string;
   http_status: number;
-  /** Error response body (if status is error) */
-  error_body: {
-    error?: string;
-    message?: string;
-    code?: string;
-  } | null;
+  duration_ms: number;
+  request: {
+    headers: Record<string, string>;
+    params?: Record<string, any>;
+    body?: Record<string, any>;
+  };
+  response: {
+    body: any;
+    truncated?: boolean;
+  };
+  error: ErrorBody | null;
+  status: "success" | "error";
 }
 
 /**
  * Account processing details for a sync run
- * Parent relationship with NotionUpload as child
+ * Contains all API calls made for this account
  */
-export interface AccountProcessed {
-  /** GoCardless account UUID */
+export interface AccountSync {
   account_id: string;
-  /** Human-readable account name (e.g., "Starling - 8246") */
-  account_name: string;
-  /** Institution name (e.g., "Starling", "Monzo") */
-  institution: string;
-  /** Status of GoCardless fetch operation */
-  fetch_status: "success" | "error";
-  /** Duration of fetch operation in milliseconds */
-  fetch_duration_ms: number;
-  /** Number of pending transactions fetched */
-  transactions_pending: number;
-  /** Number of booked transactions fetched */
-  transactions_booked: number;
-  /** HTTP status code from GoCardless API */
-  http_status: number;
-  /** Error response body from GoCardless (if fetch failed) */
-  error_body: {
-    error?: string;
-    message?: string;
-    code?: string;
-  } | null;
-  /** Notion upload details (null if fetch failed) */
-  notion_upload: NotionUpload | null;
+  owner: string;
+  institution_name: string;
+  last_four: string;
+  calls: ApiCall[];
+  summary: AccountSummary;
 }
 
 /**
  * Complete sync run log entry
- * Represents one execution of the fetch_transactions.py script
+ * Represents one execution of the transaction sync
  */
 export interface SyncRun {
-  /** Unique run identifier (e.g., "run_1737014100") */
   run_id: string;
-  /** ISO timestamp when run started */
   timestamp: string;
-  /** Overall run status (success if all accounts succeeded) */
   status: "success" | "warning" | "error";
-  /** Total duration of entire run in milliseconds */
   duration_ms: number;
-  /** Array of account processing results */
-  accounts_processed: AccountProcessed[];
+  accounts_processed: AccountSync[];
 }
 
 /**
@@ -121,60 +122,16 @@ export interface SyncConfig {
   log_retention_days?: number;
 }
 
-/**
- * Detailed request/response data for log details modal
- * Provides full debugging information for a specific account
- */
-export interface LogDetails {
-  /** Run identifier */
-  run_id: string;
-  /** ISO timestamp */
-  timestamp: string;
-  /** Array of account details */
-  accounts: Array<{
-    account_id: string;
-    account_name: string;
-    /** GoCardless fetch request details */
-    fetch_request: {
-      method: string;
-      url: string;
-      headers: Record<string, string>;
-      params?: Record<string, string>;
-    };
-    /** GoCardless fetch response details */
-    fetch_response: {
-      status: number;
-      duration_ms: number;
-      body: any; // Raw JSON response
-    };
-    /** Notion upload request details (if applicable) */
-    notion_request?: {
-      method: string;
-      url: string;
-      headers: Record<string, string>;
-      body: any;
-    };
-    /** Notion upload response details (if applicable) */
-    notion_response?: {
-      status: number;
-      duration_ms: number;
-      body: any;
-    };
-  }>;
-}
+// LogDetails interface removed - details are now embedded in ApiCall entries within AccountSync
 
 /**
  * Filter state for log table
  * Controls which logs are displayed
  */
 export interface LogFilters {
-  /** Selected date (YYYY-MM-DD) or "today" */
   date: string;
-  /** Selected account ID (empty string = all accounts) */
   accountId: string;
-  /** Search query (filters by run_id, error messages) */
   searchQuery: string;
-  /** Status filter */
   status: "all" | "success" | "warning" | "error";
 }
 

@@ -30,7 +30,7 @@ const navigationItems = [
     title: "Finance",
     items: [
       { title: "Bank Connections", url: "/bank-connections", icon: Landmark },
-      { title: "Transactions", url: "/transactions", icon: Receipt },
+      { title: "Transactions Monitor", url: "/transactions", icon: Receipt },
       { title: "Investments", url: "/investments", icon: TrendingUp },
     ],
   },

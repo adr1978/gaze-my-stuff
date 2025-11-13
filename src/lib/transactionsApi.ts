@@ -11,7 +11,6 @@ import {
   SyncStats,
   SyncRun,
   SyncConfig,
-  LogDetails,
 } from "@/components/transactions/types";
 
 // FastAPI backend base URL (running on QNAP NAS)
@@ -114,7 +113,6 @@ export async function fetchSyncLogs(
   try {
     return await apiRequest<SyncRun[]>(endpoint);
   } catch (error) {
-    // Fallback dummy data when backend is unavailable
     console.warn("Using fallback data for logs:", error);
     return [
       {
@@ -125,91 +123,37 @@ export async function fetchSyncLogs(
         accounts_processed: [
           {
             account_id: "acc_starling_8246",
-            account_name: "Starling - 8246",
-            institution: "Starling Bank",
-            fetch_status: "success",
-            fetch_duration_ms: 1200,
-            transactions_pending: 5,
-            transactions_booked: 12,
-            http_status: 200,
-            error_body: null,
-            notion_upload: {
-              status: "success",
-              duration_ms: 980,
-              uploaded_count: 17,
-              http_status: 200,
-              error_body: null
-            }
-          },
-          {
-            account_id: "acc_monzo_4532",
-            account_name: "Monzo - 4532",
-            institution: "Monzo",
-            fetch_status: "success",
-            fetch_duration_ms: 890,
-            transactions_pending: 2,
-            transactions_booked: 8,
-            http_status: 200,
-            error_body: null,
-            notion_upload: {
-              status: "success",
-              duration_ms: 760,
-              uploaded_count: 10,
-              http_status: 200,
-              error_body: null
-            }
-          }
-        ]
-      },
-      {
-        run_id: "run_1737000000",
-        timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-        status: "warning",
-        duration_ms: 3120,
-        accounts_processed: [
-          {
-            account_id: "acc_hsbc_7891",
-            account_name: "HSBC - 7891",
-            institution: "HSBC",
-            fetch_status: "success",
-            fetch_duration_ms: 1450,
-            transactions_pending: 3,
-            transactions_booked: 15,
-            http_status: 200,
-            error_body: null,
-            notion_upload: {
-              status: "error",
-              duration_ms: 1200,
-              uploaded_count: 0,
-              http_status: 503,
-              error_body: {
-                message: "Notion API rate limit exceeded",
-                code: "rate_limited"
+            owner: "Anthony",
+            institution_name: "Starling",
+            last_four: "8246",
+            calls: [
+              {
+                call_id: "acc_starling_8246_gc_100000",
+                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                call_type: "gocardless_fetch",
+                http_method: "GET",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_starling_8246/transactions/",
+                http_status: 200,
+                duration_ms: 1200,
+                request: {
+                  headers: { "Authorization": "Bearer ***", "Content-Type": "application/json" },
+                  params: { "date_from": "2025-01-10", "date_to": "2025-01-16" }
+                },
+                response: {
+                  body: { transactions: { booked: [], pending: [] } },
+                  truncated: false
+                },
+                error: null,
+                status: "success"
               }
+            ],
+            summary: {
+              fetched: 17,
+              new: 15,
+              updated: 2,
+              skipped: 0,
+              errors: 0
             }
-          }
-        ]
-      },
-      {
-        run_id: "run_1736986500",
-        timestamp: new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString(),
-        status: "error",
-        duration_ms: 980,
-        accounts_processed: [
-          {
-            account_id: "acc_nationwide_2341",
-            account_name: "Nationwide - 2341",
-            institution: "Nationwide",
-            fetch_status: "error",
-            fetch_duration_ms: 980,
-            transactions_pending: 0,
-            transactions_booked: 0,
-            http_status: 401,
-            error_body: {
-              message: "Invalid or expired access token",
-              code: "authentication_failed"
-            },
-            notion_upload: null
           }
         ]
       }
@@ -218,98 +162,16 @@ export async function fetchSyncLogs(
 }
 
 /**
- * Fetch detailed request/response data for a specific run
+ * Fetch detailed request/response data for a specific API call
  * 
- * Used for the log details modal to show full API debugging information.
- * Includes complete request/response bodies for both GoCardless and Notion.
+ * NOTE: This function is deprecated as call details are now embedded
+ * in the ApiCall entries within each AccountSync
  * 
- * @param runId - Unique run identifier (e.g., "run_1737014100")
- * @returns Promise<LogDetails> Detailed log information
+ * @param runId - Unique run identifier
+ * @returns Promise<never> - This endpoint no longer exists
  */
-export async function fetchLogDetails(runId: string): Promise<LogDetails> {
-  try {
-    return await apiRequest<LogDetails>(`/api/transactions/logs/${runId}`);
-  } catch (error) {
-    // Fallback dummy data for modal testing
-    console.warn("Using fallback data for log details:", error);
-    return {
-      run_id: runId,
-      timestamp: new Date().toISOString(),
-      accounts: [
-        {
-          account_id: "acc_starling_8246",
-          account_name: "Starling - 8246",
-          fetch_request: {
-            method: "GET",
-            url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_starling_8246/transactions/",
-            headers: {
-              "Authorization": "Bearer sk_live_***",
-              "Content-Type": "application/json"
-            },
-            params: {
-              "date_from": "2025-01-10",
-              "date_to": "2025-01-16"
-            }
-          },
-          fetch_response: {
-            status: 200,
-            duration_ms: 1200,
-            body: {
-              transactions: {
-                booked: [
-                  {
-                    transactionId: "tx_abc123",
-                    bookingDate: "2025-01-15",
-                    valueDate: "2025-01-15",
-                    transactionAmount: { amount: "-12.50", currency: "GBP" },
-                    creditorName: "Tesco PLC",
-                    remittanceInformationUnstructured: "TESCO STORES 3241"
-                  }
-                ],
-                pending: [
-                  {
-                    transactionId: "tx_def456",
-                    valueDate: "2025-01-16",
-                    transactionAmount: { amount: "-5.99", currency: "GBP" },
-                    creditorName: "Amazon UK",
-                    remittanceInformationUnstructured: "AMAZON PRIME"
-                  }
-                ]
-              }
-            }
-          },
-          notion_request: {
-            method: "POST",
-            url: "https://api.notion.com/v1/pages",
-            headers: {
-              "Authorization": "Bearer secret_***",
-              "Content-Type": "application/json",
-              "Notion-Version": "2022-06-28"
-            },
-            body: {
-              parent: { database_id: "db_transactions_123" },
-              properties: {
-                "Name": { title: [{ text: { content: "TESCO STORES 3241" } }] },
-                "Amount": { number: -12.50 },
-                "Date": { date: { start: "2025-01-15" } },
-                "Account": { select: { name: "Starling - 8246" } }
-              }
-            }
-          },
-          notion_response: {
-            status: 200,
-            duration_ms: 980,
-            body: {
-              object: "page",
-              id: "page_abc123",
-              created_time: "2025-01-16T10:00:00.000Z",
-              properties: {}
-            }
-          }
-        }
-      ]
-    };
-  }
+export async function fetchLogDetails(runId: string): Promise<never> {
+  throw new Error("fetchLogDetails is deprecated - call details are now embedded in sync logs");
 }
 
 /**
