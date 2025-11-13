@@ -50,12 +50,21 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
             </div>
           </div>
           {hasErrors && (
-            <Badge variant="destructive">
+            <Badge 
+              variant="outline"
+              className="rounded-full bg-destructive/10 text-destructive border-transparent hover:bg-destructive/20"
+            >
               {account.summary.errors} {account.summary.errors === 1 ? 'error' : 'errors'}
             </Badge>
           )}
           {!hasErrors && (
-            <Badge variant={status === "success" ? "success" : "warning"}>
+            <Badge 
+              variant="outline"
+              className={status === "success" 
+                ? "rounded-full bg-success/10 text-success border-transparent hover:bg-success/20"
+                : "rounded-full bg-warning/10 text-warning border-transparent hover:bg-warning/20"
+              }
+            >
               {status}
             </Badge>
           )}
