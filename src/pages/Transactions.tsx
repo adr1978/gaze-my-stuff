@@ -28,8 +28,8 @@ export default function Transactions() {
 
   // Apply client-side filters for search and status
   const filteredLogs = logs?.filter((run) => {
-    // Status filter
-    if (filters.status !== "all" && run.status !== filters.status) {
+    // Status filter - match both singular and plural (e.g., "error" and "errors")
+    if (filters.status !== "all" && !run.status.startsWith(filters.status)) {
       return false;
     }
 
