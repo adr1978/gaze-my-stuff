@@ -38,7 +38,7 @@ export function DatePickerPopover({ date, onDateChange, label }: DatePickerPopov
           <Button
             variant="outline"
             className={cn(
-              "w-full justify-start text-left font-normal rounded-md bg-muted hover:bg-muted",
+              "w-full justify-start text-left font-normal rounded-md bg-muted text-foreground hover:bg-muted hover:text-foreground",
               !date && "text-muted-foreground"
             )}
           >
