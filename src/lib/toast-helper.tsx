@@ -31,44 +31,24 @@ interface ToastOptions {
 
 /**
  * Get icon component for toast variant
- * Maps each variant to its corresponding lucide-react icon
+ * Matches the exact styling used in Notion Cover Studio
  */
 const getIconForVariant = (variant: ToastVariant) => {
-  const iconProps = { className: 'h-5 w-5' };
-  
   switch (variant) {
     case 'success':
-      return <CheckCircle2 {...iconProps} />;
+      return <CheckCircle2 className="h-5 w-5 text-green-400" />;
     case 'warning':
-      return <AlertTriangle {...iconProps} />;
+      return <AlertTriangle className="h-5 w-5 text-yellow-400" />;
     case 'info':
-      return <Info {...iconProps} />;
+      return <Info className="h-5 w-5 text-blue-400" />;
     case 'error':
-      return <XCircle {...iconProps} />;
-  }
-};
-
-/**
- * Get CSS classes for toast variant
- * Applies variant-specific colours and enhanced shadows
- */
-const getClassesForVariant = (variant: ToastVariant): string => {
-  const baseClasses = 'shadow-xl border-2';
-  
-  switch (variant) {
-    case 'success':
-      return `${baseClasses} !bg-success/10 !border-success/30 !text-success-foreground dark:!bg-success/15 dark:!border-success/40`;
-    case 'warning':
-      return `${baseClasses} !bg-warning/10 !border-warning/30 !text-warning-foreground dark:!bg-warning/15 dark:!border-warning/40`;
-    case 'info':
-      return `${baseClasses} !bg-info/10 !border-info/30 !text-info-foreground dark:!bg-info/15 dark:!border-info/40`;
-    case 'error':
-      return `${baseClasses} !bg-destructive/10 !border-destructive/30 !text-destructive-foreground dark:!bg-destructive/15 dark:!border-destructive/40`;
+      return <XCircle className="h-5 w-5 text-red-400" />;
   }
 };
 
 /**
  * Show a toast notification with variant-specific styling
+ * Matches the exact pattern used in Notion Cover Studio
  * 
  * @param variant - Toast type (success, warning, info, error)
  * @param title - Main toast message
@@ -82,13 +62,13 @@ const showToastWithVariant = (
   options?: ToastOptions
 ) => {
   const icon = getIconForVariant(variant);
-  const classes = getClassesForVariant(variant);
   
-  toast(title, {
-    description,
+  // Use description as the message if provided, otherwise use title
+  const message = description || title;
+  
+  toast[variant](message, {
     duration: options?.duration || 4000,
     icon,
-    className: classes,
   });
 };
 

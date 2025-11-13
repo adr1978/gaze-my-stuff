@@ -1,11 +1,11 @@
 // In src/pages/BankConnections.tsx
 
 import { useState } from "react";
-import { Plus, Loader2 } from "lucide-react"; // <-- Import Loader2
+import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequisitionCard } from "@/components/bankConnections/RequisitionCard";
 import { BankSelectionModal } from "@/components/bankConnections/BankSelectionModal";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast-helper";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // <-- Import hooks
 import { gocardlessApi } from "@/lib/api"; // <-- Import our API client
 import { Skeleton } from "@/components/ui/skeleton"; // <-- For loading
@@ -37,11 +37,11 @@ export default function BankConnections() {
     
     // When the mutation is successful, refetch the data
     onSuccess: (data: any) => {
-      toast.success(data.message || "Sync status updated");
+      showToast.success(data.message || "Sync status updated");
       queryClient.invalidateQueries({ queryKey: ["requisitions"] });
     },
     onError: () => {
-      toast.error("Failed to update sync status.");
+      showToast.error("Failed to update sync status.");
     },
   });
 
@@ -50,14 +50,14 @@ export default function BankConnections() {
     mutationFn: (agreementId: string) => gocardlessApi.reconfirm(agreementId),
     onSuccess: (data) => {
       if (data.reconfirm_link) {
-        toast.info("Opening reconfirmation page in a new tab...");
+        showToast.info("Opening reconfirmation page in a new tab...");
         window.open(data.reconfirm_link, "_blank");
       } else {
-        toast.error("Could not get reconfirmation link.");
+        showToast.error("Could not get reconfirmation link.");
       }
     },
     onError: () => {
-      toast.error("Failed to start reconfirmation.");
+      showToast.error("Failed to start reconfirmation.");
     },
   });
 
