@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchSyncStats, fetchSyncLogs } from "@/lib/TransactionsApi";
-import { StatsOverview } from "@/components/TransactionsMonitor/StatsOverview";
-import { LogFilters } from "@/components/TransactionsMonitor/LogFilters";
-import { LogTable } from "@/components/TransactionsMonitor/LogTable";
-import type { LogFilters as LogFiltersType } from "@/components/TransactionsMonitor/types";
+import { fetchSyncStats, fetchSyncLogs } from "@/lib/transactionsApi";
+import { StatsOverview } from "@/components/transactionsMonitor/StatsOverview";
+import { LogFilters } from "@/components/transactionsMonitor/LogFilters";
+import { LogTable } from "@/components/transactionsMonitor/LogTable";
+import type { LogFilters as LogFiltersType } from "@/components/transactionsMonitor/types";
 
-export default function TransactionsMonitor() {
+export default function transactionsMonitor() {
   const [filters, setFilters] = useState<LogFiltersType>({
     date: new Date().toISOString().split('T')[0],
     accountId: "",
@@ -68,7 +68,7 @@ export default function TransactionsMonitor() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">TransactionsMonitor Monitor</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-2">transactionsMonitor Monitor</h1>
           <p className="text-muted-foreground">
             Monitor automated bank sync jobs and Notion uploads
           </p>
