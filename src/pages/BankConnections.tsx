@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton"; // <-- For loading
 // --- We no longer need this! ---
 // const mockRequisitions: Requisition[] = [ ... ];
 
-export default function GoCardless() {
+export default function BankConnections() {
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
