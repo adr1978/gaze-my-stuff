@@ -40,7 +40,7 @@ export function LogFilters({ filters, onFiltersChange }: LogFiltersProps) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by run ID or error..."
+                placeholder="Search by bank name or account number..."
                 value={filters.searchQuery}
                 onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
                 className="pl-9"
