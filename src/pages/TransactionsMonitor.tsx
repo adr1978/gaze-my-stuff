@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchSyncStats, fetchSyncLogs } from "@/lib/TransactionsMonitorApi";
+import { fetchSyncStats, fetchSyncLogs } from "@/lib/TransactionsApi";
 import { StatsOverview } from "@/components/TransactionsMonitor/StatsOverview";
 import { LogFilters } from "@/components/TransactionsMonitor/LogFilters";
 import { LogTable } from "@/components/TransactionsMonitor/LogTable";
