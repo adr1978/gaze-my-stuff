@@ -15,10 +15,10 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from .transaction_config import logger
 
-# Log file location
-LOG_DIR = Path(__file__).parent / "data" / "logs"
-SUMMARY_FILE = Path(__file__).parent / "data" / "summary.json"
-METADATA_FILE = Path(__file__).parent.parent.parent / "src" / "data" / "gc_metadata.json"
+# Log file location (scripts folder -> parent -> data)
+LOG_DIR = Path(__file__).parent.parent / "data" / "logs"
+SUMMARY_FILE = Path(__file__).parent.parent / "data" / "summary.json"
+METADATA_FILE = Path(__file__).parent.parent.parent.parent / "src" / "data" / "gc_metadata.json"
 
 
 class CallLogger:

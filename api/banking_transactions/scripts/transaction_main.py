@@ -18,9 +18,9 @@ import sys
 # Add to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# Use absolute imports
-from banking_transactions.transaction_config import logger
-from banking_transactions.transaction_extract import (
+# Use relative imports (now in scripts folder)
+from .transaction_config import logger
+from .transaction_extract import (
     get_all_accounts_to_sync,
     fetch_raw_transactions,
     load_gc_metadata,
@@ -28,8 +28,8 @@ from banking_transactions.transaction_extract import (
     load_synced_transactions,
     save_synced_transactions
 )
-from banking_transactions.transaction_transform import transform_transactions
-from banking_transactions.transaction_notion_adapter import create_transaction_page, update_transaction_page
+from .transaction_transform import transform_transactions
+from .transaction_notion_adapter import create_transaction_page, update_transaction_page
 
 
 def sync_transactions(dry_run=False, specific_account=None, test_data_file=None):
