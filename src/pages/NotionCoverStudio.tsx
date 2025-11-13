@@ -11,11 +11,8 @@ import { Button } from "@/components/ui/button";
 import {
   Upload,
   Download,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showToast } from "@/lib/toast-helper";
 import { CanvasEditor } from "@/components/notionCoverStudio/CanvasEditor";
 import { CanvasControls } from "@/components/notionCoverStudio/CanvasControls";
 import { ImageControls } from "@/components/notionCoverStudio/ImageControls";
@@ -159,9 +156,7 @@ const Index = () => {
   // --- EVENT HANDLERS ---
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (layers.length >= MAX_LAYERS) {
-      toast.error(`You can only add up to ${MAX_LAYERS} layers`, {
-        icon: <XCircle className="h-5 w-5 text-red-400" />,
-      });
+      showToast.error(`You can only add up to ${MAX_LAYERS} layers`);
       return;
     }
 
@@ -169,9 +164,7 @@ const Index = () => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload a valid image file", {
-        icon: <XCircle className="h-5 w-5 text-red-400" />,
-      });
+      showToast.error("Please upload a valid image file");
       return;
     }
 
@@ -209,9 +202,7 @@ const Index = () => {
         // NEW: enable transform mode automatically for newly added images
         setTransformMode(true);
 
-        toast.success("Image uploaded as new layer", {
-          icon: <CheckCircle2 className="h-5 w-5 text-green-400" />,
-        });
+        showToast.success("Image uploaded as new layer");
       };
       img.src = event.target?.result as string;
     };
@@ -234,9 +225,7 @@ const Index = () => {
       return newLayers;
     });
 
-    toast.success("Layer removed", {
-      icon: <CheckCircle2 className="h-5 w-5 text-green-400" />,
-    });
+    showToast.success("Layer removed");
   };
 
   const handleResetImage = () => {
@@ -246,25 +235,19 @@ const Index = () => {
       ...activeLayer.initialState,
     });
 
-    toast.success("Active layer reset", {
-      icon: <CheckCircle2 className="h-5 w-5 text-green-400" />,
-    });
+    showToast.success("Active layer reset");
   };
 
   const handleRemovePattern = () => {
     updateActiveLayer({ pattern: "none", randomPatternData: [] });
-    toast.success("Pattern removed from active layer", {
-      icon: <CheckCircle2 className="h-5 w-5 text-green-400" />,
-    });
+    showToast.success("Pattern removed from active layer");
   };
 
   const handleSnapToGrid = () => {
     updateActiveLayer({
       position: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
     });
-    toast.success("Active layer centred", {
-      icon: <CheckCircle2 className="h-5 w-5 text-green-400" />,
-    });
+    showToast.success("Active layer centred");
   };
 
   const handleToggleTransform = () => {
@@ -293,9 +276,7 @@ const Index = () => {
       }));
     });
 
-    toast.success("Canvas size updated", {
-      icon: <CheckCircle2 className="h-5 w-5 text-green-400" />,
-    });
+    showToast.success("Canvas size updated");
   };
 
   const handlePatternChange = (newPattern: PatternType) => {
@@ -310,9 +291,7 @@ const Index = () => {
         activeLayer.rotation,
         activeLayer.spacing,
       );
-      toast.info("Spacing is disabled for this pattern", {
-        icon: <AlertCircle className="h-5 w-5 text-blue-400" />,
-      });
+      showToast.info("Spacing is disabled for this pattern");
     }
 
     updateActiveLayer({
