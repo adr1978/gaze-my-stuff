@@ -41,38 +41,42 @@ export default function TransactionsMonitor() {
       }
       return true;
     })
-    .filter((run) => {
-      // Search filter (run ID, account names, or error messages)
+    .map((run) => {
+      // Search filter - filter accounts based on search query
+      let accountsFiltered = run.accounts_processed;
+      
       if (filters.searchQuery) {
         const query = filters.searchQuery.toLowerCase();
         const matchesRunId = run.run_id.toLowerCase().includes(query);
-        const matchesAccount = run.accounts_processed.some((acc) => 
-          acc.owner.toLowerCase().includes(query) ||
-          acc.institution_name.toLowerCase().includes(query) ||
-          acc.last_four.includes(query)
-        );
-        const matchesError = run.accounts_processed.some((acc) => 
-          acc.calls.some((call) => 
-            call.error?.message?.toLowerCase().includes(query) ||
-            call.error?.code?.toLowerCase().includes(query)
-          )
-        );
-        if (!matchesRunId && !matchesAccount && !matchesError) {
-          return false;
+        
+        // If run ID matches, keep all accounts; otherwise filter accounts
+        if (!matchesRunId) {
+          accountsFiltered = accountsFiltered.filter((acc) => {
+            const matchesAccount = 
+              acc.owner.toLowerCase().includes(query) ||
+              acc.institution_name.toLowerCase().includes(query) ||
+              acc.last_four.includes(query);
+            const matchesError = acc.calls.some((call) => 
+              call.error?.message?.toLowerCase().includes(query) ||
+              call.error?.code?.toLowerCase().includes(query)
+            );
+            return matchesAccount || matchesError;
+          });
         }
       }
-      return true;
-    })
-    .map((run) => {
-      if (filters.status === "all") return run;
-      const accountsFiltered = run.accounts_processed.filter((acc) => {
-        const hasErrors = acc.summary.errors > 0;
-        const hasWarnings = acc.summary.skipped > 0;
-        if (filters.status === "error") return hasErrors;
-        if (filters.status === "warning") return !hasErrors && hasWarnings;
-        if (filters.status === "success") return !hasErrors && !hasWarnings;
-        return true;
-      });
+      
+      // Status filter
+      if (filters.status !== "all") {
+        accountsFiltered = accountsFiltered.filter((acc) => {
+          const hasErrors = acc.summary.errors > 0;
+          const hasWarnings = acc.summary.skipped > 0;
+          if (filters.status === "error") return hasErrors;
+          if (filters.status === "warning") return !hasErrors && hasWarnings;
+          if (filters.status === "success") return !hasErrors && !hasWarnings;
+          return true;
+        });
+      }
+      
       return { ...run, accounts_processed: accountsFiltered };
     })
     .filter((run) => run.accounts_processed.length > 0);
