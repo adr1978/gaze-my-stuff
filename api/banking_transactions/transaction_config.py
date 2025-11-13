@@ -14,13 +14,13 @@ from pathlib import Path
 # Base directory of this file
 BASE_DIR = Path(__file__).parent
 
-# Synced transactions tracking (in data/transactions folder)
-SYNCED_TRANSACTIONS_FILE = BASE_DIR.parent / "data" / "transactions" / "synced_transactions.json"
+# Synced transactions tracking (in data folder within this module)
+SYNCED_TRANSACTIONS_FILE = BASE_DIR / "data" / "synced_transactions.json"
 
 # GoCardless metadata lives in src/data folder
 METADATA_FILE = BASE_DIR.parent.parent / "src" / "data" / "gc_metadata.json"
 
-# Logs are handled by CallLogger now (stored in data/transactions/logs/)
+# Logs are handled by CallLogger now (stored in data/logs/ within this module)
 # No need for old LOG_DIR and LOG_FILE
 
 # ============================================================================

@@ -3,21 +3,22 @@ Structured logging for transaction sync operations
 Writes detailed logs in format expected by the monitoring dashboard
 
 Log Structure:
-- Daily log files: /api/data/transactions/logs/YYYY-MM-DD.json
+- Daily log files: /api/banking_transactions/data/logs/YYYY-MM-DD.json
 - Parent row: Account summary (owner - institution (last_four))
 - Child rows: Individual API calls (GoCardless GET, Notion POST/PATCH)
 - Response bodies truncated to first 10 transactions to save disk space
 """
 import json
 import gzip
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from .transaction_config import logger
 
 # Log file location
-LOG_DIR = Path(__file__).parent.parent / "data" / "transactions" / "logs"
-SUMMARY_FILE = Path(__file__).parent.parent / "data" / "transactions" / "summary.json"
+LOG_DIR = Path(__file__).parent / "data" / "logs"
+SUMMARY_FILE = Path(__file__).parent / "data" / "summary.json"
+METADATA_FILE = Path(__file__).parent.parent.parent / "src" / "data" / "gc_metadata.json"
 
 
 class CallLogger:
@@ -251,53 +252,118 @@ class CallLogger:
     
     def _update_summary_stats(self, log_entry: Dict):
         """
-        Update rolling summary statistics
+        Update rolling summary statistics in format expected by dashboard
         """
-        # Load existing summary
+        today = datetime.now().strftime("%Y-%m-%d")
+        
+        # Calculate totals from log entry
+        total_transactions = sum(
+            acc["summary"]["fetched"] for acc in log_entry["accounts_processed"]
+        )
+        
+        # Load existing summary or create new
         if SUMMARY_FILE.exists():
             with open(SUMMARY_FILE, 'r') as f:
                 summary = json.load(f)
         else:
             summary = {
-                "total_runs": 0,
-                "total_transactions": 0,
-                "total_errors": 0,
-                "last_run": None,
-                "last_7_days": []
+                "today": {
+                    "date": today,
+                    "total_transactions": 0,
+                    "successful_runs": 0,
+                    "failed_runs": 0,
+                    "last_run": None,
+                    "next_run": None,
+                    "duration_ms": 0
+                },
+                "active_accounts": 0,
+                "last_7_days_success_rate": 0.0,
+                "last_updated": None
             }
         
-        # Update counts
-        summary["total_runs"] += 1
-        summary["last_run"] = log_entry["timestamp"]
+        # Reset if new day
+        if summary.get("today", {}).get("date") != today:
+            summary["today"] = {
+                "date": today,
+                "total_transactions": 0,
+                "successful_runs": 0,
+                "failed_runs": 0,
+                "last_run": None,
+                "next_run": None,
+                "duration_ms": 0
+            }
         
-        for account in log_entry["accounts_processed"]:
-            summary["total_transactions"] += account["summary"]["new"]
-            summary["total_transactions"] += account["summary"]["updated"]
-            summary["total_errors"] += account["summary"]["errors"]
+        # Update today's stats
+        summary["today"]["total_transactions"] += total_transactions
+        summary["today"]["last_run"] = log_entry["timestamp"]
+        summary["today"]["duration_ms"] = log_entry["duration_ms"]
         
-        # Track daily success rate for last 7 days
-        today = datetime.now().strftime("%Y-%m-%d")
-        day_entry = {
-            "date": today,
-            "successful": log_entry["status"] == "success",
-            "total_runs": 1
-        }
-        
-        # Update or add today's entry
-        existing_day = next((d for d in summary["last_7_days"] if d["date"] == today), None)
-        if existing_day:
-            existing_day["total_runs"] += 1
-            if day_entry["successful"]:
-                existing_day.setdefault("successful_runs", 0)
-                existing_day["successful_runs"] += 1
+        if log_entry["status"] == "success":
+            summary["today"]["successful_runs"] += 1
         else:
-            day_entry["successful_runs"] = 1 if day_entry["successful"] else 0
-            summary["last_7_days"].append(day_entry)
+            summary["today"]["failed_runs"] += 1
         
-        # Keep only last 7 days
-        summary["last_7_days"] = summary["last_7_days"][-7:]
+        # Dynamically count active accounts from gc_metadata.json
+        summary["active_accounts"] = self._count_active_accounts()
+        
+        # Calculate 7-day success rate
+        summary["last_7_days_success_rate"] = self._calculate_7day_success_rate()
+        
+        # Update timestamp
+        summary["last_updated"] = datetime.now().isoformat()
         
         # Save summary
         SUMMARY_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(SUMMARY_FILE, 'w') as f:
             json.dump(summary, f, indent=2)
+    
+    def _count_active_accounts(self) -> int:
+        """
+        Count accounts with sync_enabled=true from gc_metadata.json
+        """
+        try:
+            if not METADATA_FILE.exists():
+                logger.warning(f"Metadata file not found: {METADATA_FILE}")
+                return 0
+            
+            with open(METADATA_FILE, 'r') as f:
+                metadata = json.load(f)
+            
+            count = 0
+            for req_id, req_data in metadata.items():
+                accounts = req_data.get("accounts", [])
+                for account in accounts:
+                    if account.get("sync_enabled", False):
+                        count += 1
+            
+            return count
+        except Exception as e:
+            logger.error(f"Error counting active accounts: {e}")
+            return 0
+    
+    def _calculate_7day_success_rate(self) -> float:
+        """
+        Calculate success rate from last 7 days of log files
+        """
+        try:
+            successful = 0
+            total = 0
+            
+            # Look back 7 days
+            for days_ago in range(7):
+                date = datetime.now() - timedelta(days=days_ago)
+                log_file = LOG_DIR / f"{date.strftime('%Y-%m-%d')}.json"
+                
+                if log_file.exists():
+                    with open(log_file, 'r') as f:
+                        data = json.load(f)
+                    
+                    for run in data.get("runs", []):
+                        total += 1
+                        if run.get("status") == "success":
+                            successful += 1
+            
+            return successful / total if total > 0 else 0.0
+        except Exception as e:
+            logger.error(f"Error calculating 7-day success rate: {e}")
+            return 0.0

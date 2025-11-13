@@ -30,7 +30,7 @@ async def get_sync_config():
         dict: Configuration object
     """
     # Path to config file
-    config_path = "api/data/transactions/config.json"
+    config_path = "api/banking_transactions/data/config.json"
     
     # Try to load real config data
     if os.path.exists(config_path):
