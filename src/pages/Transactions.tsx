@@ -26,35 +26,43 @@ export default function Transactions() {
     refetchInterval: 30000,
   });
 
-  // Apply client-side filters for search and status
-  const filteredLogs = logs?.filter((run) => {
-    // Status filter - match both singular and plural (e.g., "error" and "errors")
-    if (filters.status !== "all" && !run.status.startsWith(filters.status)) {
-      return false;
-    }
-
-    // Search filter (run ID, account names, or error messages)
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      const matchesRunId = run.run_id.toLowerCase().includes(query);
-      const matchesAccount = run.accounts_processed.some((acc) => 
-        acc.owner.toLowerCase().includes(query) ||
-        acc.institution_name.toLowerCase().includes(query) ||
-        acc.last_four.includes(query)
-      );
-      const matchesError = run.accounts_processed.some((acc) => 
-        acc.calls.some((call) => 
-          call.error?.message?.toLowerCase().includes(query) ||
-          call.error?.code?.toLowerCase().includes(query)
-        )
-      );
-      if (!matchesRunId && !matchesAccount && !matchesError) {
-        return false;
+  // Apply client-side filters: status at account-level, search at run-level
+  const filteredLogs = (logs || [])
+    .filter((run) => {
+      // Search filter (run ID, account names, or error messages)
+      if (filters.searchQuery) {
+        const query = filters.searchQuery.toLowerCase();
+        const matchesRunId = run.run_id.toLowerCase().includes(query);
+        const matchesAccount = run.accounts_processed.some((acc) => 
+          acc.owner.toLowerCase().includes(query) ||
+          acc.institution_name.toLowerCase().includes(query) ||
+          acc.last_four.includes(query)
+        );
+        const matchesError = run.accounts_processed.some((acc) => 
+          acc.calls.some((call) => 
+            call.error?.message?.toLowerCase().includes(query) ||
+            call.error?.code?.toLowerCase().includes(query)
+          )
+        );
+        if (!matchesRunId && !matchesAccount && !matchesError) {
+          return false;
+        }
       }
-    }
-
-    return true;
-  }) || [];
+      return true;
+    })
+    .map((run) => {
+      if (filters.status === "all") return run;
+      const accountsFiltered = run.accounts_processed.filter((acc) => {
+        const hasErrors = acc.summary.errors > 0;
+        const hasWarnings = acc.summary.skipped > 0;
+        if (filters.status === "error") return hasErrors;
+        if (filters.status === "warning") return !hasErrors && hasWarnings;
+        if (filters.status === "success") return !hasErrors && !hasWarnings;
+        return true;
+      });
+      return { ...run, accounts_processed: accountsFiltered };
+    })
+    .filter((run) => run.accounts_processed.length > 0);
 
   return (
     <div className="min-h-screen bg-background p-8">
