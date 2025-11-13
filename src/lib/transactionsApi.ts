@@ -148,11 +148,158 @@ export async function fetchSyncLogs(
   } catch (error) {
     console.warn("Using fallback data for logs:", error);
     
-    // Generate comprehensive dummy data with various scenarios
-    const now = Date.now();
-    return [
-      // Run 1: Success with multiple accounts
-      {
+    // Fallback dataset with multiple dates and proper date filtering
+    const toIsoDate = (d: Date) => d.toISOString().split('T')[0];
+    const targetDateStr = date || toIsoDate(new Date());
+
+    const makeId = (prefix: string) => `${prefix}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const generateRunsForDate = (day: Date, includeFiveNotions = false): SyncRun[] => {
+      const base = new Date(day);
+      base.setHours(8, 15, 0, 0);
+      const t1 = new Date(base);
+      const t2 = new Date(base); t2.setHours(t2.getHours() - 6);
+      const t3 = new Date(base); t3.setHours(t3.getHours() - 12);
+
+      const notionCalls = (count: number, start: Date) =>
+        Array.from({ length: count }).map((_, i) => ({
+          call_id: makeId(`notion_${toIsoDate(day)}_${i + 1}`),
+          timestamp: new Date(start.getTime() + (i + 1) * 700).toISOString(),
+          call_type: "notion_create" as const,
+          http_method: "POST",
+          url: "https://api.notion.com/v1/pages",
+          http_status: 200,
+          duration_ms: 320 + i * 30,
+          request: { headers: { Authorization: "Bearer ***" }, body: { parent: { database_id: "xxx" } } },
+          response: { body: { id: makeId("page") } },
+          error: null,
+          status: "success" as const,
+        }));
+
+      const fetchCall = (at: Date, accId: string) => ({
+        call_id: makeId(`gc_${accId}`),
+        timestamp: at.toISOString(),
+        call_type: "gocardless_fetch" as const,
+        http_method: "GET",
+        url: `https://bankaccountdata.gocardless.com/api/v2/accounts/${accId}/transactions/`,
+        http_status: 200,
+        duration_ms: 1100,
+        request: { headers: { Authorization: "Bearer ***" }, params: { date_from: toIsoDate(day), date_to: toIsoDate(day) } },
+        response: { body: { transactions: { booked: [], pending: [] } } },
+        error: null,
+        status: "success" as const,
+      });
+
+      const runSuccess: SyncRun = {
+        run_id: makeId(`run_${toIsoDate(day)}_a`),
+        timestamp: t1.toISOString(),
+        status: "success",
+        duration_ms: 4200,
+        accounts_processed: [
+          {
+            account_id: "acc_starling_8246",
+            owner: "Anthony",
+            institution_name: "Starling Bank",
+            last_four: "8246",
+            calls: [
+              fetchCall(t1, "acc_starling_8246"),
+              ...notionCalls(includeFiveNotions ? 5 : 2, t1),
+            ],
+            summary: { fetched: includeFiveNotions ? 5 : 2, new: includeFiveNotions ? 5 : 2, updated: 0, skipped: 0, errors: 0 },
+          },
+          {
+            account_id: "acc_monzo_4521",
+            owner: "Jane",
+            institution_name: "Monzo",
+            last_four: "4521",
+            calls: [fetchCall(new Date(t1.getTime() + 1000), "acc_monzo_4521"), ...notionCalls(1, t1)],
+            summary: { fetched: 1, new: 1, updated: 0, skipped: 0, errors: 0 },
+          },
+        ],
+      };
+
+      const runWarning: SyncRun = {
+        run_id: makeId(`run_${toIsoDate(day)}_b`),
+        timestamp: t2.toISOString(),
+        status: "warning",
+        duration_ms: 2300,
+        accounts_processed: [
+          {
+            account_id: "acc_starling_8246",
+            owner: "Anthony",
+            institution_name: "Starling Bank",
+            last_four: "8246",
+            calls: [
+              fetchCall(t2, "acc_starling_8246"),
+              {
+                call_id: makeId("notion_rate_limit"),
+                timestamp: new Date(t2.getTime() + 1500).toISOString(),
+                call_type: "notion_create",
+                http_method: "POST",
+                url: "https://api.notion.com/v1/pages",
+                http_status: 500,
+                duration_ms: 1200,
+                request: { headers: { Authorization: "Bearer ***" }, body: { parent: { database_id: "xxx" } } },
+                response: { body: { error: "Internal Server Error", message: "Notion API rate limit exceeded" } },
+                error: { error: "Internal Server Error", message: "Notion API rate limit exceeded" },
+                status: "error",
+              },
+            ],
+            summary: { fetched: 1, new: 0, updated: 0, skipped: 0, errors: 1 },
+          },
+        ],
+      };
+
+      const runError: SyncRun = {
+        run_id: makeId(`run_${toIsoDate(day)}_c`),
+        timestamp: t3.toISOString(),
+        status: "error",
+        duration_ms: 1500,
+        accounts_processed: [
+          {
+            account_id: "acc_monzo_4521",
+            owner: "Jane",
+            institution_name: "Monzo",
+            last_four: "4521",
+            calls: [
+              {
+                call_id: makeId("gc_token_expired"),
+                timestamp: t3.toISOString(),
+                call_type: "gocardless_fetch",
+                http_method: "GET",
+                url: "https://bankaccountdata.gocardless.com/api/v2/accounts/acc_monzo_4521/transactions/",
+                http_status: 401,
+                duration_ms: 1450,
+                request: { headers: { Authorization: "Bearer ***" }, params: { date_from: toIsoDate(day), date_to: toIsoDate(day) } },
+                response: { body: { error: "Unauthorized", message: "Access token expired. Please reconfirm connection." } },
+                error: { error: "Unauthorized", message: "Access token expired. Please reconfirm connection." },
+                status: "error",
+              },
+            ],
+            summary: { fetched: 0, new: 0, updated: 0, skipped: 0, errors: 1 },
+          },
+        ],
+      };
+
+      return [runSuccess, runWarning, runError];
+    };
+
+    // Build a 5-day dataset for variety when no date is selected
+    const baseDate = new Date(`${targetDateStr}T00:00:00`);
+    const days = [0, -1, -2, -3, -4];
+    const allRuns = days.flatMap((offset, idx) => {
+      const d = new Date(baseDate);
+      d.setDate(baseDate.getDate() + offset);
+      return generateRunsForDate(d, idx === 0);
+    });
+
+    // If a date is specified, filter to that date. Otherwise return variety.
+    const filtered = date
+      ? allRuns.filter((r) => r.timestamp.split("T")[0] === targetDateStr)
+      : allRuns;
+
+    return filtered.slice(0, limit);
+  }
         run_id: "run_1737014100",
         timestamp: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
         status: "success",
