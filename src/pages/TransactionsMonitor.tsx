@@ -21,13 +21,26 @@ export default function TransactionsMonitor() {
   });
 
   const { data: logs, isLoading: logsLoading } = useQuery({
-    queryKey: ["syncLogs", filters.date],
-    queryFn: () => fetchSyncLogs(filters.date),
+    queryKey: ["syncLogs"],
+    queryFn: () => fetchSyncLogs(),
     refetchInterval: 30000,
   });
 
-  // Apply client-side filters: status at account-level, search at run-level
+  // Apply client-side filters
   const filteredLogs = (logs || [])
+    .filter((run) => {
+      // Date filter - check if any account's first call matches the selected date
+      if (filters.date) {
+        const hasMatchingDate = run.accounts_processed.some((acc) => {
+          if (acc.calls.length === 0) return false;
+          const firstCallDate = new Date(acc.calls[0].timestamp);
+          const displayDate = `${String(firstCallDate.getDate()).padStart(2, '0')}/${String(firstCallDate.getMonth() + 1).padStart(2, '0')}/${firstCallDate.getFullYear()}`;
+          return displayDate === filters.date;
+        });
+        if (!hasMatchingDate) return false;
+      }
+      return true;
+    })
     .filter((run) => {
       // Search filter (run ID, account names, or error messages)
       if (filters.searchQuery) {
