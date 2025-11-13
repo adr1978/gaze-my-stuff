@@ -43,7 +43,7 @@ export function DatePickerPopover({ date, onDateChange, label }: DatePickerPopov
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "MMMM do, yyyy") : <span>Pick a date</span>}
+            {date ? format(date, "MMMM do, yyyy") : <span>Select date</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
