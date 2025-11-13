@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
-import { atelierForestLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { atelierCaveLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Expand, Shrink } from "lucide-react";
 
 // Register JSON language support for syntax highlighting
@@ -104,7 +104,7 @@ export function JsonViewerModal({
           <div className="w-full overflow-x-auto">
             <SyntaxHighlighter 
               language="json" 
-              style={atelierForestLight}
+              style={atelierCaveLight}
               customStyle={{
                 borderRadius: '0.5rem',
                 fontSize: '0.875rem',

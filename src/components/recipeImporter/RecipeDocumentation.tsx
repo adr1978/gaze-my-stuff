@@ -107,7 +107,7 @@ export function RecipeDocumentation() {
               <h3 className="text-lg font-semibold mb-3 text-foreground">JSON Viewer Modal</h3>
               <ul className="space-y-2 text-muted-foreground">
                 <li><strong>Purpose:</strong> Display recipe data in structured JSON format for debugging/export</li>
-                <li><strong>Syntax Highlighting:</strong> Uses react-syntax-highlighter with atelierForestLight theme</li>
+                <li><strong>Syntax Highlighting:</strong> Uses react-syntax-highlighter with atelierCaveLight theme</li>
                 <li><strong>Fullscreen Toggle:</strong> Button to expand modal to full screen for better viewing</li>
                 <li><strong>Button States:</strong> Shows "Go Full-screen" or "Exit full-screen" with appropriate icons</li>
                 <li><strong>Scrolling Behavior:</strong> Only code block scrolls horizontally, header/buttons remain fixed</li>

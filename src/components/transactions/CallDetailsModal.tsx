@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atelierDuneLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { atelierCaveLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { Clock, Cloud, AlertTriangle } from "lucide-react";
 import type { ApiCall } from "./types";
 
@@ -90,7 +90,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
               <p className="text-sm font-medium mb-2">Request Headers</p>
               <SyntaxHighlighter
                 language="json"
-                style={atelierDuneLight}
+                style={atelierCaveLight}
                 customStyle={{
                   borderRadius: "6px",
                   fontSize: "12px",
@@ -107,7 +107,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
                 <p className="text-sm font-medium mb-2">Request Parameters</p>
                 <SyntaxHighlighter
                   language="json"
-                  style={atelierDuneLight}
+                  style={atelierCaveLight}
                   customStyle={{
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -125,7 +125,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
                 <p className="text-sm font-medium mb-2">Request Body</p>
                 <SyntaxHighlighter
                   language="json"
-                  style={atelierDuneLight}
+                  style={atelierCaveLight}
                   customStyle={{
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -149,7 +149,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
               </div>
               <SyntaxHighlighter
                 language="json"
-                style={atelierDuneLight}
+                style={atelierCaveLight}
                 customStyle={{
                   borderRadius: "6px",
                   fontSize: "12px",
