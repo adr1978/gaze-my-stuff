@@ -1,4 +1,4 @@
-import { Search, RotateCw } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,17 +9,25 @@ import type { LogFilters } from "./types";
 interface LogFiltersProps {
   filters: LogFilters;
   onFiltersChange: (filters: LogFilters) => void;
-  onRefresh: () => void;
 }
 
-export function LogFilters({ filters, onFiltersChange, onRefresh }: LogFiltersProps) {
-  // Convert date string to Date object for the picker
-  const dateValue = filters.date ? new Date(filters.date) : new Date();
+export function LogFilters({ filters, onFiltersChange }: LogFiltersProps) {
+  // Convert date string to Date object for the picker, or undefined if empty
+  const dateValue = filters.date ? new Date(filters.date) : undefined;
 
   const handleDateChange = (date: Date | undefined) => {
     onFiltersChange({
       ...filters,
-      date: date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      date: date ? date.toISOString().split('T')[0] : ''
+    });
+  };
+
+  const handleReset = () => {
+    onFiltersChange({
+      date: '',
+      accountId: '',
+      searchQuery: '',
+      status: 'all'
     });
   };
 
@@ -63,8 +71,9 @@ export function LogFilters({ filters, onFiltersChange, onRefresh }: LogFiltersPr
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={onRefresh} variant="outline" size="icon" className="h-10">
-            <RotateCw className="h-4 w-4" />
+          <Button onClick={handleReset} variant="outline" className="h-10">
+            <X className="h-4 w-4 mr-1.5" />
+            Reset
           </Button>
         </div>
       </CardContent>

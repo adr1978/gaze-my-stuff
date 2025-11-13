@@ -8,7 +8,7 @@ import type { LogFilters as LogFiltersType } from "@/components/transactionsMoni
 
 export default function TransactionsMonitor() {
   const [filters, setFilters] = useState<LogFiltersType>({
-    date: new Date().toISOString().split('T')[0],
+    date: '',
     accountId: "",
     searchQuery: "",
     status: "all",
@@ -20,10 +20,11 @@ export default function TransactionsMonitor() {
     refetchInterval: 30000,
   });
 
-  const { data: logs, isLoading: logsLoading, refetch } = useQuery({
+  const { data: logs, isLoading: logsLoading } = useQuery({
     queryKey: ["syncLogs", filters.date],
-    queryFn: () => fetchSyncLogs(filters.date),
+    queryFn: () => filters.date ? fetchSyncLogs(filters.date) : Promise.resolve([]),
     refetchInterval: 30000,
+    enabled: !!filters.date, // Only fetch when date is selected
   });
 
   // Apply client-side filters: status at account-level, search at run-level
@@ -75,7 +76,7 @@ export default function TransactionsMonitor() {
         </div>
 
         <StatsOverview stats={stats} isLoading={statsLoading} />
-        <LogFilters filters={filters} onFiltersChange={setFilters} onRefresh={() => refetch()} />
+        <LogFilters filters={filters} onFiltersChange={setFilters} />
         <LogTable runs={filteredLogs} isLoading={logsLoading} />
       </div>
     </div>

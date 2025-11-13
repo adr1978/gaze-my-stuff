@@ -129,7 +129,7 @@ export interface SyncConfig {
  * Controls which logs are displayed
  */
 export interface LogFilters {
-  date: string;
+  date: string; // Empty string means no date filter
   accountId: string;
   searchQuery: string;
   status: "all" | "success" | "warning" | "error";
