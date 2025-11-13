@@ -54,13 +54,13 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
               variant="outline"
               className="rounded-full bg-destructive/10 text-destructive border-transparent hover:bg-destructive/20"
             >
-              {account.summary.errors} {account.summary.errors === 1 ? 'error' : 'errors'}
+              {account.summary.errors} {account.summary.errors === 1 ? 'ERROR' : 'ERRORS'}
             </Badge>
           )}
           {!hasErrors && (
             <Badge 
               variant="outline"
-              className={status === "success" 
+              className={status === "SUCCESS" 
                 ? "rounded-full bg-success/10 text-success border-transparent hover:bg-success/20"
                 : "rounded-full bg-warning/10 text-warning border-transparent hover:bg-warning/20"
               }
