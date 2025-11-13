@@ -118,7 +118,7 @@ export function EditRecipeModal({
 
         {/* Scrollable content area with increased padding to prevent focus ring clipping */}
         <div className="relative flex-1 overflow-hidden">
-          <ScrollArea className="h-[50vh] px-8 py-2" ref={scrollAreaRef}>
+          <ScrollArea className="h-[50vh] px-10 py-4" ref={scrollAreaRef}>
             {editedRecipe && (
               <div className="space-y-4 pb-6">
                 {/* Title field */}
