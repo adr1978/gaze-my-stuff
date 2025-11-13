@@ -34,33 +34,31 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
     <>
       <div className="hover:bg-muted/50 transition-colors">
         <div className="p-4 flex items-center justify-between gap-4 cursor-pointer" onClick={onToggleExpand}>
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-            <div className="min-w-0">
-              <p className="text-xs font-semibold truncate">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <ChevronRight className={`h-4 w-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`} />
+            <p className="text-sm font-semibold text-foreground w-24 flex-shrink-0">
+              {format(new Date(account.timestamp), "dd/MM/yyyy")}
+            </p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate">
                 {account.owner} - {account.institution_name} ({account.last_four})
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {format(new Date(account.timestamp), "dd/MM/yyyy")}
-              </p>
-            </div>
-            <div className="flex-1 flex items-center justify-center min-w-0 px-4">
-              <p className="text-xs text-muted-foreground">
                 {account.summary.fetched} fetched • {account.summary.new} new • {account.summary.updated} updated
                 {account.summary.skipped > 0 && ` • ${account.summary.skipped} skipped`}
               </p>
             </div>
-            {hasErrors && (
-              <Badge variant="destructive">
-                {account.summary.errors} {account.summary.errors === 1 ? 'error' : 'errors'}
-              </Badge>
-            )}
-            {!hasErrors && (
-              <Badge variant={status === "success" ? "success" : "warning"}>
-                {status}
-              </Badge>
-            )}
           </div>
+          {hasErrors && (
+            <Badge variant="destructive">
+              {account.summary.errors} {account.summary.errors === 1 ? 'error' : 'errors'}
+            </Badge>
+          )}
+          {!hasErrors && (
+            <Badge variant={status === "success" ? "success" : "warning"}>
+              {status}
+            </Badge>
+          )}
         </div>
         
         {isExpanded && (
