@@ -22,9 +22,8 @@ export default function TransactionsMonitor() {
 
   const { data: logs, isLoading: logsLoading } = useQuery({
     queryKey: ["syncLogs", filters.date],
-    queryFn: () => filters.date ? fetchSyncLogs(filters.date) : Promise.resolve([]),
+    queryFn: () => fetchSyncLogs(filters.date),
     refetchInterval: 30000,
-    enabled: !!filters.date, // Only fetch when date is selected
   });
 
   // Apply client-side filters: status at account-level, search at run-level
