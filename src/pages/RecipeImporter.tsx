@@ -181,11 +181,27 @@ export default function RecipeAnalyser() {
       }
 
       // AI Extraction method - calls Supabase edge function
-      const { data, error } = await supabase.functions.invoke("analyze-recipe", {
-        body: { url },
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-recipe`;
+      const resp = await fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ url }),
       });
 
-      if (error) throw error;
+      if (!resp.ok) {
+        if (resp.status === 429) {
+          showToast.error("Rate Limited", "Too many requests. Please try again shortly.");
+        } else if (resp.status === 402) {
+          showToast.error("Payment Required", "Please add credits to your workspace.");
+        }
+        const t = await resp.text().catch(() => "");
+        throw new Error(`analyze-recipe HTTP ${resp.status} ${t}`);
+      }
+
+      const data = await resp.json();
 
       // Decode HTML entities in extracted data
       const decodedData = {
@@ -194,8 +210,8 @@ export default function RecipeAnalyser() {
         name: data.name ? decodeHtmlEntities(data.name) : null,
         imageUrl: data.imageUrl || null,
         servings: data.servings ? decodeHtmlEntities(data.servings) : null,
-        ingredients: data.ingredients.map((ing: string) => decodeHtmlEntities(ing)),
-        instructions: data.instructions.map((inst: string) => decodeHtmlEntities(inst)),
+        ingredients: (data.ingredients || []).map((ing: string) => decodeHtmlEntities(ing)),
+        instructions: (data.instructions || []).map((inst: string) => decodeHtmlEntities(inst)),
       };
 
       setRecipeData(decodedData);
