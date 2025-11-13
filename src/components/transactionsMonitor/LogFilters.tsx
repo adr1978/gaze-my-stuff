@@ -71,7 +71,7 @@ export function LogFilters({ filters, onFiltersChange }: LogFiltersProps) {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={handleReset} variant="outline" className="h-10 bg-muted hover:bg-muted/80">
+          <Button onClick={handleReset} variant="outline" className="h-10 bg-muted hover:bg-muted">
             <Eraser className="h-4 w-4 mr-1.5" />
           </Button>
         </div>
