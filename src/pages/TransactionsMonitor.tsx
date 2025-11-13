@@ -6,7 +6,7 @@ import { LogFilters } from "@/components/transactionsMonitor/LogFilters";
 import { LogTable } from "@/components/transactionsMonitor/LogTable";
 import type { LogFilters as LogFiltersType } from "@/components/transactionsMonitor/types";
 
-export default function transactionsMonitor() {
+export default function TransactionsMonitor() {
   const [filters, setFilters] = useState<LogFiltersType>({
     date: new Date().toISOString().split('T')[0],
     accountId: "",
@@ -68,7 +68,7 @@ export default function transactionsMonitor() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">transactionsMonitor Monitor</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Transactions Monitor</h1>
           <p className="text-muted-foreground">
             Monitor automated bank sync jobs and Notion uploads
           </p>

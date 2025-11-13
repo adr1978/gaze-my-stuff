@@ -27,6 +27,18 @@ export function LogFilters({ filters, onFiltersChange, onRefresh }: LogFiltersPr
     <Card>
       <CardContent className="p-4">
         <div className="flex gap-3 items-end flex-wrap">
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <label className="text-sm font-medium">Search</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by run ID or error..."
+                value={filters.searchQuery}
+                onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+                className="pl-9"
+              />
+            </div>
+          </div>
           <div className="w-[200px]">
             <DatePickerPopover
               date={dateValue}
@@ -50,18 +62,6 @@ export function LogFilters({ filters, onFiltersChange, onRefresh }: LogFiltersPr
                 <SelectItem value="error">Error</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex-1 min-w-[200px] space-y-2">
-            <label className="text-sm font-medium">Search</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by run ID or error..."
-                value={filters.searchQuery}
-                onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-                className="pl-9"
-              />
-            </div>
           </div>
           <Button onClick={onRefresh} variant="outline" size="icon" className="h-10">
             <RotateCw className="h-4 w-4" />
