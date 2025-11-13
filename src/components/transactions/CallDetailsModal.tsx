@@ -149,7 +149,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
               </div>
               <SyntaxHighlighter
                 language="json"
-                style={duotoneLight}
+                style={atelierDuneLight}
                 customStyle={{
                   borderRadius: "6px",
                   fontSize: "12px",
