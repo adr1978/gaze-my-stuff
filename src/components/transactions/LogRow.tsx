@@ -37,12 +37,13 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">
+              <p className="text-sm font-semibold truncate">
                 {account.owner} - {account.institution_name} ({account.last_four})
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {format(new Date(account.timestamp), "HH:mm:ss")} • {account.summary.fetched} fetched • {account.summary.new} new • {account.summary.updated} updated
-                {account.summary.skipped > 0 && ` • ${account.summary.skipped} skipped`}
+                <span className="mx-2 text-muted-foreground">•</span>
+                <span className="font-normal text-muted-foreground">
+                  {format(new Date(account.timestamp), "HH:mm:ss")} • {account.summary.fetched} fetched • {account.summary.new} new • {account.summary.updated} updated
+                  {account.summary.skipped > 0 && ` • ${account.summary.skipped} skipped`}
+                </span>
               </p>
             </div>
             {hasErrors && (

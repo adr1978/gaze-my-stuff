@@ -8,8 +8,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { duotoneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atelierDuneLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { Clock, Cloud, AlertTriangle } from "lucide-react";
 import type { ApiCall } from "./types";
 
@@ -40,7 +40,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Overview</h3>
-                <Badge variant={isError ? "destructive" : "default"} className="pointer-events-none">
+                <Badge variant={isError ? "destructive" : "default"} className="pointer-events-none hover:bg-transparent">
                   {call.http_status}
                 </Badge>
               </div>
@@ -90,7 +90,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
               <p className="text-sm font-medium mb-2">Request Headers</p>
               <SyntaxHighlighter
                 language="json"
-                style={duotoneLight}
+                style={atelierDuneLight}
                 customStyle={{
                   borderRadius: "6px",
                   fontSize: "12px",
@@ -107,7 +107,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
                 <p className="text-sm font-medium mb-2">Request Parameters</p>
                 <SyntaxHighlighter
                   language="json"
-                  style={duotoneLight}
+                  style={atelierDuneLight}
                   customStyle={{
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -125,7 +125,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
                 <p className="text-sm font-medium mb-2">Request Body</p>
                 <SyntaxHighlighter
                   language="json"
-                  style={duotoneLight}
+                  style={atelierDuneLight}
                   customStyle={{
                     borderRadius: "6px",
                     fontSize: "12px",
