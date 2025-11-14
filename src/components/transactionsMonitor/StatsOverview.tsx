@@ -30,7 +30,7 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
         {[...Array(4)].map((_, i) => (
           <Card key={i}>
             <CardContent className="p-6">
-              <Skeleton className="h-4 w-24 mb-2" />
+              <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-16" />
             </CardContent>
           </Card>
@@ -61,13 +61,13 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Transactions Today Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
               <TrendingUp className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">
+              <p className="text-sm text-muted-foreground">
                 Transactions Today
               </p>
               <p className="text-3xl font-bold text-foreground">
@@ -80,13 +80,13 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
 
       {/* Next Scheduled Run Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-lg bg-sky-500/10 flex items-center justify-center flex-shrink-0">
               <Clock className="h-6 w-6 text-sky-600 dark:text-sky-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">
+              <p className="text-sm text-muted-foreground">
                 Next Run
               </p>
               <p className="text-3xl font-bold text-foreground">
@@ -99,7 +99,7 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
 
       {/* Success Rate Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <div
               className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -113,7 +113,7 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
               <CheckCircle2 className={`h-6 w-6 ${successRateColour}`} />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">
+              <p className="text-sm text-muted-foreground">
                 Success Rate
               </p>
               <p className={`text-3xl font-bold ${successRateColour}`}>
@@ -126,13 +126,13 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
 
       {/* Active Connections Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
               <Link className="h-6 w-6 text-violet-600 dark:text-violet-400" />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">
+              <p className="text-sm text-muted-foreground">
                 Active Accounts
               </p>
               <p className="text-3xl font-bold text-foreground">
