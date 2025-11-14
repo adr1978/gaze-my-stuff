@@ -14,19 +14,18 @@ export default function TransactionsMonitor() {
     status: "all",
   });
 
-  /* Auto-refresh every 30 seconds to get latest logs + summary data
+  // { Auto-refresh every 30 seconds to get latest logs + summary data }
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["syncStats"],
     queryFn: fetchSyncStats,
-    refetchInterval: 30000,
+    //refetchInterval: 30000,
   });
 
   const { data: logs, isLoading: logsLoading } = useQuery({
     queryKey: ["syncLogs"],
     queryFn: () => fetchSyncLogs(),
-    refetchInterval: 30000,
+    //refetchInterval: 30000,
   });
-  */
 
   // Apply client-side filters
   const filteredLogs = (logs || [])
