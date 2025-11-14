@@ -41,7 +41,7 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
           <div className="flex items-center gap-2">
             <ChevronRight className={`h-4 w-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`} />
             <p className="text-sm font-semibold text-foreground">
-              {format(new Date(account.timestamp), "dd/MM")}
+              {format(new Date(account.timestamp), "dd / mm / yyyy")}
             </p>
           </div>
           

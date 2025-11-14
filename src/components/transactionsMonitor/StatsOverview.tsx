@@ -87,7 +87,7 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">
-                Next Scheduled Run
+                Next Run
               </p>
               <p className="text-3xl font-bold text-foreground">
                 {stats.today.next_run ? format(new Date(stats.today.next_run), "ha").toLowerCase() : "Not scheduled"}
@@ -133,7 +133,7 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">
-                Active Connections
+                Active Accounts
               </p>
               <p className="text-3xl font-bold text-foreground">
                 {stats.active_accounts}
