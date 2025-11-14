@@ -37,12 +37,21 @@ export function ChildCallRow({ call, onViewDetails }: ChildCallRowProps) {
           }`} 
         />
         <CallIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        <div className="flex-1 min-w-0">
+        <div className="w-6">
           <p className="text-sm font-medium truncate">{callTypeLabel}</p>
           <p className="text-xs text-muted-foreground">
             {format(new Date(call.timestamp), "HH:mm:ss")} • {call.duration_ms}ms
             {call.transaction_id && ` • ${call.transaction_id.substring(0, 8)}...`}
           </p>
+        </div>
+        <div className="flex text-xs">
+          <span className="font-mono">
+            <span className={call.http_method === "GET" ? "text-success font-semibold" : "text-warning font-semibold"}>
+              {call.http_method}
+            </span>
+            {" "}
+            <span className="text-muted-foreground">{call.url}</span>
+          </span>
         </div>
         <span className={`text-xs font-mono ${isError ? "text-destructive" : "text-muted-foreground"}`}>
           {call.http_status}
