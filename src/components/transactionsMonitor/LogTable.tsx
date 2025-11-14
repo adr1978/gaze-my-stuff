@@ -13,26 +13,28 @@ interface LogTableProps {
 // Flatten runs into accounts for display
 interface AccountWithTimestamp extends AccountSync {
   timestamp: string;
+  uniqueKey: string;
 }
 
 export function LogTable({ runs, isLoading }: LogTableProps) {
   const [expandedAccounts, setExpandedAccounts] = useState<Set<string>>(new Set());
 
-  // Flatten all accounts from all runs
+  // Flatten all accounts from all runs with unique keys
   const accounts: AccountWithTimestamp[] = runs.flatMap((run) =>
     run.accounts_processed.map((account) => ({
       ...account,
       timestamp: run.timestamp,
+      uniqueKey: `${run.timestamp}-${account.account_id}`, // Unique key per row
     }))
   );
 
-  const toggleExpanded = (accountId: string) => {
+  const toggleExpanded = (uniqueKey: string) => {
     setExpandedAccounts((prev) => {
       const next = new Set(prev);
-      if (next.has(accountId)) {
-        next.delete(accountId);
+      if (next.has(uniqueKey)) {
+        next.delete(uniqueKey);
       } else {
-        next.add(accountId);
+        next.add(uniqueKey);
       }
       return next;
     });
@@ -79,10 +81,10 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
           <div className="divide-y divide-border">
             {accounts.map((account) => (
               <LogRow
-                key={account.account_id}
+                key={account.uniqueKey}
                 account={account}
-                isExpanded={expandedAccounts.has(account.account_id)}
-                onToggleExpand={() => toggleExpanded(account.account_id)}
+                isExpanded={expandedAccounts.has(account.uniqueKey)}
+                onToggleExpand={() => toggleExpanded(account.uniqueKey)}
               />
             ))}
           </div>
