@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LogRow } from "./LogRow";
 import type { SyncRun, AccountSync } from "./types";
 
@@ -62,16 +63,29 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="divide-y divide-border">
-          {accounts.map((account) => (
-            <LogRow
-              key={account.account_id}
-              account={account}
-              isExpanded={expandedAccounts.has(account.account_id)}
-              onToggleExpand={() => toggleExpanded(account.account_id)}
-            />
-          ))}
+        {/* Frozen header row */}
+        <div className="sticky top-0 z-10 bg-muted/50 border-b border-border backdrop-blur-sm">
+          <div className="grid grid-cols-[80px_1fr_200px_120px] gap-4 px-4 py-3">
+            <div className="text-xs font-semibold text-muted-foreground">Date</div>
+            <div className="text-xs font-semibold text-muted-foreground">Owner</div>
+            <div className="text-xs font-semibold text-muted-foreground">Stats</div>
+            <div className="text-xs font-semibold text-muted-foreground text-right">Overall Status</div>
+          </div>
         </div>
+        
+        {/* Scrollable table content */}
+        <ScrollArea className="h-[calc(100vh-400px)]">
+          <div className="divide-y divide-border">
+            {accounts.map((account) => (
+              <LogRow
+                key={account.account_id}
+                account={account}
+                isExpanded={expandedAccounts.has(account.account_id)}
+                onToggleExpand={() => toggleExpanded(account.account_id)}
+              />
+            ))}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
