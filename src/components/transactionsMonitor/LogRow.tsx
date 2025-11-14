@@ -33,41 +33,56 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
   return (
     <>
       <div className="hover:bg-muted/50 transition-colors">
-        <div className="p-4 flex items-center justify-between gap-4 cursor-pointer" onClick={onToggleExpand}>
-          <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div 
+          className="grid grid-cols-[80px_1fr_200px_120px] gap-4 px-4 py-4 cursor-pointer items-center" 
+          onClick={onToggleExpand}
+        >
+          {/* Date column */}
+          <div className="flex items-center gap-2">
             <ChevronRight className={`h-4 w-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`} />
-            <p className="text-sm font-semibold text-foreground w-24 flex-shrink-0">
-              {format(new Date(account.timestamp), "dd/MM/yyyy")}
+            <p className="text-sm font-semibold text-foreground">
+              {format(new Date(account.timestamp), "dd/MM")}
             </p>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate">
-                {account.owner} - {account.institution_name} ({account.last_four})
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {account.summary.fetched} fetched • {account.summary.new} new • {account.summary.updated} updated
-                {account.summary.skipped > 0 && ` • ${account.summary.skipped} skipped`}
-              </p>
-            </div>
           </div>
-          {hasErrors && (
-            <Badge 
-              variant="outline"
-              className="rounded-full bg-destructive/10 text-destructive border-transparent hover:bg-destructive/20"
-            >
-              {account.summary.errors} {account.summary.errors === 1 ? 'ERROR' : 'ERRORS'}
-            </Badge>
-          )}
-          {!hasErrors && (
-            <Badge 
-              variant="outline"
-              className={status === "SUCCESS" 
-                ? "rounded-full bg-success/10 text-success border-transparent hover:bg-success/20"
-                : "rounded-full bg-warning/10 text-warning border-transparent hover:bg-warning/20"
-              }
-            >
-              {status}
-            </Badge>
-          )}
+          
+          {/* Owner column */}
+          <div className="min-w-0">
+            <p className="text-xs font-medium truncate">
+              {account.owner}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {account.institution_name} ({account.last_four})
+            </p>
+          </div>
+          
+          {/* Stats column */}
+          <div className="text-xs text-muted-foreground">
+            {account.summary.fetched} fetched • {account.summary.new} new • {account.summary.updated} updated
+            {account.summary.skipped > 0 && ` • ${account.summary.skipped} skipped`}
+          </div>
+          
+          {/* Status column */}
+          <div className="flex justify-end">
+            {hasErrors && (
+              <Badge 
+                variant="outline"
+                className="rounded-full bg-destructive/10 text-destructive border-transparent hover:bg-destructive/20"
+              >
+                {account.summary.errors} {account.summary.errors === 1 ? 'ERROR' : 'ERRORS'}
+              </Badge>
+            )}
+            {!hasErrors && (
+              <Badge 
+                variant="outline"
+                className={status === "SUCCESS" 
+                  ? "rounded-full bg-success/10 text-success border-transparent hover:bg-success/20"
+                  : "rounded-full bg-warning/10 text-warning border-transparent hover:bg-warning/20"
+                }
+              >
+                {status}
+              </Badge>
+            )}
+          </div>
         </div>
         
         {isExpanded && (

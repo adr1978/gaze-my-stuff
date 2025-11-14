@@ -62,66 +62,58 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
       {/* Transactions Today Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">
                 Transactions Today
               </p>
               <p className="text-3xl font-bold text-foreground">
                 {stats.today.total_transactions}
               </p>
-            </div>
-            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-primary" />
+              {stats.today.successful_runs > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  From {stats.today.successful_runs} successful run
+                  {stats.today.successful_runs !== 1 ? "s" : ""}
+                </p>
+              )}
             </div>
           </div>
-          {stats.today.successful_runs > 0 && (
-            <p className="text-xs text-muted-foreground mt-3">
-              From {stats.today.successful_runs} successful run
-              {stats.today.successful_runs !== 1 ? "s" : ""}
-            </p>
-          )}
         </CardContent>
       </Card>
 
       {/* Next Scheduled Run Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-sky-500/10 flex items-center justify-center flex-shrink-0">
+              <Clock className="h-6 w-6 text-sky-600 dark:text-sky-400" />
+            </div>
+            <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">
                 Next Scheduled Run
               </p>
-              <p className="text-2xl font-semibold text-foreground">
-                {nextRunDistance}
+              <p className="text-3xl font-bold text-foreground">
+                {stats.today.next_run ? format(new Date(stats.today.next_run), "ha").toLowerCase() : "Not scheduled"}
               </p>
-            </div>
-            <div className="h-12 w-12 rounded-lg bg-sky-500/10 flex items-center justify-center">
-              <Clock className="h-6 w-6 text-sky-600 dark:text-sky-400" />
+              {stats.today.next_run && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {format(new Date(stats.today.next_run), "dd MMM yyyy")}
+                </p>
+              )}
             </div>
           </div>
-          {stats.today.next_run && (
-            <p className="text-xs text-muted-foreground mt-3">
-              {format(new Date(stats.today.next_run), "HH:mm:ss 'on' dd MMM")}
-            </p>
-          )}
         </CardContent>
       </Card>
 
       {/* Success Rate Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">
-                Success Rate
-              </p>
-              <p className={`text-3xl font-bold ${successRateColour}`}>
-                {successRate}%
-              </p>
-            </div>
+          <div className="flex items-center gap-4">
             <div
-              className={`h-12 w-12 rounded-lg flex items-center justify-center ${
+              className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
                 successRate >= 90
                   ? "bg-emerald-500/10"
                   : successRate >= 70
@@ -131,32 +123,40 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
             >
               <CheckCircle2 className={`h-6 w-6 ${successRateColour}`} />
             </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground mb-1">
+                Success Rate
+              </p>
+              <p className={`text-3xl font-bold ${successRateColour}`}>
+                {successRate}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Over the last 7 days
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">
-            Over the last 7 days
-          </p>
         </CardContent>
       </Card>
 
       {/* Active Connections Card */}
       <Card className="hover:shadow-md transition-shadow duration-300">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+              <Link className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">
                 Active Connections
               </p>
               <p className="text-3xl font-bold text-foreground">
                 {stats.active_accounts}
               </p>
-            </div>
-            <div className="h-12 w-12 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <Link className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+              <p className="text-xs text-muted-foreground mt-1">
+                From Bank Connections
+              </p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">
-            From Bank Connections
-          </p>
         </CardContent>
       </Card>
     </div>
