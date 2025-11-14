@@ -35,7 +35,7 @@ export function LogRow({ account, isExpanded, onToggleExpand }: LogRowProps) {
     <>
       <div className="hover:bg-muted/50 transition-colors">
         <div 
-          className="grid grid-cols-[150px_200px_1fr_200px_120px] gap-4 px-4 py-4 cursor-pointer items-center" 
+          className="grid grid-cols-[150px_1fr_1fr_200px_120px] gap-4 px-4 py-4 cursor-pointer items-center" 
           onClick={onToggleExpand}
         >
           {/* Date column */}

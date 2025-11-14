@@ -67,7 +67,7 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
       <CardContent className="p-0">
         {/* Frozen header row */}
         <div className="sticky top-0 z-10 bg-muted/50 border-b border-border backdrop-blur-sm">
-          <div className="grid grid-cols-[150px_200px_1fr_200px_120px] gap-4 px-4 py-3">
+          <div className="grid grid-cols-[150px_1fr_1fr_200px_120px] gap-4 px-4 py-3">
             <div className="text-xs font-semibold text-muted-foreground">Date</div>
             <div className="text-xs font-semibold text-muted-foreground">Owner</div>
             <div className="text-xs font-semibold text-muted-foreground">Account</div>

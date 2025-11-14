@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atelierCaveLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { Clock, Cloud, AlertTriangle } from "lucide-react";
+import { Clock, Cloud, AlertTriangle, Globe } from "lucide-react";
 import type { ApiCall } from "./types";
 
 interface CallDetailsModalProps {
@@ -40,14 +40,14 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Overview</h3>
-                <Badge variant={isError ? "destructive" : "default"} className="pointer-events-none hover:bg-transparent">
+                <Badge variant={isError ? "destructive" : "success"} className="pointer-events-none hover:bg-transparent">
                   {call.http_status}
                 </Badge>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
-                  <Cloud className="h-4 w-4 text-muted-foreground" />
+                  <Globe className="h-4 w-4 text-muted-foreground" />
                   <span className="font-mono">
                     <span className={call.http_method === "GET" ? "text-success font-semibold" : "text-warning font-semibold"}>
                       {call.http_method}
