@@ -73,12 +73,6 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
               <p className="text-3xl font-bold text-foreground">
                 {stats.today.total_transactions}
               </p>
-              {stats.today.successful_runs > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  From {stats.today.successful_runs} successful run
-                  {stats.today.successful_runs !== 1 ? "s" : ""}
-                </p>
-              )}
             </div>
           </div>
         </CardContent>
@@ -98,11 +92,6 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
               <p className="text-3xl font-bold text-foreground">
                 {stats.today.next_run ? format(new Date(stats.today.next_run), "ha").toLowerCase() : "Not scheduled"}
               </p>
-              {stats.today.next_run && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {format(new Date(stats.today.next_run), "dd MMM yyyy")}
-                </p>
-              )}
             </div>
           </div>
         </CardContent>
@@ -130,9 +119,6 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
               <p className={`text-3xl font-bold ${successRateColour}`}>
                 {successRate}%
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Over the last 7 days
-              </p>
             </div>
           </div>
         </CardContent>
@@ -151,9 +137,6 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
               </p>
               <p className="text-3xl font-bold text-foreground">
                 {stats.active_accounts}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                From Bank Connections
               </p>
             </div>
           </div>
