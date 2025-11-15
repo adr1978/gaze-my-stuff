@@ -63,9 +63,11 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
   }
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        {/* Frozen header row */}
+    // 💡 FIX: Make the Card fill its new flex-grow parent
+    <Card className="h-full flex flex-col">
+      {/* 💡 FIX: Make CardContent a flex container that fills height */}
+      <CardContent className="p-0 h-full flex flex-col">
+        {/* Frozen header row (fixed height) */}
         <div className="sticky top-0 z-10 bg-muted/50 border-b border-border backdrop-blur-sm">
           <div className="grid grid-cols-[150px_1fr_1fr_200px_120px] gap-4 px-4 py-3">
             <div className="text-xs font-semibold text-muted-foreground">Date</div>
@@ -76,8 +78,8 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
           </div>
         </div>
         
-        {/* Scrollable table content */}
-        <ScrollArea className="h-[calc(100vh-400px)]">
+        {/* 💡 FIX: Remove calc() and use flex-1 to fill remaining space */}
+        <ScrollArea className="h-full flex-1">
           <div className="divide-y divide-border">
             {accounts.map((account) => (
               <LogRow

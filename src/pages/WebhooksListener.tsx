@@ -133,8 +133,8 @@ export default function WebhooksListener() {
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
 
   return (
-    // 1. Set h-screen and define as a vertical flex container to manage the page content.
-    <div className="h-full bg-background p-8 flex flex-col">
+    // 💡 FIX: Use h-screen (viewport height) and flex flex-col
+    <div className="h-screen bg-background p-8 flex flex-col">
       
       {/* 2. Set to w-full, define as a vertical flex container, and allow it to grow. */}
       <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow min-h-0">
@@ -147,7 +147,9 @@ export default function WebhooksListener() {
           </p>
         </div>
 
-        {/* 3. The Card: Add min-h-0 to ensure flex-grow correctly restricts the card's height. */}
+        {/* 3. The Card: flex-grow and min-h-0 are correct. They'll now work
+               because the parent container has a defined height (h-screen)
+               and is a flex container. */}
         <Card className="overflow-hidden flex-grow min-h-0">
           {/* The inner grid needs h-full to occupy the entire Card height. */}
           <div className="grid grid-cols-[400px_1fr] h-full">

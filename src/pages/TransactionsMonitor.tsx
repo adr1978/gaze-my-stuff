@@ -83,8 +83,10 @@ export default function TransactionsMonitor() {
     .filter((run) => run.accounts_processed.length > 0);
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    // 💡 FIX: Change from min-h-screen to h-screen and add flex
+    <div className="h-screen bg-background p-8 flex flex-col">
+      {/* 💡 FIX: Add wrapper to manage flex-grow */}
+      <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow min-h-0">
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-2">Transactions Monitor</h1>
           <p className="text-muted-foreground">
@@ -92,9 +94,15 @@ export default function TransactionsMonitor() {
           </p>
         </div>
 
+        {/* These components have fixed heights */}
         <StatsOverview stats={stats} isLoading={statsLoading} />
         <LogFilters filters={filters} onFiltersChange={setFilters} />
-        <LogTable runs={filteredLogs} isLoading={logsLoading} />
+        
+        {/* 💡 FIX: Add flex-grow and min-h-0 to the table's parent
+            (or directly on the component if it's the last child) */}
+        <div className="flex-grow min-h-0">
+          <LogTable runs={filteredLogs} isLoading={logsLoading} />
+        </div>
       </div>
     </div>
   );
