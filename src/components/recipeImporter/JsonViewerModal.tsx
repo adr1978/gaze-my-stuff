@@ -20,8 +20,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
-import { atelierCaveLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { atelierCaveLight, atelierCaveDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Expand, Shrink } from "lucide-react";
+import { useTheme } from "next-themes";
 
 // Register JSON language support for syntax highlighting
 SyntaxHighlighter.registerLanguage('json', json);
@@ -55,6 +56,7 @@ export function JsonViewerModal({
   recipeData,
   metadata,
 }: JsonViewerModalProps) {
+  const { theme } = useTheme();
   // State to track fullscreen mode - resets to false whenever modal opens
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -104,7 +106,7 @@ export function JsonViewerModal({
           <div className="w-full overflow-x-auto">
             <SyntaxHighlighter 
               language="json" 
-              style={atelierCaveLight}
+              style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
               customStyle={{
                 borderRadius: '0.5rem',
                 fontSize: '0.875rem',
