@@ -30,15 +30,17 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
             <div className="space-y-3">
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground font-medium">ID:</span>
-                <span className="font-mono">{webhook.id}</span>
+                <span>{webhook.id}</span>
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground font-medium">Timestamp:</span>
-                <span className="font-mono">{webhook.timestamp.toISOString()}</span>
+                <span>{webhook.timestamp.toISOString()}</span>
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground font-medium">Method:</span>
-                <span className="font-mono font-semibold">{webhook.method}</span>
+                <span className={cn("font-mono text-xs font-semibold", methodColors[webhook.method])}>
+                  {call.http_method}
+                </span>
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground font-medium">Endpoint:</span>
@@ -46,9 +48,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground font-medium">Status:</span>
-                <span className="font-mono">
-                  {webhook.statusCode} {webhook.statusText}
-                </span>
+                <span className="font-mono">{webhook.statusCode} {webhook.statusText}</span>
               </div>
             </div>
           </div>
@@ -62,7 +62,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
               {Object.entries(webhook.headers).map(([key, value]) => (
                 <div key={key} className="grid grid-cols-[200px_1fr] gap-4 text-sm">
                   <span className="text-muted-foreground font-medium truncate">{key}:</span>
-                  <span className="font-mono break-all">{value}</span>
+                  <span className="break-all">{value}</span>
                 </div>
               ))}
             </div>
