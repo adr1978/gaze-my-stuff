@@ -30,10 +30,10 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
   }
 
   return (
-    // 1. Add 'flex flex-col' to container to enable Flexbox for vertical layout.
+    // Outer container correctly set to h-full flex flex-col
     <div className="h-full flex flex-col border-r border-border">
-      {/* 2. Use 'flex-1' to make the ScrollArea consume all available height. */}
-      <ScrollArea className="flex-1">
+      {/* 💡 FIX: Use both h-full and flex-1 on ScrollArea to reliably fill vertical space */}
+      <ScrollArea className="h-full flex-1">
         <div className="divide-y divide-border">
           {webhooks.map((webhook) => (
             <button
@@ -52,7 +52,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
                   <Badge
                     variant="webhook"
                     className={cn(
-                      "font-mono text-xs font-semibold",
+                      "justify-self-start font-mono text-xs font-semibold",
                       methodColors[webhook.method]
                     )}
                   >
