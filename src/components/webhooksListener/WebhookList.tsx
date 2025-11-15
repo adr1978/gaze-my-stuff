@@ -33,7 +33,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
   return (
     <Card className="h-full overflow-hidden">
       <ScrollArea className="h-full">
-        <div className="p-4 space-y-2">
+        <div className="divide-y divide-border">
           {webhooks.map((webhook) => (
             <button
               key={webhook.id}
@@ -49,7 +49,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Badge
-                    variant="outline"
+                    variant="webhook"
                     className={cn(
                       "font-mono text-xs font-semibold",
                       methodColors[webhook.method]

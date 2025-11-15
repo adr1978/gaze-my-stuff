@@ -14,7 +14,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
     return (
       <Card className="h-full flex items-center justify-center p-8">
         <div className="text-center text-muted-foreground">
-          <p className="text-lg font-medium">Select a webhook to see its details</p>
+          <p className="text-lg">Select a webhook to see its details</p>
         </div>
       </Card>
     );
