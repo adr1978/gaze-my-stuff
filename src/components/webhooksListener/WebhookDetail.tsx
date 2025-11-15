@@ -12,10 +12,10 @@ interface WebhookDetailProps {
 }
 
 const methodColors = {
-  POST: "text-blue-600",
-  PUT: "text-amber-600",
-  GET: "text-emerald-600",
-  DELETE: "text-destructive",
+  POST: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  PUT: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  GET: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  DELETE: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 export function WebhookDetail({ webhook }: WebhookDetailProps) {
