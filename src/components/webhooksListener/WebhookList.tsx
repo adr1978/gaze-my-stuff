@@ -20,10 +20,20 @@ const methodColors = {
 export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: WebhookListProps) {
   if (webhooks.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center p-8 border-r border-border">
-        <div className="text-center text-muted-foreground">
-          <p className="text-lg font-medium mb-2">No webhooks received yet</p>
-          <p className="text-sm">Webhook events will appear here when received</p>
+      <div className="h-full flex flex-col border-r border-border min-h-0">
+        {/* Header */}
+        <div className="bg-muted/50 border-b border-border">
+          <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
+            Webhooks Received
+          </div>
+        </div>
+        
+        {/* Empty state */}
+        <div className="h-full flex flex-1 items-center justify-center p-8">
+          <div className="text-center text-muted-foreground">
+            <p className="text-lg font-medium mb-2">No webhooks received yet</p>
+            <p className="text-sm">Webhook events will appear here when received</p>
+          </div>
         </div>
       </div>
     );
@@ -32,7 +42,15 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
   return (
     // Outer container correctly set to h-full flex flex-col
     <div className="h-full flex flex-col border-r border-border min-h-0">
-      {/* 💡 FIX: Use both h-full and flex-1 on ScrollArea to reliably fill vertical space */}
+      
+      {/* Frozen header row */}
+      <div className="bg-muted/50 border-b border-border">
+        <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
+          Webhooks Received
+        </div>
+      </div>
+
+      {/* Scrollable content */}
       <ScrollArea className="h-full flex-1">
         <div className="divide-y divide-border">
           {webhooks.map((webhook) => (

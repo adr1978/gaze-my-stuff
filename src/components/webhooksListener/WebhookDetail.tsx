@@ -23,9 +23,19 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
   
   if (!webhook) {
     return (
-      <div className="h-full flex items-center justify-center p-8">
-        <div className="text-center text-muted-foreground">
-          <p className="text-lg">Select a webhook to see its details</p>
+      <div className="h-full flex flex-col min-h-0">
+        {/* Header */}
+        <div className="bg-muted/50 border-b border-border">
+          <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
+            Webhook Information
+          </div>
+        </div>
+
+        {/* Empty state */}
+        <div className="h-full flex flex-1 items-center justify-center p-8">
+          <div className="text-center text-muted-foreground">
+            <p className="text-lg">Select a webhook to see its details</p>
+          </div>
         </div>
       </div>
     );
@@ -34,7 +44,15 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
   return (
     // Outer container correctly set to h-full flex flex-col
     <div className="h-full flex flex-col min-h-0">
-      {/* 💡 FIX: Use both h-full and flex-1 on ScrollArea to reliably fill vertical space */}
+      
+      {/* Frozen header row */}
+      <div className="bg-muted/50 border-b border-border">
+        <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
+          Webhook Information
+        </div>
+      </div>
+
+      {/* Scrollable content */}
       <ScrollArea className="h-full flex-1">
         <div className="p-6 space-y-6">
           {/* Request Details */}
