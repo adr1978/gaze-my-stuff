@@ -133,8 +133,13 @@ export default function WebhooksListener() {
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    // 1. Set h-screen and define as a vertical flex container to manage the page content.
+    <div className="h-screen bg-background p-8 flex flex-col">
+      
+      {/* 2. Set to w-full, define as a vertical flex container, and allow it to grow. */}
+      <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow">
+        
+        {/* Header content (fixed height) */}
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-2">Webhooks Listener</h1>
           <p className="text-muted-foreground">
@@ -142,7 +147,9 @@ export default function WebhooksListener() {
           </p>
         </div>
 
-        <Card className="overflow-hidden h-[calc(100vh-180px)]">
+        {/* 3. The Card: Replace fixed height with flex-grow to fill remaining vertical space. */}
+        <Card className="overflow-hidden flex-grow">
+          {/* The inner grid needs h-full to occupy the entire Card height. */}
           <div className="grid grid-cols-[400px_1fr] h-full">
             <WebhookList
               webhooks={webhooks}
