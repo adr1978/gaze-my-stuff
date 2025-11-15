@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { WebhookList } from "@/components/webhooksListener/WebhookList";
 import { WebhookDetail } from "@/components/webhooksListener/WebhookDetail";
 import type { Webhook } from "@/components/webhooksListener/types";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 // Mock data for demonstration
 const mockWebhooks: Webhook[] = [
@@ -128,30 +137,88 @@ const mockWebhooks: Webhook[] = [
   },
 ];
 
+/** Helper to simulate a new webhook */
+const createNewWebhook = (): Webhook => {
+  const baseWebhook = mockWebhooks[Math.floor(Math.random() * mockWebhooks.length)];
+  return {
+    ...baseWebhook,
+    id: `wh_${Math.random().toString(36).substring(2, 12)}`,
+    timestamp: new Date(),
+  };
+};
+
 export default function WebhooksListener() {
-  const [webhooks] = useState<Webhook[]>(mockWebhooks);
+  const [webhooks, setWebhooks] = useState<Webhook[]>(mockWebhooks);
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+
+  // Effect to handle the auto-refresh simulation
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
+    if (autoRefresh) {
+      // Start an interval to add a new webhook every 3 seconds
+      intervalId = setInterval(() => {
+        const newWebhook = createNewWebhook();
+        // Add the new webhook to the top of the list
+        setWebhooks((prevWebhooks) => [newWebhook, ...prevWebhooks]);
+      }, 3000);
+    }
+
+    // Cleanup function: This runs when autoRefresh changes to false
+    // or when the component unmounts.
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [autoRefresh]); // This effect depends only on the autoRefresh state
 
   return (
-    // 💡 FIX: Use h-screen (viewport height) and flex flex-col
     <div className="h-screen bg-background p-8 flex flex-col">
-      
-      {/* 2. Set to w-full, define as a vertical flex container, and allow it to grow. */}
       <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow min-h-0">
         
-        {/* Header content (fixed height) */}
-        <div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Webhooks Listener</h1>
-          <p className="text-muted-foreground">
-            Monitor and inspect incoming webhook requests in real-time
-          </p>
+        {/* Header content now in a flex container */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Webhooks Listener</h1>
+            <p className="text-muted-foreground">
+              Monitor and inspect incoming webhook requests in real-time
+            </p>
+          </div>
+
+          {/* Auto-refresh toggle button */}
+          <div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setAutoRefresh(!autoRefresh)}
+                    className={cn(
+                      // When "on", change background to accent color
+                      autoRefresh && "bg-accent text-accent-foreground hover:bg-accent/90"
+                    )}
+                  >
+                    <RefreshCw 
+                      className={cn(
+                        "h-4 w-4",
+                        // When "on", spin the icon
+                        autoRefresh && "animate-spin"
+                      )} 
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle Auto-Refresh</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
 
-        {/* 3. The Card: flex-grow and min-h-0 are correct. They'll now work
-               because the parent container has a defined height (h-screen)
-               and is a flex container. */}
         <Card className="overflow-hidden flex-grow min-h-0">
-          {/* The inner grid needs h-full to occupy the entire Card height. */}
           <div className="grid grid-cols-[400px_1fr] h-full">
             <WebhookList
               webhooks={webhooks}
