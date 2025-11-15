@@ -46,7 +46,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
     <div className="h-full flex flex-col min-h-0">
       
       {/* Frozen header row */}
-      <div className="bg-muted/70 border-b border-border">
+      <div className="bg-secondary border-b border-border">
         <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
           Webhook Information
         </div>
