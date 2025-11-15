@@ -147,8 +147,8 @@ export default function WebhooksListener() {
           </p>
         </div>
 
-        {/* 3. The Card: Replace fixed height with flex-grow to fill remaining vertical space. */}
-        <Card className="overflow-hidden flex-grow">
+        {/* 3. The Card: Add min-h-0 to ensure flex-grow correctly restricts the card's height. */}
+        <Card className="overflow-hidden flex-grow min-h-0">
           {/* The inner grid needs h-full to occupy the entire Card height. */}
           <div className="grid grid-cols-[400px_1fr] h-full">
             <WebhookList
