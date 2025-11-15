@@ -102,7 +102,7 @@ const mockWebhooks: Webhook[] = [
   {
     id: "wh_2k3l4m5n6o",
     timestamp: new Date("2025-01-15T12:48:33Z"),
-    method: "PUT",
+    method: "DELETE",
     endpoint: "/webhooks/orders",
     statusCode: 500,
     statusText: "Internal Server Error",
