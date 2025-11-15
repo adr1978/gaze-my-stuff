@@ -43,7 +43,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
                 "w-full text-left p-4 transition-all",
                 "hover:bg-muted/50",
                 selectedWebhookId === webhook.id
-                  ? "bg-accent/40 border-accent-foreground/20"
+                  ? "bg-accent/50 border-accent-foreground/20"
                   : "bg-card border-border"
               )}
             >
