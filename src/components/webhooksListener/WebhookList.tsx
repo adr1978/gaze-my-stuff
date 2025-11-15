@@ -57,16 +57,10 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
                   >
                     {webhook.method}
                   </Badge>
-                  <Badge
-                    variant={webhook.statusCode >= 200 && webhook.statusCode < 300 ? "success" : "destructive"}
-                    className="text-xs"
-                  >
-                    {webhook.statusCode}
-                  </Badge>
+                  <span className="font-mono text-xs text-foreground truncate">
+                    {webhook.endpoint}
+                  </span>
                 </div>
-                <p className="font-mono text-sm text-foreground truncate">
-                  {webhook.endpoint}
-                </p>
                 <p className="text-xs text-muted-foreground">
                   {format(webhook.timestamp, "dd-MMM-yyyy HH:mm:ss")}
                 </p>
