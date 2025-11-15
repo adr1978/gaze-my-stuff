@@ -115,7 +115,7 @@ export default function WebhooksListener() {
           </p>
         </div>
 
-        <Card className="overflow-hidden h-[calc(100vh-220px)]">
+        <Card className="overflow-hidden h-[calc(100vh-180px)]">
           <div className="grid grid-cols-[400px_1fr] h-full">
             <WebhookList
               webhooks={webhooks}
