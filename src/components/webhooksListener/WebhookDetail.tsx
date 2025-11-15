@@ -1,9 +1,10 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atelierCaveLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { atelierCaveLight, atelierCaveDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import type { Webhook } from "./types";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 interface WebhookDetailProps {
   webhook: Webhook | null;
@@ -17,6 +18,8 @@ const methodColors = {
 };
 
 export function WebhookDetail({ webhook }: WebhookDetailProps) {
+  const { theme } = useTheme();
+  
   if (!webhook) {
     return (
       <div className="h-full flex items-center justify-center p-8">
@@ -82,7 +85,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
             <h3 className="text-lg font-semibold mb-4">Request Body</h3>
             <SyntaxHighlighter
               language="json"
-              style={atelierCaveLight}
+              style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
               customStyle={{
                 borderRadius: "6px",
                 fontSize: "12px",
