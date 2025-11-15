@@ -15,7 +15,8 @@ export function Layout({ children }: LayoutProps) {
           <header className="h-14 border-b border-border flex items-center px-4 md:hidden">
             <SidebarTrigger />
           </header>
-          <main className="flex-1 overflow-auto">
+          {/* 💡 FIX: Add min-h-0 to the <main> tag */}
+          <main className="flex-1 overflow-auto min-h-0">
             {children}
           </main>
         </div>

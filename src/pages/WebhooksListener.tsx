@@ -137,7 +137,7 @@ export default function WebhooksListener() {
     <div className="h-full bg-background p-8 flex flex-col">
       
       {/* 2. Set to w-full, define as a vertical flex container, and allow it to grow. */}
-      <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow">
+      <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow min-h-0">
         
         {/* Header content (fixed height) */}
         <div>
