@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Card } from "@/components/ui/card";
 import { WebhookList } from "@/components/webhooksListener/WebhookList";
 import { WebhookDetail } from "@/components/webhooksListener/WebhookDetail";
 import type { Webhook } from "@/components/webhooksListener/types";
@@ -114,14 +115,16 @@ export default function WebhooksListener() {
           </p>
         </div>
 
-        <div className="grid grid-cols-[400px_1fr] gap-6 h-[calc(100vh-250px)]">
-          <WebhookList
-            webhooks={webhooks}
-            selectedWebhookId={selectedWebhook?.id}
-            onSelectWebhook={setSelectedWebhook}
-          />
-          <WebhookDetail webhook={selectedWebhook} />
-        </div>
+        <Card className="overflow-hidden h-[calc(100vh-220px)]">
+          <div className="grid grid-cols-[400px_1fr] h-full">
+            <WebhookList
+              webhooks={webhooks}
+              selectedWebhookId={selectedWebhook?.id}
+              onSelectWebhook={setSelectedWebhook}
+            />
+            <WebhookDetail webhook={selectedWebhook} />
+          </div>
+        </Card>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -21,17 +20,17 @@ const methodColors = {
 export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: WebhookListProps) {
   if (webhooks.length === 0) {
     return (
-      <Card className="h-full flex items-center justify-center p-8">
+      <div className="h-full flex items-center justify-center p-8 border-r border-border">
         <div className="text-center text-muted-foreground">
           <p className="text-lg font-medium mb-2">No webhooks received yet</p>
           <p className="text-sm">Webhook events will appear here when received</p>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="h-full overflow-hidden">
+    <div className="h-full overflow-hidden border-r border-border">
       <ScrollArea className="h-full">
         <div className="divide-y divide-border">
           {webhooks.map((webhook) => (
@@ -69,6 +68,6 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
           ))}
         </div>
       </ScrollArea>
-    </Card>
+    </div>
   );
 }
