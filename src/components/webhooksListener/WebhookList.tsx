@@ -30,8 +30,10 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
   }
 
   return (
-    <div className="h-full overflow-hidden border-r border-border">
-      <ScrollArea className="h-full">
+    // 1. Add 'flex flex-col' to container to enable Flexbox for vertical layout.
+    <div className="h-full flex flex-col border-r border-border">
+      {/* 2. Use 'flex-1' to make the ScrollArea consume all available height. */}
+      <ScrollArea className="flex-1">
         <div className="divide-y divide-border">
           {webhooks.map((webhook) => (
             <button
@@ -39,7 +41,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
               onClick={() => onSelectWebhook(webhook)}
               className={cn(
                 "w-full text-left p-4 transition-all",
-                "hover:bg-muted/30",
+                "hover:bg-muted/50",
                 selectedWebhookId === webhook.id
                   ? "bg-accent/20 border-accent-foreground/20"
                   : "bg-card border-border"

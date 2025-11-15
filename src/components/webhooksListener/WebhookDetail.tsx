@@ -32,8 +32,10 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
   }
 
   return (
-    <div className="h-full overflow-hidden">
-      <ScrollArea className="h-full">
+    // 1. Change to 'h-full flex flex-col' to establish a vertical flex container.
+    <div className="h-full flex flex-col">
+      {/* 2. Use 'flex-1' to make the ScrollArea consume all available height. */}
+      <ScrollArea className="flex-1">
         <div className="p-6 space-y-6">
           {/* Request Details */}
           <div>
@@ -52,6 +54,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
                 <Badge
                     variant="webhook"
                     className={cn(
+                      // Applied the 'justify-self-start' fix from previous turn:
                       "justify-self-start font-mono text-xs font-semibold",
                       methodColors[webhook.method]
                     )}
