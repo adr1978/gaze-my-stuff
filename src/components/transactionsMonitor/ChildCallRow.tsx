@@ -30,21 +30,21 @@ export function ChildCallRow({ call, onViewDetails }: ChildCallRowProps) {
 
   return (
     <div className="flex items-center justify-between gap-4 px-6 py-3 hover:bg-muted/30 transition-colors border-l-2 border-border ml-8">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="flex items-center gap-3 flex-1 min-w-0 grid grid-cols-[15px_15px_150px_1fr_20px]">
         <StatusIcon 
           className={`h-4 w-4 flex-shrink-0 ${
             isError ? "text-destructive" : "text-emerald-600"
           }`} 
         />
         <CallIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        <div className="w-50">
+        <div>
           <p className="text-sm font-medium truncate">{callTypeLabel}</p>
           <p className="text-xs text-muted-foreground">
             {format(new Date(call.timestamp), "HH:mm:ss")} • {call.duration_ms}ms
             {call.transaction_id && ` • ${call.transaction_id.substring(0, 8)}...`}
           </p>
         </div>
-        <div className="flex-1 text-xs">
+        <div className="text-xs">
           <span className="font-mono">
             <span className={call.http_method === "GET" ? "text-success font-semibold" : "text-warning font-semibold"}>
               {call.http_method}
