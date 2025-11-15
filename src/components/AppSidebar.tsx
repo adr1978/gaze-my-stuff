@@ -1,6 +1,6 @@
 // Import icons from lucide-react library for sidebar navigation
 import React from "react";
-import { Landmark, Receipt, UtensilsCrossed, Home, BookOpen, TrendingUp, Image } from "lucide-react";
+import { Landmark, Receipt, UtensilsCrossed, Home, BookOpen, TrendingUp, Image, Webhook } from "lucide-react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "@/components/sidebar/ThemeToggle";
 import {
@@ -30,7 +30,6 @@ const navigationItems = [
     title: "Finance",
     items: [
       { title: "Bank Connections", url: "/bank-connections", icon: Landmark },
-      { title: "Transactions Monitor", url: "/transactions-monitor", icon: Receipt },
       { title: "Investments", url: "/investments", icon: TrendingUp },
     ],
   },
@@ -42,6 +41,13 @@ const navigationItems = [
       { title: "Documentation", url: "/documentation", icon: BookOpen },
     ],
   },
+  {
+    title: "Monitoring",
+    items: [
+      { title: "Transactions Monitor", url: "/transactions-monitor", icon: Receipt },
+    ],
+  },
+
 ];
 
 /**
