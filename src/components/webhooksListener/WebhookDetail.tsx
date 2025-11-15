@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atelierCaveLight } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import type { Webhook } from "./types";
+import { cn } from "@/lib/utils";
 
 interface WebhookDetailProps {
   webhook: Webhook | null;
