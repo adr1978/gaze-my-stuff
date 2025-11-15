@@ -23,7 +23,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
       <div className="h-full flex flex-col border-r border-border min-h-0">
         {/* Header */}
         <div className="bg-secondary border-b border-border">
-          <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
+          <div className="text-sm font-semibold text-muted-foreground px-4 py-3">
             Webhooks Received
           </div>
         </div>
@@ -45,7 +45,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
       
       {/* Frozen header row */}
       <div className="bg-secondary border-b border-border">
-        <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
+        <div className="text-sm font-semibold text-muted-foreground px-4 py-3">
           Webhooks Received
         </div>
       </div>

@@ -26,7 +26,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
       <div className="h-full flex flex-col min-h-0">
         {/* Header */}
         <div className="bg-secondary border-b border-border">
-          <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
+          <div className="text-sm font-semibold text-muted-foreground px-4 py-3">
             Webhook Information
           </div>
         </div>
@@ -47,7 +47,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
       
       {/* Frozen header row */}
       <div className="bg-secondary border-b border-border">
-        <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
+        <div className="text-sm font-semibold text-muted-foreground px-4 py-3">
           Webhook Information
         </div>
       </div>
