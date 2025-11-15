@@ -25,7 +25,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
     return (
       <div className="h-full flex flex-col min-h-0">
         {/* Header */}
-        <div className="bg-muted/50 border-b border-border">
+        <div className="bg-secondary border-b border-border">
           <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
             Webhook Information
           </div>
