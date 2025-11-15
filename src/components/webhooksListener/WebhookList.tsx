@@ -44,7 +44,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
     <div className="h-full flex flex-col border-r border-border min-h-0">
       
       {/* Frozen header row */}
-      <div className="bg-muted/60 border-b border-border">
+      <div className="bg-muted/70 border-b border-border">
         <div className="text-xs font-semibold text-muted-foreground px-4 py-3">
           Webhooks Received
         </div>
