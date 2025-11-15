@@ -45,6 +45,7 @@ const navigationItems = [
     title: "Monitoring",
     items: [
       { title: "Transactions Monitor", url: "/transactions-monitor", icon: Receipt },
+      { title: "Webhooks Listener", url: "/webhooks-listener", icon: Webhook },
     ],
   },
 
