@@ -52,7 +52,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
                 <Badge
                     variant="webhook"
                     className={cn(
-                      "inline-flex font-mono text-xs font-semibold",
+                      "justify-self-start font-mono text-xs font-semibold",
                       methodColors[webhook.method]
                     )}
                   >
