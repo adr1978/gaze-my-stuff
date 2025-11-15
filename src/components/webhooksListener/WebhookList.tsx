@@ -31,7 +31,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
 
   return (
     // Outer container correctly set to h-full flex flex-col
-    <div className="h-full flex flex-col border-r border-border">
+    <div className="h-full flex flex-col border-r border-border min-h-0">
       {/* 💡 FIX: Use both h-full and flex-1 on ScrollArea to reliably fill vertical space */}
       <ScrollArea className="h-full flex-1">
         <div className="divide-y divide-border">
