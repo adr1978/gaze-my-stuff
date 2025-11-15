@@ -134,7 +134,7 @@ export default function WebhooksListener() {
 
   return (
     // 1. Set h-screen and define as a vertical flex container to manage the page content.
-    <div className="h-screen bg-background p-8 flex flex-col">
+    <div className="h-full bg-background p-8 flex flex-col">
       
       {/* 2. Set to w-full, define as a vertical flex container, and allow it to grow. */}
       <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow">
