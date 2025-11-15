@@ -9,7 +9,7 @@ const mockWebhooks: Webhook[] = [
   {
     id: "wh_1a2b3c4d5e",
     timestamp: new Date("2025-01-15T14:32:18Z"),
-    method: "POST",
+    method: "GET",
     endpoint: "/webhooks/users",
     statusCode: 200,
     statusText: "OK",

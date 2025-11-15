@@ -45,7 +45,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground font-medium">Method:</span>
-                <span className={cn("font-mono text-xs font-semibold", methodColors[webhook.method])}>
+                <span className={cn("font-mono font-semibold", methodColors[webhook.method])}>
                   {webhook.method}
                 </span>
               </div>
