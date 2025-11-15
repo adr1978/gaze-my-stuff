@@ -39,8 +39,8 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
               key={webhook.id}
               onClick={() => onSelectWebhook(webhook)}
               className={cn(
-                "w-full text-left p-4 rounded-lg border transition-all",
-                "hover:bg-accent/50 hover:border-accent-foreground/20",
+                "w-full text-left p-4 rounded-lg transition-all",
+                "hover:bg-muted/50",
                 selectedWebhookId === webhook.id
                   ? "bg-accent border-accent-foreground/20"
                   : "bg-card border-border"
