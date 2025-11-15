@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -20,16 +19,16 @@ const methodColors = {
 export function WebhookDetail({ webhook }: WebhookDetailProps) {
   if (!webhook) {
     return (
-      <Card className="h-full flex items-center justify-center p-8">
+      <div className="h-full flex items-center justify-center p-8">
         <div className="text-center text-muted-foreground">
           <p className="text-lg">Select a webhook to see its details</p>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="h-full overflow-hidden">
+    <div className="h-full overflow-hidden">
       <ScrollArea className="h-full">
         <div className="p-6 space-y-6">
           {/* Request Details */}
@@ -96,6 +95,6 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
           </div>
         </div>
       </ScrollArea>
-    </Card>
+    </div>
   );
 }
