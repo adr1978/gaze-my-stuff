@@ -75,7 +75,34 @@ const mockWebhooks: Webhook[] = [
   {
     id: "wh_2k3l4m5n6o",
     timestamp: new Date("2025-01-15T12:48:33Z"),
-    method: "POST",
+    method: "PUT",
+    endpoint: "/webhooks/orders",
+    statusCode: 500,
+    statusText: "Internal Server Error",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": "Shopify/1.0",
+      "X-Shopify-Topic": "orders/create",
+      "X-Shopify-Hmac-SHA256": "abc123def456ghi789jkl012mno345pqr678stu901vwx234yz=",
+    },
+    body: JSON.stringify({
+      id: 123456789,
+      email: "customer@example.com",
+      total_price: "150.00",
+      line_items: [
+        {
+          id: 987654321,
+          title: "Example Product",
+          quantity: 2,
+          price: "75.00",
+        },
+      ],
+    }, null, 2),
+  },
+  {
+    id: "wh_2k3l4m5n6o",
+    timestamp: new Date("2025-01-15T12:48:33Z"),
+    method: "PUT",
     endpoint: "/webhooks/orders",
     statusCode: 500,
     statusText: "Internal Server Error",
