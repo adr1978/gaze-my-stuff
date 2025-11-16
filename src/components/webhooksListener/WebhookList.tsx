@@ -81,7 +81,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {format(webhook.timestamp, "dd-MMM-yyyy HH:mm:ss")}
+                  {format(new Date(webhook.timestamp), "dd-MMM-yyyy HH:mm:ss")}
                 </p>
               </div>
             </button>
