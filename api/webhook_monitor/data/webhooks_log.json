@@ -1,1 +1,224 @@
-[]
+[
+  {
+    "id": "wh_20250116141530001",
+    "timestamp": "2025-01-16T14:15:30Z",
+    "method": "POST",
+    "endpoint": "/webhooks/notion/page_update",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "Notion-Webhook/1.0",
+      "x-notion-signature": "sha256=abc123def456ghi789jkl012mno345pqr678stu901vwx234yz567abc890def123",
+      "x-notion-delivery": "550e8400-e29b-41d4-a716-446655440001"
+    },
+    "body": "{\n  \"event\": \"page.updated\",\n  \"page_id\": \"7d8f9e0a-1b2c-3d4e-5f6g-7h8i9j0k1l2m\",\n  \"workspace_id\": \"workspace-123\",\n  \"timestamp\": \"2025-01-16T14:15:30Z\",\n  \"data\": {\n    \"title\": \"Project Planning Document\",\n    \"last_edited_by\": {\n      \"id\": \"user-456\",\n      \"name\": \"John Doe\"\n    },\n    \"properties\": {\n      \"Status\": {\n        \"select\": {\n          \"name\": \"In Progress\"\n        }\n      },\n      \"Category\": {\n        \"multi_select\": [\n          {\"name\": \"Documentation\"},\n          {\"name\": \"Planning\"}\n        ]\n      }\n    }\n  }\n}"
+  },
+  {
+    "id": "wh_20250116134520002",
+    "timestamp": "2025-01-16T13:45:20Z",
+    "method": "POST",
+    "endpoint": "/webhooks/github/push",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "GitHub-Hookshot/abc1234",
+      "x-github-delivery": "12345678-1234-1234-1234-123456789012",
+      "x-github-event": "push",
+      "x-hub-signature-256": "sha256=fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
+    },
+    "body": "{\n  \"ref\": \"refs/heads/main\",\n  \"before\": \"abc123def456\",\n  \"after\": \"def456ghi789\",\n  \"repository\": {\n    \"id\": 987654321,\n    \"name\": \"webhook-monitor\",\n    \"full_name\": \"myorg/webhook-monitor\",\n    \"private\": false\n  },\n  \"pusher\": {\n    \"name\": \"developer\",\n    \"email\": \"dev@example.com\"\n  },\n  \"commits\": [\n    {\n      \"id\": \"def456ghi789\",\n      \"message\": \"Add webhook logging functionality\",\n      \"timestamp\": \"2025-01-16T13:45:15Z\",\n      \"author\": {\n        \"name\": \"Developer\",\n        \"email\": \"dev@example.com\"\n      },\n      \"added\": [\"api/webhook_monitor/logger.py\"],\n      \"modified\": [\"api/main.py\"],\n      \"removed\": []\n    }\n  ]\n}"
+  },
+  {
+    "id": "wh_20250116121015003",
+    "timestamp": "2025-01-16T12:10:15Z",
+    "method": "POST",
+    "endpoint": "/webhooks/stripe/payment_intent",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "Stripe/1.0 (+https://stripe.com/docs/webhooks)",
+      "stripe-signature": "t=1705408215,v1=abc123def456,v0=ghi789jkl012"
+    },
+    "body": "{\n  \"id\": \"evt_1a2b3c4d5e6f7g8h\",\n  \"object\": \"event\",\n  \"api_version\": \"2023-10-16\",\n  \"created\": 1705408215,\n  \"type\": \"payment_intent.succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"pi_1a2b3c4d5e6f7g8h\",\n      \"object\": \"payment_intent\",\n      \"amount\": 15000,\n      \"currency\": \"usd\",\n      \"status\": \"succeeded\",\n      \"customer\": \"cus_abc123def456\",\n      \"payment_method\": \"pm_card_visa\",\n      \"receipt_email\": \"customer@example.com\"\n    }\n  }\n}"
+  },
+  {
+    "id": "wh_20250116105530004",
+    "timestamp": "2025-01-16T10:55:30Z",
+    "method": "GET",
+    "endpoint": "/webhooks/healthcheck",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "user-agent": "StatusCake/1.0",
+      "accept": "*/*",
+      "x-statuscake-id": "123456"
+    },
+    "body": "{\n  \"message\": \"Health check request\"\n}"
+  },
+  {
+    "id": "wh_20250116094220005",
+    "timestamp": "2025-01-16T09:42:20Z",
+    "method": "PUT",
+    "endpoint": "/webhooks/shopify/order_update",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "Shopify/1.0",
+      "x-shopify-topic": "orders/updated",
+      "x-shopify-hmac-sha256": "mnopqr123456stuvwx789012yz345abc678def901ghi234jkl=",
+      "x-shopify-shop-domain": "my-store.myshopify.com"
+    },
+    "body": "{\n  \"id\": 5678901234,\n  \"email\": \"customer@example.com\",\n  \"total_price\": \"299.99\",\n  \"subtotal_price\": \"299.99\",\n  \"total_tax\": \"0.00\",\n  \"currency\": \"USD\",\n  \"financial_status\": \"paid\",\n  \"fulfillment_status\": \"fulfilled\",\n  \"line_items\": [\n    {\n      \"id\": 12345678,\n      \"title\": \"Premium Widget\",\n      \"quantity\": 1,\n      \"price\": \"299.99\",\n      \"sku\": \"WIDGET-001\"\n    }\n  ],\n  \"shipping_address\": {\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"address1\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"province\": \"NY\",\n    \"country\": \"United States\",\n    \"zip\": \"10001\"\n  }\n}"
+  },
+  {
+    "id": "wh_20250116083015006",
+    "timestamp": "2025-01-16T08:30:15Z",
+    "method": "POST",
+    "endpoint": "/webhooks/slack/command",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/x-www-form-urlencoded",
+      "user-agent": "Slackbot 1.0 (+https://api.slack.com/robots)",
+      "x-slack-request-timestamp": "1705395015",
+      "x-slack-signature": "v0=a2114d57b48eac39b9ad189dd8316235a7b4a8d21a10bd27519666489c69b503"
+    },
+    "body": "{\n  \"token\": \"gIkuvaNzQIHg97ATvDxqgjtO\",\n  \"team_id\": \"T0001\",\n  \"team_domain\": \"example\",\n  \"channel_id\": \"C2147483705\",\n  \"channel_name\": \"test\",\n  \"user_id\": \"U2147483697\",\n  \"user_name\": \"Steve\",\n  \"command\": \"/deploy\",\n  \"text\": \"production v2.1.0\",\n  \"response_url\": \"https://hooks.slack.com/commands/1234/5678\",\n  \"trigger_id\": \"13345224609.738474920.8088930838d88f008e0\"\n}"
+  },
+  {
+    "id": "wh_20250116072545007",
+    "timestamp": "2025-01-16T07:25:45Z",
+    "method": "DELETE",
+    "endpoint": "/webhooks/notion/page_delete",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "Notion-Webhook/1.0",
+      "x-notion-signature": "sha256=delete789abc012def345ghi678jkl901mno234pqr567stu890vwx123yz456",
+      "x-notion-delivery": "660e9500-f39c-52e5-bg27-557766551112"
+    },
+    "body": "{\n  \"event\": \"page.deleted\",\n  \"page_id\": \"9f0g1h2i-3j4k-5l6m-7n8o-9p0q1r2s3t4u\",\n  \"workspace_id\": \"workspace-789\",\n  \"timestamp\": \"2025-01-16T07:25:45Z\",\n  \"deleted_by\": {\n    \"id\": \"user-789\",\n    \"name\": \"Sarah Johnson\"\n  }\n}"
+  },
+  {
+    "id": "wh_20250116055510008",
+    "timestamp": "2025-01-16T05:55:10Z",
+    "method": "POST",
+    "endpoint": "/webhooks/github/pull_request",
+    "statusCode": 201,
+    "statusText": "Created",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "GitHub-Hookshot/xyz9876",
+      "x-github-delivery": "98765432-9876-9876-9876-987654321098",
+      "x-github-event": "pull_request",
+      "x-hub-signature-256": "sha256=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    },
+    "body": "{\n  \"action\": \"opened\",\n  \"number\": 42,\n  \"pull_request\": {\n    \"id\": 1234567890,\n    \"title\": \"Add new feature: webhook monitoring\",\n    \"state\": \"open\",\n    \"user\": {\n      \"login\": \"developer123\",\n      \"id\": 12345\n    },\n    \"body\": \"This PR adds comprehensive webhook monitoring capabilities including:\\n- JSON-based logging\\n- Auto-cleanup of old logs\\n- Real-time frontend updates\",\n    \"created_at\": \"2025-01-16T05:55:10Z\",\n    \"updated_at\": \"2025-01-16T05:55:10Z\",\n    \"head\": {\n      \"ref\": \"feature/webhook-monitoring\",\n      \"sha\": \"abc123def456ghi789\"\n    },\n    \"base\": {\n      \"ref\": \"main\",\n      \"sha\": \"xyz789uvw456rst123\"\n    }\n  },\n  \"repository\": {\n    \"id\": 123456789,\n    \"name\": \"api-server\",\n    \"full_name\": \"company/api-server\"\n  }\n}"
+  },
+  {
+    "id": "wh_20250116033020009",
+    "timestamp": "2025-01-16T03:30:20Z",
+    "method": "PATCH",
+    "endpoint": "/webhooks/notion/database_update",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "Notion-Webhook/1.0",
+      "x-notion-signature": "sha256=patch456ghi789jkl012mno345pqr678stu901vwx234yz567abc890def123ghi",
+      "x-notion-delivery": "770f0611-g40d-63f6-ch38-668877662223"
+    },
+    "body": "{\n  \"event\": \"database.updated\",\n  \"database_id\": \"1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p\",\n  \"workspace_id\": \"workspace-456\",\n  \"timestamp\": \"2025-01-16T03:30:20Z\",\n  \"changes\": {\n    \"properties\": {\n      \"Priority\": {\n        \"type\": \"select\",\n        \"options\": [\n          {\"name\": \"High\", \"color\": \"red\"},\n          {\"name\": \"Medium\", \"color\": \"yellow\"},\n          {\"name\": \"Low\", \"color\": \"green\"}\n        ]\n      }\n    }\n  },\n  \"updated_by\": {\n    \"id\": \"user-321\",\n    \"name\": \"Admin User\"\n  }\n}"
+  },
+  {
+    "id": "wh_20250116021545010",
+    "timestamp": "2025-01-16T02:15:45Z",
+    "method": "POST",
+    "endpoint": "/webhooks/stripe/invoice_payment",
+    "statusCode": 500,
+    "statusText": "Internal Server Error",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "Stripe/1.0 (+https://stripe.com/docs/webhooks)",
+      "stripe-signature": "t=1705369545,v1=error123abc456,v0=def789ghi012"
+    },
+    "body": "{\n  \"id\": \"evt_error_1x2y3z4a5b6c7d8e\",\n  \"object\": \"event\",\n  \"api_version\": \"2023-10-16\",\n  \"created\": 1705369545,\n  \"type\": \"invoice.payment_failed\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"in_1x2y3z4a5b6c7d8e\",\n      \"object\": \"invoice\",\n      \"amount_due\": 25000,\n      \"currency\": \"usd\",\n      \"customer\": \"cus_xyz789abc123\",\n      \"status\": \"open\",\n      \"attempt_count\": 3,\n      \"next_payment_attempt\": 1705455945\n    }\n  }\n}"
+  },
+  {
+    "id": "wh_20250116005530011",
+    "timestamp": "2025-01-16T00:55:30Z",
+    "method": "POST",
+    "endpoint": "/webhooks/twilio/sms_received",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/x-www-form-urlencoded",
+      "user-agent": "TwilioProxy/1.1",
+      "x-twilio-signature": "abc123def456ghi789jkl012mno345pqr678="
+    },
+    "body": "{\n  \"MessageSid\": \"SM1234567890abcdef1234567890abcdef\",\n  \"AccountSid\": \"AC1234567890abcdef1234567890abcdef\",\n  \"From\": \"+15555551234\",\n  \"To\": \"+15555555678\",\n  \"Body\": \"Hello! This is a test SMS message.\",\n  \"NumMedia\": \"0\",\n  \"MessageStatus\": \"received\",\n  \"ApiVersion\": \"2010-04-01\"\n}"
+  },
+  {
+    "id": "wh_20250115234020012",
+    "timestamp": "2025-01-15T23:40:20Z",
+    "method": "POST",
+    "endpoint": "/webhooks/sendgrid/email_event",
+    "statusCode": 202,
+    "statusText": "Accepted",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "SendGrid Event API",
+      "x-twilio-email-event-webhook-signature": "MEYCIQDabcdef123456789==",
+      "x-twilio-email-event-webhook-timestamp": "1705359620"
+    },
+    "body": "[\n  {\n    \"email\": \"recipient@example.com\",\n    \"timestamp\": 1705359620,\n    \"event\": \"delivered\",\n    \"sg_event_id\": \"sendgrid_internal_event_id\",\n    \"sg_message_id\": \"filter0123456789abcdef.0123.45678901234567890\",\n    \"smtp-id\": \"<filter0123456789abcdef.0123.45678901234567890@example.com>\",\n    \"category\": [\"transactional\", \"welcome_email\"],\n    \"marketing_campaign_id\": null\n  }\n]"
+  },
+  {
+    "id": "wh_20250115215515013",
+    "timestamp": "2025-01-15T21:55:15Z",
+    "method": "GET",
+    "endpoint": "/webhooks/monitor/ping",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "user-agent": "UptimeRobot/2.0",
+      "accept": "*/*",
+      "x-uptimerobot-monitor-id": "987654321"
+    },
+    "body": "{\n  \"message\": \"Ping request from uptime monitor\"\n}"
+  },
+  {
+    "id": "wh_20250115203045014",
+    "timestamp": "2025-01-15T20:30:45Z",
+    "method": "POST",
+    "endpoint": "/webhooks/mailchimp/subscribe",
+    "statusCode": 200,
+    "statusText": "OK",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "MailChimp.com WebHook Validator",
+      "x-mailchimp-signature": "abcdef1234567890abcdef1234567890"
+    },
+    "body": "{\n  \"type\": \"subscribe\",\n  \"fired_at\": \"2025-01-15T20:30:45Z\",\n  \"data\": {\n    \"id\": \"abc123def456\",\n    \"email\": \"newsubscriber@example.com\",\n    \"email_type\": \"html\",\n    \"ip_opt\": \"192.168.1.100\",\n    \"list_id\": \"list123456\",\n    \"merges\": {\n      \"EMAIL\": \"newsubscriber@example.com\",\n      \"FNAME\": \"Alex\",\n      \"LNAME\": \"Thompson\"\n    }\n  }\n}"
+  },
+  {
+    "id": "wh_20250115184520015",
+    "timestamp": "2025-01-15T18:45:20Z",
+    "method": "POST",
+    "endpoint": "/webhooks/discord/message",
+    "statusCode": 204,
+    "statusText": "No Content",
+    "headers": {
+      "content-type": "application/json",
+      "user-agent": "Discord-Interactions/1.0",
+      "x-signature-ed25519": "signature_abc123def456",
+      "x-signature-timestamp": "1705344320"
+    },
+    "body": "{\n  \"type\": 2,\n  \"token\": \"unique_interaction_token\",\n  \"id\": \"interaction_id_123456\",\n  \"application_id\": \"app_id_789012\",\n  \"guild_id\": \"guild_345678\",\n  \"channel_id\": \"channel_901234\",\n  \"member\": {\n    \"user\": {\n      \"id\": \"567890123456789012\",\n      \"username\": \"DiscordUser\",\n      \"discriminator\": \"1234\"\n    }\n  },\n  \"data\": {\n    \"name\": \"status\",\n    \"type\": 1,\n    \"options\": []\n  }\n}"
+  }
+]
