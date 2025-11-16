@@ -1,136 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import { WebhookList } from "@/components/webhooksListener/WebhookList";
 import { WebhookDetail } from "@/components/webhooksListener/WebhookDetail";
-import type { Webhook } from "@/components/webhooksListener/types";
-
-// Mock data for demonstration
-const mockWebhooks: Webhook[] = [
-  {
-    id: "wh_1a2b3c4d5e",
-    timestamp: new Date("2025-01-15T14:32:18Z"),
-    method: "GET",
-    endpoint: "/webhooks/users",
-    statusCode: 200,
-    statusText: "OK",
-    headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "GitHub-Hookshot/abc123",
-      "X-GitHub-Delivery": "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
-      "X-GitHub-Event": "push",
-      "X-Hub-Signature-256": "sha256=abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-    },
-    body: JSON.stringify({
-      ref: "refs/heads/main",
-      before: "abc123def456",
-      after: "def456ghi789",
-      repository: {
-        id: 123456789,
-        name: "example-repo",
-        full_name: "user/example-repo",
-      },
-      pusher: {
-        name: "user",
-        email: "user@example.com",
-      },
-      commits: [
-        {
-          id: "def456ghi789",
-          message: "Update README.md",
-          timestamp: "2025-01-15T14:32:15Z",
-          author: {
-            name: "user",
-            email: "user@example.com",
-          },
-        },
-      ],
-    }, null, 2),
-  },
-  {
-    id: "wh_6f7g8h9i0j",
-    timestamp: new Date("2025-01-15T13:15:42Z"),
-    method: "POST",
-    endpoint: "/webhooks/payments",
-    statusCode: 201,
-    statusText: "Created",
-    headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "Stripe/1.0",
-      "Stripe-Signature": "t=1642252542,v1=abc123def456,v0=ghi789jkl012",
-    },
-    body: JSON.stringify({
-      id: "evt_1a2b3c4d5e",
-      object: "event",
-      type: "payment_intent.succeeded",
-      data: {
-        object: {
-          id: "pi_1a2b3c4d5e",
-          amount: 5000,
-          currency: "usd",
-          status: "succeeded",
-        },
-      },
-    }, null, 2),
-  },
-  {
-    id: "wh_2k3l4m5n6o",
-    timestamp: new Date("2025-01-15T12:48:33Z"),
-    method: "PUT",
-    endpoint: "/webhooks/orders",
-    statusCode: 500,
-    statusText: "Internal Server Error",
-    headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "Shopify/1.0",
-      "X-Shopify-Topic": "orders/create",
-      "X-Shopify-Hmac-SHA256": "abc123def456ghi789jkl012mno345pqr678stu901vwx234yz=",
-    },
-    body: JSON.stringify({
-      id: 123456789,
-      email: "customer@example.com",
-      total_price: "150.00",
-      line_items: [
-        {
-          id: 987654321,
-          title: "Example Product",
-          quantity: 2,
-          price: "75.00",
-        },
-      ],
-    }, null, 2),
-  },
-  {
-    id: "wh_2k3l4m5n6o9",
-    timestamp: new Date("2025-01-15T12:48:33Z"),
-    method: "DELETE",
-    endpoint: "/webhooks/orders",
-    statusCode: 500,
-    statusText: "Internal Server Error",
-    headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "Shopify/1.0",
-      "X-Shopify-Topic": "orders/create",
-      "X-Shopify-Hmac-SHA256": "abc123def456ghi789jkl012mno345pqr678stu901vwx234yz=",
-    },
-    body: JSON.stringify({
-      id: 123456789,
-      email: "customer@example.com",
-      total_price: "150.00",
-      line_items: [
-        {
-          id: 987654321,
-          title: "Example Product",
-          quantity: 2,
-          price: "75.00",
-        },
-      ],
-    }, null, 2),
-  },
-];
+import { webhookApi, type Webhook } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function WebhooksListener() {
-  const [webhooks] = useState<Webhook[]>(mockWebhooks);
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [lastChecked, setLastChecked] = useState<string | undefined>(undefined);
+
+  // Fetch webhooks from API
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["webhooks", lastChecked],
+    queryFn: () => webhookApi.getWebhooks(lastChecked),
+    refetchInterval: autoRefresh ? 5000 : false, // 5 seconds when auto-refresh is on
+  });
+
+  // Convert timestamps from string to Date for display
+  const webhooks: Webhook[] = (data?.webhooks || []).map(webhook => ({
+    ...webhook,
+    timestamp: webhook.timestamp as any, // Keep as string for filtering, component handles it
+  }));
+
+  // Update last checked timestamp when data changes
+  useEffect(() => {
+    if (data?.last_updated) {
+      setLastChecked(data.last_updated);
+    }
+  }, [data]);
+
+  // Handle toggle auto-refresh
+  const handleToggleAutoRefresh = () => {
+    setAutoRefresh(!autoRefresh);
+    toast.success(`Auto-refresh ${!autoRefresh ? 'enabled' : 'disabled'}`);
+  };
+
+  // Handle manual refresh
+  const handleManualRefresh = () => {
+    refetch();
+    toast.success("Webhooks refreshed");
+  };
 
   return (
     // 💡 FIX: Use h-screen (viewport height) and flex flex-col
@@ -140,26 +53,55 @@ export default function WebhooksListener() {
       <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow min-h-0">
         
         {/* Header content (fixed height) */}
-        <div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Webhooks Listener</h1>
-          <p className="text-muted-foreground">
-            Monitor and inspect incoming webhook requests in real-time
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Webhooks Listener</h1>
+            <p className="text-muted-foreground">
+              Monitor and inspect incoming webhook requests in real-time
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button
+              variant={autoRefresh ? "default" : "outline"}
+              size="sm"
+              onClick={handleToggleAutoRefresh}
+            >
+              {autoRefresh ? "Auto-refresh On" : "Auto-refresh Off"}
+            </Button>
+          </div>
         </div>
 
         {/* 3. The Card: flex-grow and min-h-0 are correct. They'll now work
                because the parent container has a defined height (h-screen)
                and is a flex container. */}
         <Card className="overflow-hidden flex-grow min-h-0">
-          {/* The inner grid needs h-full to occupy the entire Card height. */}
-          <div className="grid grid-cols-[400px_1fr] h-full">
-            <WebhookList
-              webhooks={webhooks}
-              selectedWebhookId={selectedWebhook?.id}
-              onSelectWebhook={setSelectedWebhook}
-            />
-            <WebhookDetail webhook={selectedWebhook} />
-          </div>
+          {isLoading && webhooks.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">Loading webhooks...</p>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-destructive">Failed to load webhooks. Please check your API connection.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-[400px_1fr] h-full">
+              <WebhookList
+                webhooks={webhooks}
+                selectedWebhookId={selectedWebhook?.id}
+                onSelectWebhook={setSelectedWebhook}
+              />
+              <WebhookDetail webhook={selectedWebhook} />
+            </div>
+          )}
         </Card>
       </div>
     </div>

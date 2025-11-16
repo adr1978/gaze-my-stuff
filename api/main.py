@@ -10,6 +10,7 @@ Development server: http://192.168.1.70:6059
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from banking_transactions.endpoints import sync_logs, sync_stats, sync_config
+from webhook_monitor.endpoints import get_webhooks, receive_webhook
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -33,6 +34,10 @@ app.add_middleware(
 app.include_router(sync_logs.router, prefix="/api/transactions", tags=["logs"])
 app.include_router(sync_stats.router, prefix="/api/transactions", tags=["stats"])
 app.include_router(sync_config.router, prefix="/api/transactions", tags=["config"])
+
+# Register webhook monitoring endpoints
+app.include_router(get_webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
+app.include_router(receive_webhook.router, prefix="/api/webhooks", tags=["webhooks"])
 
 @app.get("/")
 async def root():

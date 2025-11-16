@@ -170,3 +170,29 @@ export interface Institution {
   name: string;
   logo: string;
 }
+
+// Webhook API types
+export interface Webhook {
+  id: string;
+  timestamp: string;
+  method: 'POST' | 'PUT' | 'GET' | 'DELETE';
+  endpoint: string;
+  statusCode: number;
+  statusText: string;
+  headers: Record<string, string>;
+  body: string;
+}
+
+interface WebhooksResponse {
+  webhooks: Webhook[];
+  count: number;
+  last_updated: string | null;
+}
+
+// Webhook API functions
+export const webhookApi = {
+  getWebhooks: async (lastChecked?: string): Promise<WebhooksResponse> => {
+    const params = lastChecked ? `?last_checked=${encodeURIComponent(lastChecked)}` : '';
+    return api.get(`/api/webhooks/webhooks${params}`);
+  },
+};

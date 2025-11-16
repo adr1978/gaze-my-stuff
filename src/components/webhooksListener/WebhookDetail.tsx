@@ -65,7 +65,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground font-medium">Timestamp:</span>
-                <span>{webhook.timestamp.toISOString()}</span>
+                <span>{webhook.timestamp}</span>
               </div>
               <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
                 <span className="text-muted-foreground font-medium">Method:</span>
