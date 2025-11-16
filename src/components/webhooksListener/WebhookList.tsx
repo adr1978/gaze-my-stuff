@@ -15,6 +15,7 @@ const methodColors = {
   PUT: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   GET: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   DELETE: "bg-destructive/10 text-destructive border-destructive/20",
+  PATCH: "bg-purple-500/10 text-purple-600 border-purple-500/20",
 };
 
 export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: WebhookListProps) {

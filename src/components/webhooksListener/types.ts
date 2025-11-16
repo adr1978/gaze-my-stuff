@@ -1,7 +1,7 @@
 export interface Webhook {
   id: string;
   timestamp: string; // Changed from Date to string to match API response
-  method: 'POST' | 'PUT' | 'GET' | 'DELETE';
+  method: 'POST' | 'PUT' | 'GET' | 'DELETE' | 'PATCH';
   endpoint: string;
   statusCode: number;
   statusText: string;
