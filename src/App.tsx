@@ -10,6 +10,7 @@ import Investments from "./pages/Investments";
 import Home from "./pages/Home";
 import BankConnections from "./pages/BankConnections";
 import TransactionsMonitor from "./pages/TransactionsMonitor";
+import ApiMonitor from "./pages/ApiMonitor";
 import WebhooksListener from "./pages/WebhooksListener";
 import RecipeImporter from "./pages/RecipeImporter";
 import NotionCoverStudio from "./pages/NotionCoverStudio";
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/investments" element={<Investments />} />
               
               {/* Monitoring section pages */}
+              <Route path="/api-monitor" element={<ApiMonitor />} />
               <Route path="/transactions-monitor" element={<TransactionsMonitor />} />
               <Route path="/webhooks-listener" element={<WebhooksListener />} />
               

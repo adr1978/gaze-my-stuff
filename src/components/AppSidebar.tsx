@@ -1,6 +1,6 @@
 // Import icons from lucide-react library for sidebar navigation
 import React from "react";
-import { Landmark, Receipt, UtensilsCrossed, Home, BookOpen, TrendingUp, Image, Webhook } from "lucide-react";
+import { Landmark, Receipt, UtensilsCrossed, Home, BookOpen, TrendingUp, Image, Webhook, Cloud } from "lucide-react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "@/components/sidebar/ThemeToggle";
 import {
@@ -44,6 +44,7 @@ const navigationItems = [
   {
     title: "Monitoring",
     items: [
+      { title: "API Monitor", url: "/api-monitor", icon: Cloud },
       { title: "Transactions Monitor", url: "/transactions-monitor", icon: Receipt },
       { title: "Webhooks Listener", url: "/webhooks-listener", icon: Webhook },
     ],
