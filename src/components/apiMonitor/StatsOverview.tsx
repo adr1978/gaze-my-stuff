@@ -32,80 +32,96 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
     stats.success_rate >= 80 ? "text-yellow-600" :
     "text-red-600";
 
+  // Calculate success rate color
+  const successRateColour =
+    stats.success_rate >= 90
+      ? "text-emerald-600 dark:text-emerald-400"
+      : stats.success_rate >= 70
+      ? "text-amber-600 dark:text-amber-400"
+      : "text-rose-600 dark:text-rose-400";
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* Requests Today */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between space-x-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Requests Today Card */}
+      <Card className="hover:shadow-md transition-shadow duration-300">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Activity className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">
                 Requests Today
               </p>
-              <p className="text-2xl font-bold">{stats.requests_today}</p>
-              <p className="text-xs text-muted-foreground">
-                API calls made
+              <p className="text-3xl font-bold text-foreground">
+                {stats.requests_today}
               </p>
             </div>
-            <Activity className="h-8 w-8 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Avg. Duration */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between space-x-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
+      {/* Avg. Duration Card */}
+      <Card className="hover:shadow-md transition-shadow duration-300">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-sky-500/10 flex items-center justify-center flex-shrink-0">
+              <Clock className="h-6 w-6 text-sky-600 dark:text-sky-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">
                 Avg. Duration
               </p>
-              <p className="text-2xl font-bold">
+              <p className="text-3xl font-bold text-foreground">
                 {(stats.avg_duration_ms / 1000).toFixed(1)}s
               </p>
-              <p className="text-xs text-muted-foreground">
-                Per sync run
-              </p>
             </div>
-            <Clock className="h-8 w-8 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Success Rate */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between space-x-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
+      {/* Success Rate Card */}
+      <Card className="hover:shadow-md transition-shadow duration-300">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div
+              className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                stats.success_rate >= 90
+                  ? "bg-emerald-500/10"
+                  : stats.success_rate >= 70
+                  ? "bg-amber-500/10"
+                  : "bg-rose-500/10"
+              }`}
+            >
+              <TrendingUp className={`h-6 w-6 ${successRateColour}`} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">
                 Success Rate
               </p>
-              <p className={`text-2xl font-bold ${successRateColor}`}>
+              <p className={`text-3xl font-bold ${successRateColour}`}>
                 {stats.success_rate.toFixed(1)}%
               </p>
-              <p className="text-xs text-muted-foreground">
-                Last 24 hours
-              </p>
             </div>
-            <TrendingUp className="h-8 w-8 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Pages Created */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between space-x-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
+      {/* Pages Created Card */}
+      <Card className="hover:shadow-md transition-shadow duration-300">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+              <FileText className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">
                 Pages Created
               </p>
-              <p className="text-2xl font-bold">{stats.pages_created_today}</p>
-              <p className="text-xs text-muted-foreground">
-                Notion pages today
+              <p className="text-3xl font-bold text-foreground">
+                {stats.pages_created_today}
               </p>
             </div>
-            <FileText className="h-8 w-8 text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
