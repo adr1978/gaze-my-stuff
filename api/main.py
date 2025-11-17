@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from banking_transactions.endpoints import sync_logs, sync_stats, sync_config
 from webhook_monitor.endpoints import get_webhooks, receive_webhook
+from api_monitor.endpoints import monitor_stats, monitor_logs
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -38,6 +39,10 @@ app.include_router(sync_config.router, prefix="/api/transactions", tags=["config
 # Register webhook monitoring endpoints
 app.include_router(get_webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 app.include_router(receive_webhook.router, prefix="/api/webhooks", tags=["webhooks"])
+
+# Register API monitor endpoints
+app.include_router(monitor_stats.router, prefix="/api/api_monitor", tags=["api_monitor"])
+app.include_router(monitor_logs.router, prefix="/api/api_monitor", tags=["api_monitor"])
 
 @app.get("/")
 async def root():
