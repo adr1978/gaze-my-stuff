@@ -70,11 +70,10 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
     <Card className="overflow-hidden flex-grow min-h-0 flex flex-col">
       <div className="overflow-auto flex-1">
         <div className="min-w-full">
-          <div className="bg-muted/50 border-b border-border">
-            <div className="grid grid-cols-[150px_1fr_1fr_200px_120px] gap-4 px-4 py-3">
+          <div className="bg-muted/50 border-b border-border sticky top-0 z-10">
+            <div className="grid grid-cols-[150px_1fr_200px_120px] gap-4 px-4 py-3">
               <div className="text-sm font-medium">Date</div>
               <div className="text-sm font-medium">Category</div>
-              <div className="text-sm font-medium">Run ID</div>
               <div className="text-sm font-medium">Stats</div>
               <div className="text-sm font-medium text-right">Status</div>
             </div>

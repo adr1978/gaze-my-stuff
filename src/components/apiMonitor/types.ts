@@ -20,6 +20,7 @@ export interface ApiCall {
     method: string;
     url: string;
     headers?: Record<string, string>;
+    params?: Record<string, any>;
     body?: any;
   };
   response: {

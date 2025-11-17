@@ -89,7 +89,7 @@ export default function ApiMonitor() {
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-2">API Monitor</h1>
           <p className="text-muted-foreground">
-            Monitor automated API sync jobs across multiple platforms
+            Monitor automated API sync jobs across all platforms
           </p>
         </div>
 
