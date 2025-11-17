@@ -97,6 +97,24 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
               </SyntaxHighlighter>
             </div>
 
+            {/* Request Parameters */}
+            {call.request.params && Object.keys(call.request.params).length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Request Parameters</p>
+                <SyntaxHighlighter
+                  language="json"
+                  style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                  customStyle={{
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    padding: "12px",
+                  }}
+                >
+                  {JSON.stringify(call.request.params, null, 2)}
+                </SyntaxHighlighter>
+              </div>
+            )}
+
             {/* Request Body */}
             {call.request.body && (
               <div>

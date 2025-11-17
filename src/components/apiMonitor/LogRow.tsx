@@ -50,7 +50,7 @@ export function LogRow({ item, isExpanded, onToggleExpand }: LogRowProps) {
     <>
       <div className="hover:bg-muted/50 transition-colors">
         <div 
-          className="grid grid-cols-[150px_1fr_1fr_200px_120px] gap-4 px-4 py-4 cursor-pointer items-center" 
+          className="grid grid-cols-[150px_1fr_200px_120px] gap-4 px-4 py-4 cursor-pointer items-center" 
           onClick={onToggleExpand}
         >
           {/* Date column */}
@@ -67,18 +67,10 @@ export function LogRow({ item, isExpanded, onToggleExpand }: LogRowProps) {
               {categoryDisplay}
             </p>
           </div>
-          
-          {/* Run ID column */}
-          <div className="min-w-0">
-            <p className="text-xs text-muted-foreground truncate">
-              {item.item_name}
-            </p>
-          </div>
 
           {/* Stats column */}
           <div className="text-xs text-muted-foreground">
             {item.summary.fetched} fetched • {item.summary.created} new • {item.summary.updated} updated
-            {item.summary.skipped > 0 && ` • ${item.summary.skipped} skipped`}
           </div>
           
           {/* Status column */}
