@@ -31,8 +31,7 @@ function getApiBaseUrl(): string | null {
   
   // Check if we're on local network (lovable preview or localhost)
   // For local development and internal access
-  if (hostname.includes("lovableproject.com") || 
-      hostname === "localhost" || 
+  if (hostname === "localhost" || 
       hostname.startsWith("192.168.")) {
     return "http://192.168.1.70:6059";
   }

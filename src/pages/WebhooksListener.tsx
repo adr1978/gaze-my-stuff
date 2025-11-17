@@ -46,10 +46,7 @@ export default function WebhooksListener() {
   };
 
   return (
-    // 💡 FIX: Use h-screen (viewport height) and flex flex-col
     <div className="h-screen bg-background p-8 flex flex-col">
-      
-      {/* 2. Set to w-full, define as a vertical flex container, and allow it to grow. */}
       <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow min-h-0">
         
         {/* Header content (fixed height) */}
@@ -79,10 +76,6 @@ export default function WebhooksListener() {
             </Button>
           </div>
         </div>
-
-        {/* 3. The Card: flex-grow and min-h-0 are correct. They'll now work
-               because the parent container has a defined height (h-screen)
-               and is a flex container. */}
         <Card className="overflow-hidden flex-grow min-h-0">
           {isLoading && webhooks.length === 0 ? (
             <div className="flex items-center justify-center h-full">

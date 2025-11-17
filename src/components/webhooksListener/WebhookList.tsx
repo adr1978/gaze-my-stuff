@@ -33,7 +33,6 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
         <div className="h-full flex flex-1 items-center justify-center p-8">
           <div className="text-center text-muted-foreground">
             <p className="text-lg font-medium mb-2">No webhooks received yet</p>
-            <p className="text-sm">Webhook events will appear here when received</p>
           </div>
         </div>
       </div>
