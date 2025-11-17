@@ -1,130 +1,157 @@
+/**
+ * CallDetailsModal Component
+ * 
+ * Displays detailed request/response data for a single API call.
+ * Shows full HTTP details, headers, body, and error information.
+ */
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atelierCaveLight, atelierCaveDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { Clock, Cloud, AlertTriangle, Globe } from "lucide-react";
 import type { ApiCall } from "./types";
+import { useTheme } from "next-themes";
 
 interface CallDetailsModalProps {
-  call: ApiCall;
-  isOpen: boolean;
-  onClose: () => void;
+  call: ApiCall | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function CallDetailsModal({ call, isOpen, onClose }: CallDetailsModalProps) {
-  const isSuccess = call.status === "success";
+export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalProps) {
+  const { theme } = useTheme();
+  if (!call) return null;
+
+  const isError = call.status === "error";
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
+            <Cloud className="h-5 w-5" />
             API Call Details
-            <Badge variant={isSuccess ? "default" : "destructive"}>
-              {call.response.status_code}
-            </Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="request" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="request">Request</TabsTrigger>
-            <TabsTrigger value="response">Response</TabsTrigger>
-            {call.error && <TabsTrigger value="error">Error</TabsTrigger>}
-          </TabsList>
+        <ScrollArea className="flex-1">
+          <div className="space-y-6 pr-4">
+            {/* Call Overview */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Overview</h3>
+                <Badge variant={isError ? "destructive" : "success"} className="pointer-events-none hover:bg-transparent">
+                  {call.response.status_code}
+                </Badge>
+              </div>
 
-          <TabsContent value="request" className="space-y-4">
-            <div>
-              <h3 className="font-semibold mb-2">Method & URL</h3>
-              <div className="bg-muted p-3 rounded-md">
-                <span className="font-mono text-sm">
-                  {call.request.method} {call.request.url}
-                </span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-mono">
+                    <span className={call.request.method === "GET" ? "text-success font-semibold" : "text-warning font-semibold"}>
+                      {call.request.method}
+                    </span>
+                    {" "}
+                    <span className="text-muted-foreground">{call.request.url}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>{call.duration_ms}ms</span>
+                </div>
               </div>
             </div>
 
-            {call.request.headers && (
-              <div>
-                <h3 className="font-semibold mb-2">Headers</h3>
-                <ScrollArea className="h-[150px] bg-muted p-3 rounded-md">
-                  <pre className="text-xs font-mono">
-                    {JSON.stringify(call.request.headers, null, 2)}
-                  </pre>
-                </ScrollArea>
+            {/* Error Message (if present) */}
+            {call.error && (
+              <div className="space-y-3 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Error</h3>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{call.error.message}</p>
+                  {call.error.code && (
+                    <p className="text-xs text-muted-foreground mt-1">Code: {call.error.code}</p>
+                  )}
+                </div>
               </div>
             )}
 
+            {/* Request Headers */}
+            <div>
+              <p className="text-sm font-medium mb-2">Request Headers</p>
+              <SyntaxHighlighter
+                language="json"
+                style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                customStyle={{
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  padding: "12px",
+                }}
+              >
+                {JSON.stringify(call.request.headers || {}, null, 2)}
+              </SyntaxHighlighter>
+            </div>
+
+            {/* Request Body */}
             {call.request.body && (
               <div>
-                <h3 className="font-semibold mb-2">Body</h3>
-                <ScrollArea className="h-[150px] bg-muted p-3 rounded-md">
-                  <pre className="text-xs font-mono">
-                    {JSON.stringify(call.request.body, null, 2)}
-                  </pre>
-                </ScrollArea>
+                <p className="text-sm font-medium mb-2">Request Body</p>
+                <SyntaxHighlighter
+                  language="json"
+                  style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                  customStyle={{
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    padding: "12px",
+                  }}
+                >
+                  {JSON.stringify(call.request.body, null, 2)}
+                </SyntaxHighlighter>
               </div>
             )}
-          </TabsContent>
 
-          <TabsContent value="response" className="space-y-4">
-            <div>
-              <h3 className="font-semibold mb-2">Status Code</h3>
-              <div className="bg-muted p-3 rounded-md">
-                <span className={`font-mono text-sm ${isSuccess ? 'text-green-600' : 'text-red-600'}`}>
-                  {call.response.status_code}
-                </span>
-              </div>
-            </div>
-
+            {/* Response Body */}
             {call.response.body && (
               <div>
-                <h3 className="font-semibold mb-2">Body</h3>
-                <ScrollArea className="h-[300px] bg-muted p-3 rounded-md">
-                  <pre className="text-xs font-mono">
-                    {JSON.stringify(call.response.body, null, 2)}
-                  </pre>
-                </ScrollArea>
+                <p className="text-sm font-medium mb-2">Response Body</p>
+                <SyntaxHighlighter
+                  language="json"
+                  style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                  customStyle={{
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    padding: "12px",
+                  }}
+                >
+                  {JSON.stringify(call.response.body, null, 2)}
+                </SyntaxHighlighter>
               </div>
             )}
 
-            <div>
-              <h3 className="font-semibold mb-2">Duration</h3>
-              <div className="bg-muted p-3 rounded-md">
-                <span className="font-mono text-sm">{call.duration_ms}ms</span>
-              </div>
-            </div>
-          </TabsContent>
-
-          {call.error && (
-            <TabsContent value="error" className="space-y-4">
+            {/* Error Details */}
+            {call.error?.details && (
               <div>
-                <h3 className="font-semibold mb-2">Error Message</h3>
-                <div className="bg-destructive/10 border border-destructive p-3 rounded-md">
-                  <p className="text-sm text-destructive">{call.error.message}</p>
-                </div>
+                <p className="text-sm font-medium mb-2">Error Details</p>
+                <SyntaxHighlighter
+                  language="json"
+                  style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                  customStyle={{
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    padding: "12px",
+                  }}
+                >
+                  {JSON.stringify(call.error.details, null, 2)}
+                </SyntaxHighlighter>
               </div>
-
-              {call.error.code && (
-                <div>
-                  <h3 className="font-semibold mb-2">Error Code</h3>
-                  <div className="bg-muted p-3 rounded-md">
-                    <span className="font-mono text-sm">{call.error.code}</span>
-                  </div>
-                </div>
-              )}
-
-              {call.error.details && (
-                <div>
-                  <h3 className="font-semibold mb-2">Error Details</h3>
-                  <ScrollArea className="h-[200px] bg-muted p-3 rounded-md">
-                    <pre className="text-xs font-mono">
-                      {JSON.stringify(call.error.details, null, 2)}
-                    </pre>
-                  </ScrollArea>
-                </div>
-              )}
-            </TabsContent>
-          )}
-        </Tabs>
+            )}
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

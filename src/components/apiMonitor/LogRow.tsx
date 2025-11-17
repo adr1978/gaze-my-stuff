@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { TableCell, TableRow } from "@/components/ui/table";
+import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
 import { ChildCallRow } from "./ChildCallRow";
 import { CallDetailsModal } from "./CallDetailsModal";
 import type { ItemSync, ApiCall } from "./types";
@@ -20,22 +20,17 @@ interface LogRowProps {
 
 export function LogRow({ item, isExpanded, onToggleExpand }: LogRowProps) {
   const [selectedCall, setSelectedCall] = useState<ApiCall | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const handleCallClick = (call: ApiCall) => {
     setSelectedCall(call);
-    setIsModalOpen(true);
+    setShowDetailsModal(true);
   };
 
-  // Format timestamp
-  const date = new Date(item.timestamp);
-  const formattedDate = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-  const formattedTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-
-  // Determine status
+  // Determine overall status based on errors
   const hasErrors = item.summary.errors > 0;
   const hasWarnings = item.summary.skipped > 0;
-  const status = hasErrors ? "error" : hasWarnings ? "warning" : "success";
+  const status = hasErrors ? "ERROR" : hasWarnings ? "WARNING" : "SUCCESS";
 
   // Category display
   const categoryDisplay = {
@@ -47,62 +42,87 @@ export function LogRow({ item, isExpanded, onToggleExpand }: LogRowProps) {
     uncategorised: "Uncategorised"
   }[item.category] || item.category;
 
+  // Format timestamp
+  const date = new Date(item.timestamp);
+  const formattedDate = format(date, "dd-MMM-yyyy");
+
   return (
     <>
-      <TableRow className="cursor-pointer hover:bg-muted/50" onClick={onToggleExpand}>
-        <TableCell>
-          {isExpanded ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </TableCell>
-        <TableCell>
-          <div className="flex flex-col">
-            <span className="font-medium">{formattedDate}</span>
-            <span className="text-sm text-muted-foreground">{formattedTime}</span>
+      <div className="hover:bg-muted/50 transition-colors">
+        <div 
+          className="grid grid-cols-[150px_1fr_1fr_200px_120px] gap-4 px-4 py-4 cursor-pointer items-center" 
+          onClick={onToggleExpand}
+        >
+          {/* Date column */}
+          <div className="flex items-center gap-2">
+            <ChevronRight className={`h-4 w-4 transition-transform flex-shrink-0 ${isExpanded ? "rotate-90" : ""}`} />
+            <p className="text-sm font-semibold text-foreground">
+              {formattedDate}
+            </p>
           </div>
-        </TableCell>
-        <TableCell className="font-medium">{item.item_name}</TableCell>
-        <TableCell>{categoryDisplay}</TableCell>
-        <TableCell className="text-muted-foreground">{item.source}</TableCell>
-        <TableCell className="text-center">{item.summary.fetched}</TableCell>
-        <TableCell className="text-center">{item.summary.created}</TableCell>
-        <TableCell className="text-center">{item.summary.updated}</TableCell>
-        <TableCell className="text-center">{item.summary.skipped}</TableCell>
-        <TableCell className="text-center">{item.summary.errors}</TableCell>
-        <TableCell>
-          {status === "error" && (
-            <Badge variant="destructive">ERROR</Badge>
-          )}
-          {status === "warning" && (
-            <Badge variant="outline" className="border-yellow-500 text-yellow-600">
-              WARNING
-            </Badge>
-          )}
-          {status === "success" && (
-            <Badge variant="outline" className="border-green-500 text-green-600">
-              SUCCESS
-            </Badge>
-          )}
-        </TableCell>
-      </TableRow>
+          
+          {/* Category column */}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold truncate">
+              {categoryDisplay}
+            </p>
+          </div>
+          
+          {/* Run ID column */}
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground truncate">
+              {item.item_name}
+            </p>
+          </div>
 
-      {isExpanded && item.calls.map((call, idx) => (
-        <ChildCallRow
-          key={idx}
-          call={call}
-          onViewDetails={() => handleCallClick(call)}
-        />
-      ))}
+          {/* Stats column */}
+          <div className="text-xs text-muted-foreground">
+            {item.summary.fetched} fetched • {item.summary.created} new • {item.summary.updated} updated
+            {item.summary.skipped > 0 && ` • ${item.summary.skipped} skipped`}
+          </div>
+          
+          {/* Status column */}
+          <div className="flex justify-end">
+            {hasErrors && (
+              <Badge 
+                variant="outline"
+                className="rounded-full bg-destructive/10 text-destructive border-transparent hover:bg-destructive/20"
+              >
+                {item.summary.errors} {item.summary.errors === 1 ? 'ERROR' : 'ERRORS'}
+              </Badge>
+            )}
+            {!hasErrors && (
+              <Badge 
+                variant="outline"
+                className={status === "SUCCESS" 
+                  ? "rounded-full bg-success/10 text-success border-transparent hover:bg-success/20"
+                  : "rounded-full bg-warning/10 text-warning border-transparent hover:bg-warning/20"
+                }
+              >
+                {status}
+              </Badge>
+            )}
+          </div>
+        </div>
+        
+        {isExpanded && (
+          <div className="border-t border-border bg-muted/30">
+            {item.calls.map((call, idx) => (
+              <ChildCallRow
+                key={idx}
+                call={call}
+                onViewDetails={() => handleCallClick(call)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
-      {selectedCall && (
-        <CallDetailsModal
-          call={selectedCall}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
+      <CallDetailsModal
+        call={selectedCall}
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+      />
     </>
   );
 }

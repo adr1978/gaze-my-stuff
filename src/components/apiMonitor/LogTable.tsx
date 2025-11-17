@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LogRow } from "./LogRow";
 import type { ApiRun, ItemSync } from "./types";
 
@@ -70,23 +69,17 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
   return (
     <Card className="overflow-hidden flex-grow min-h-0 flex flex-col">
       <div className="overflow-auto flex-1">
-        <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
-            <TableRow>
-              <TableHead className="w-[40px]"></TableHead>
-              <TableHead className="w-[180px]">Date/Time</TableHead>
-              <TableHead className="w-[150px]">Item Name</TableHead>
-              <TableHead className="w-[140px]">Category</TableHead>
-              <TableHead className="w-[120px]">Source</TableHead>
-              <TableHead className="w-[100px] text-center">Fetched</TableHead>
-              <TableHead className="w-[100px] text-center">Created</TableHead>
-              <TableHead className="w-[100px] text-center">Updated</TableHead>
-              <TableHead className="w-[100px] text-center">Skipped</TableHead>
-              <TableHead className="w-[100px] text-center">Errors</TableHead>
-              <TableHead className="w-[120px]">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <div className="min-w-full">
+          <div className="bg-muted/50 border-b border-border">
+            <div className="grid grid-cols-[150px_1fr_1fr_200px_120px] gap-4 px-4 py-3">
+              <div className="text-sm font-medium">Date</div>
+              <div className="text-sm font-medium">Category</div>
+              <div className="text-sm font-medium">Run ID</div>
+              <div className="text-sm font-medium">Stats</div>
+              <div className="text-sm font-medium text-right">Status</div>
+            </div>
+          </div>
+          <div>
             {flattenedItems.map((item) => (
               <LogRow
                 key={item.uniqueKey}
@@ -95,8 +88,8 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
                 onToggleExpand={() => toggleExpanded(item.uniqueKey)}
               />
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        </div>
       </div>
     </Card>
   );
