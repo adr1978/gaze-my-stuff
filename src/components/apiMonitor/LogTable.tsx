@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LogRow } from "./LogRow";
 import type { ApiRun, ItemSync } from "./types";
 
@@ -67,18 +68,20 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
   }
 
   return (
-    <Card className="overflow-hidden flex-grow min-h-0 flex flex-col">
-      <div className="overflow-auto flex-1">
-        <div className="min-w-full">
-          <div className="bg-muted/50 border-b border-border sticky top-0 z-10">
-            <div className="grid grid-cols-[150px_1fr_200px_120px] gap-4 px-4 py-3">
-              <div className="text-sm font-medium">Date</div>
-              <div className="text-sm font-medium">Category</div>
-              <div className="text-sm font-medium">Stats</div>
-              <div className="text-sm font-medium text-right">Status</div>
-            </div>
+    <Card className="h-full flex flex-col">
+      <CardContent className="p-0 h-full flex flex-col">
+        {/* Frozen header row (fixed height) */}
+        <div className="sticky top-0 z-10 bg-secondary border-b border-border backdrop-blur-sm">
+          <div className="grid grid-cols-[150px_1fr_200px_120px] gap-4 px-4 py-3">
+            <div className="text-xs font-semibold text-muted-foreground ml-6">Date</div>
+            <div className="text-xs font-semibold text-muted-foreground">Category</div>
+            <div className="text-xs font-semibold text-muted-foreground">Stats</div>
+            <div className="text-xs font-semibold text-muted-foreground text-right">Overall Status</div>
           </div>
-          <div>
+        </div>
+        
+        <ScrollArea className="h-full flex-1">
+          <div className="divide-y divide-border">
             {flattenedItems.map((item) => (
               <LogRow
                 key={item.uniqueKey}
@@ -88,8 +91,8 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
               />
             ))}
           </div>
-        </div>
-      </div>
+        </ScrollArea>
+      </CardContent>
     </Card>
   );
 }
