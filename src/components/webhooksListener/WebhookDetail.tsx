@@ -35,7 +35,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
         {/* Empty state */}
         <div className="h-full flex flex-1 items-center justify-center p-8">
           <div className="text-center text-muted-foreground">
-            <p className="text-lg">Select a webhook to see its details</p>
+            <p>Select a webhook to see its details</p>
           </div>
         </div>
       </div>

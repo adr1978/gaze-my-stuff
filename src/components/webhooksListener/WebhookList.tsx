@@ -32,7 +32,7 @@ export function WebhookList({ webhooks, selectedWebhookId, onSelectWebhook }: We
         {/* Empty state */}
         <div className="h-full flex flex-1 items-center justify-center p-8">
           <div className="text-center text-muted-foreground">
-            <p className="text-lg font-medium mb-2">No webhooks received yet</p>
+            <p className="mb-2">No webhooks received yet</p>
           </div>
         </div>
       </div>
