@@ -44,9 +44,9 @@ const navigationItems = [
   {
     title: "Monitoring",
     items: [
-      { title: "API Monitor", url: "/api-monitor", icon: Cloud },
-      { title: "Transactions Monitor", url: "/transactions-monitor", icon: Receipt },
-      { title: "Webhooks Listener", url: "/webhooks-listener", icon: Webhook },
+      { title: "API Traffic", url: "/api-monitor", icon: Cloud },
+      { title: "Transactions Sync", url: "/transactions-monitor", icon: Receipt },
+      { title: "Webhooks", url: "/webhooks-listener", icon: Webhook },
     ],
   },
 
