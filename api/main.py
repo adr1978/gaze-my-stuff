@@ -13,6 +13,7 @@ from banking_transactions.endpoints import sync_logs, sync_stats, sync_config
 from webhook_monitor.endpoints import get_webhooks, receive_webhook
 from api_monitor.endpoints import monitor_stats, monitor_logs
 from recipe_analyzer.endpoints import analyze
+from banking_connections.endpoints import requisition_router, account_router
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -36,6 +37,12 @@ app.add_middleware(
 app.include_router(sync_logs.router, prefix="/api/transactions", tags=["logs"])
 app.include_router(sync_stats.router, prefix="/api/transactions", tags=["stats"])
 app.include_router(sync_config.router, prefix="/api/transactions", tags=["config"])
+
+# Register banking connections (GoCardless) endpoints
+# The prefix is set to /api here, and the router handles the /gc suffix, 
+# resulting in the required /api/gc/... endpoints.
+app.include_router(requisition_router, prefix="/api", tags=["gocardless"])
+app.include_router(account_router, prefix="/api", tags=["gocardless"])
 
 # Register webhook monitoring endpoints
 app.include_router(get_webhooks.router, prefix="/api/webhooks", tags=["webhooks"])

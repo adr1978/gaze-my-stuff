@@ -21,7 +21,7 @@ SECRET_KEY = os.getenv("GOCARDLESS_SECRET_KEY")
 
 # Metadata file path
 BASE_DIR = Path(__file__).parent.parent 
-METADATA_FILE = BASE_DIR / "data" / "gc_metadata.json"
+METADATA_FILE = BASE_DIR / "data" / "gc_metadata.json" # Production file (not sample) within /api root
 
 
 def get_nordigen_client():
