@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from banking_transactions.endpoints import sync_logs, sync_stats, sync_config
 from webhook_monitor.endpoints import get_webhooks, receive_webhook
 from api_monitor.endpoints import monitor_stats, monitor_logs
+from recipe_analyzer.endpoints import analyze
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -43,6 +44,9 @@ app.include_router(receive_webhook.router, prefix="/api/webhooks", tags=["webhoo
 # Register API monitor endpoints
 app.include_router(monitor_stats.router, prefix="/api/api_monitor", tags=["api_monitor"])
 app.include_router(monitor_logs.router, prefix="/api/api_monitor", tags=["api_monitor"])
+
+# Register recipe analyzer endpoints
+app.include_router(analyze.router, prefix="/api/recipe", tags=["recipe"])
 
 @app.get("/")
 async def root():

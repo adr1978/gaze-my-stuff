@@ -30,7 +30,7 @@
 
 import { useState, useEffect } from "react";
 import { showToast } from "@/lib/toast-helper";
-import { supabase } from "@/integrations/supabase/client";
+import { analyzeRecipeDirect } from "@/lib/recipeApiDirect";
 import { RecipeSourceCard } from "@/components/recipeImporter/RecipeSourceCard";
 import { RecipeDataCard } from "@/components/recipeImporter/RecipeDataCard";
 import { MetadataCard } from "@/components/recipeImporter/MetadataCard";
@@ -151,9 +151,19 @@ export default function RecipeAnalyser() {
   };
 
   /**
+   * Load saved recipes from localStorage on mount
+   */
+  useEffect(() => {
+    const savedRecipes = localStorage.getItem('savedRecipes');
+    if (savedRecipes) {
+      console.log('Loaded recipes from localStorage:', JSON.parse(savedRecipes));
+    }
+  }, []);
+
+  /**
    * Main recipe analysis function
    * Handles AI extraction, Waitrose parser, or manual entry
-   * based on selected extraction method
+   * Uses backend API with fallback to direct Gemini calls
    */
   const analyzeRecipe = async () => {
     // Validation: URL required for non-manual methods
@@ -164,52 +174,72 @@ export default function RecipeAnalyser() {
 
     setIsAnalyzing(true);
     try {
-      if (extractionMethod === "waitrose") {
-        // Waitrose parser endpoint (placeholder - not yet implemented)
-        showToast.info(
-          "Waitrose Parser Selected",
-          "Using Waitrose internal parser for recipe extraction"
-        );
-        setIsAnalyzing(false);
-        return;
-      }
-
       // Manual entry is handled by useEffect watching extractionMethod
       if (extractionMethod === "manual") {
         setIsAnalyzing(false);
         return;
       }
 
-      // AI Extraction method - calls Lovable Cloud edge function
-      const { data, error } = await supabase.functions.invoke("analyze-recipe", {
-        body: { url },
-      });
-
-      if (error) {
-        console.error("Edge function error:", error);
-        throw error;
+      let data;
+      
+      if (extractionMethod === "ai") {
+        // Try backend first, fallback to direct API
+        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/recipe/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url.trim() })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Backend API failed');
+          }
+          
+          data = await response.json();
+          console.log('Recipe analyzed via backend:', data);
+        } catch (backendError) {
+          console.warn('Backend failed, using direct API:', backendError);
+          data = await analyzeRecipeDirect(url.trim());
+          console.log('Recipe analyzed via direct API:', data);
+        }
+      } else if (extractionMethod === "waitrose") {
+        showToast.info(
+          "Waitrose Parser",
+          "Waitrose parser not implemented, using AI"
+        );
+        data = await analyzeRecipeDirect(url.trim());
       }
 
-      // Decode HTML entities in extracted data
-      const decodedData = {
-        ...data,
-        url,
-        name: data.name ? decodeHtmlEntities(data.name) : null,
-        imageUrl: data.imageUrl || null,
-        servings: data.servings ? decodeHtmlEntities(data.servings) : null,
-        ingredients: (data.ingredients || []).map((ing: string) => decodeHtmlEntities(ing)),
-        instructions: (data.instructions || []).map((inst: string) => decodeHtmlEntities(inst)),
-      };
+      if (data) {
+        // Decode HTML entities in extracted data
+        const decodedData = {
+          ...data,
+          url,
+          name: data.name ? decodeHtmlEntities(data.name) : null,
+          imageUrl: data.imageUrl || null,
+          servings: data.servings ? decodeHtmlEntities(data.servings) : null,
+          ingredients: (data.ingredients || []).map((ing: string) => decodeHtmlEntities(ing)),
+          instructions: (data.instructions || []).map((inst: string) => decodeHtmlEntities(inst)),
+        };
 
-      setRecipeData(decodedData);
-      showToast.success(
-        "Success",
-        `Recipe analysed successfully using ${extractionMethod === "ai" ? "AI Magic" : "Waitrose Parser"}`
-      );
+        setRecipeData(decodedData);
+        
+        // Save to localStorage
+        const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
+        savedRecipes.push({ ...decodedData, analyzedAt: new Date().toISOString() });
+        localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+        
+        showToast.success(
+          "Success",
+          "Recipe analyzed successfully!"
+        );
+      }
     } catch (error) {
-      console.error("Error analysing recipe:", error);
+      console.error("Error analyzing recipe:", error);
       showToast.error(
-        "Unable to Analyse",
+        "Unable to Analyze",
         "Could not extract recipe data from this URL"
       );
     } finally {
