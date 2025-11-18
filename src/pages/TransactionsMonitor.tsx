@@ -108,19 +108,19 @@ export default function TransactionsMonitor() {
     <div className="h-screen bg-background p-8 flex flex-col">
       {/* 💡 FIX: Add wrapper to manage flex-grow */}
       <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow min-h-0">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Transactions Monitor</h1>
-            <p className="text-muted-foreground">
-              Monitor automated bank sync jobs and Notion uploads
-            </p>
-          </div>
-          <div className="flex items-center gap-3 px-4 py-2 rounded-md border border-border bg-background">
+        <div className="relative mb-6">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Transactions Monitor</h1>
+          <p className="text-muted-foreground">
+            Monitor automated transaction syncs to Notion
+          </p>
+          <div className="absolute right-0 bottom-0 flex items-center gap-3 px-4 py-2 rounded-md border border-border bg-background">
             <Label
               htmlFor="auto-refresh-transactions"
               className="text-sm text-muted-foreground cursor-pointer"
             >
-              Auto refresh {autoRefresh ? `(${countdown}s)` : ''}
+              <span className="inline-block w-[108px]">
+                Auto refresh {autoRefresh ? `(${countdown}s)` : ''}
+              </span>
             </Label>
             <Switch
               id="auto-refresh-transactions"
