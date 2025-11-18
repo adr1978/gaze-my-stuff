@@ -79,6 +79,7 @@ export default function BankConnections() {
           <Button 
             onClick={() => setIsBankModalOpen(true)}
             className="absolute right-0 bottom-0"
+            size="sm"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Connection
