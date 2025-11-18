@@ -60,7 +60,7 @@ export function LogTable({ runs, isLoading }: LogTableProps) {
       <Card className="overflow-hidden flex-grow min-h-0">
         <div className="h-full flex flex-1 items-center justify-center p-8">
           <div className="text-center text-muted-foreground">
-            <p className="text-lg font-medium">No sync runs found</p>
+            <p className="font-medium">No sync runs found</p>
           </div>
         </div>
       </Card>

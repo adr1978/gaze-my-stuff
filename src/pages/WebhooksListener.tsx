@@ -63,7 +63,7 @@ export default function WebhooksListener() {
               htmlFor="auto-refresh-webhooks"
               className="text-sm text-muted-foreground cursor-pointer"
             >
-              <span className="inline-block w-[108px]">
+              <span className="inline-block w-[110px]">
                 Auto refresh {autoRefresh ? `(${countdown}s)` : ''}
               </span>
             </Label>
