@@ -121,8 +121,8 @@ export const gocardlessApi = {
     } catch (error) {
       console.warn("GoCardless API call failed, using mock data:", error);
       // Import mock data as fallback
-      const mockResponse = await import("@/data/goCardless_Response.json");
-      const mockMetadata = await import("@/data/gc_metadata.json");
+      const mockResponse = await import("@/data/sample_gc_response.json");
+      const mockMetadata = await import("@/data/sample_gc_metadata.json");
       
       // Merge API response with local metadata
       return mockResponse.results.map((req: any) => {
@@ -157,9 +157,17 @@ export const gocardlessApi = {
     institutionId: string, 
     owner: string
   ): Promise<{ link: string; requisition_id: string }> => {
+    // 1. The STABLE URL for the FastAPI server (e.g., http://localhost:8000)
+    const apiBaseUrl = API_BASE_URL; 
+    
+    // 2. The DYNAMIC URL for the user's browser (e.g., http://localhost:8080 or https://hub.domain.com)
+    const frontendBaseUrl = window.location.origin;
+    
     return api.post("/api/gc/create-requisition", {
       institution_id: institutionId,
       owner: owner,
+      api_base_url: apiBaseUrl, 
+      frontend_base_url: frontendBaseUrl,
     });
   },
 };

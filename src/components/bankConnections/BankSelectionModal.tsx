@@ -27,6 +27,8 @@ import { toast } from "sonner"; // Import toast
 interface BankSelectionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onBankSelect: (institutionId: string) => void; // Function to call when a bank is selected, passing its ID
+  isCreating: boolean; // Loading state passed from the parent mutation
 }
 
 export function BankSelectionModal({ open, onOpenChange }: BankSelectionModalProps) {
