@@ -1,23 +1,37 @@
+# api/banking_connections/scripts/gc_client.py
+
+import os
+from dotenv import load_dotenv # <-- NEW: Import load_dotenv
 from nordigen import NordigenClient
 import json
-from datetime import datetime
-from pathlib import Path
 import logging
+from pathlib import Path
+# ... (other imports from original file)
+
+# Load environment variables from .env file
+load_dotenv() # <-- NEW: Load env variables at the start
 
 # --- Configure logging ---
 logger = logging.getLogger("uvicorn.error")
 
 # Your GoCardless API credentials
-SECRET_ID = "446c454b-9338-47dd-997b-572eb01ef2ce"
-SECRET_KEY = "0e0b8f2f6e9ebc8d046e5965e8ee8061404954b8db8aba6d780f028ca470a4d4a2944d0583efdf0c30a9b51ff084eadb011ac0f0561c555152e03ed8555a8e9f"
+SECRET_ID = os.getenv("GOCARDLESS_SECRET_ID")
+SECRET_KEY = os.getenv("GOCARDLESS_SECRET_KEY")
+
 
 # Metadata file path
-BASE_DIR = Path(__file__).parent
-METADATA_FILE = BASE_DIR / "gc_metadata.json"
+BASE_DIR = Path(__file__).parent.parent 
+METADATA_FILE = BASE_DIR / "data" / "gc_metadata.json"
 
 
 def get_nordigen_client():
     """Initialize and return a Nordigen client with fresh token."""
+    # Ensure keys are loaded before attempting to use them
+    if not SECRET_ID or not SECRET_KEY:
+        logger.error("GOCARDLESS_SECRET_ID or GOCARDLESS_SECRET_KEY not set!")
+        # Raising an exception here prevents silent failures further down
+        raise ValueError("GoCardless API keys are missing. Please check .env file.")
+        
     client = NordigenClient(
         secret_id=SECRET_ID,
         secret_key=SECRET_KEY

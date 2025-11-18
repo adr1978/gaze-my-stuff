@@ -1,23 +1,23 @@
+# api/banking_connections/endpoints/requisition_routes.py
+
 import httpx
-import json
 import logging
 from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import JSONResponse, RedirectResponse
-from scripts.banking_data.gc_client import get_nordigen_client, load_gc_metadata, save_gc_metadata
+from fastapi.responses import RedirectResponse
+# Correct relative import for the client file
+from ..scripts.gc_client import get_nordigen_client, load_gc_metadata, save_gc_metadata 
 from datetime import datetime, timedelta
-from pathlib import Path
 
 # --- Configure logging ---
 logger = logging.getLogger("uvicorn.error")
 
 router = APIRouter(
     prefix="/gc",  # All routes in this file will start with /api/gc
-    tags=["gocardless"],
+    tags=["gocardless-requisitions"],
 )
 
-#
-# Helper function to fetch account details
-#
+
+# Helper function to fetch account details (kept here as it's tightly coupled with the callback)
 async def fetch_and_store_account_details(requisition_id: str, reference: str, owner: str):
     """
     Fetch account details for all accounts in a requisition and store in metadata.
@@ -26,13 +26,13 @@ async def fetch_and_store_account_details(requisition_id: str, reference: str, o
     logger.info(f"Fetching account details for req_id: {requisition_id}")
     try:
         client = get_nordigen_client()
-        
+        if client is None:
+            raise Exception("Nordigen client could not be initialized. Check API keys.")
+            
         requisition = client.requisition.get_requisition_by_id(requisition_id)
         account_ids = requisition.get("accounts", [])
         
-        if not account_ids:
-            logger.warning(f"No accounts found for requisition {requisition_id}")
-            # <-- This is the fix from before (no 'return')
+        # ... (Rest of the logic from original routes.py to fetch and store details)
         
         institution_id = requisition.get("institution_id", "Unknown")
         
@@ -42,7 +42,7 @@ async def fetch_and_store_account_details(requisition_id: str, reference: str, o
             institutions = client.institution.get_institutions(country="GB")
             institution_name = next((i['name'] for i in institutions if i['id'] == institution_id), institution_id)
         except Exception:
-            pass # Use default
+            pass 
 
         accounts_data = []
         for account_id in account_ids:
@@ -101,16 +101,17 @@ async def fetch_and_store_account_details(requisition_id: str, reference: str, o
         
     except Exception as e:
         logger.error(f"Error in fetch_and_store_account_details: {e}")
-
-
-#
-# API for the main "Bank Connections" page
-#
+        
+# --- Endpoints for Requisition Flow ---
+        
 @router.get("/requisitions")
 async def gc_get_requisitions():
     """API endpoint to fetch all requisitions/connections."""
+    # (Content from the original routes.py function: gc_get_requisitions)
     logger.info("API call: GET /api/gc/requisitions")
     client = get_nordigen_client()
+    if client is None: raise HTTPException(status_code=503, detail="GoCardless service unavailable.")
+    
     requisitions = client.requisition.get_requisitions()
     results = requisitions.get("results", [])
     
@@ -154,14 +155,15 @@ async def gc_get_requisitions():
     logger.info(f"Returning {len(enriched_results)} requisitions.")
     return enriched_results
 
-#
-# API for the "Add Connection" modal bank list
-#
+
 @router.get("/institutions")
 async def gc_get_institutions():
     """API endpoint to fetch all GB institutions."""
+    # (Content from the original routes.py function: gc_get_institutions)
     logger.info("API call: GET /api/gc/institutions")
     client = get_nordigen_client()
+    if client is None: raise HTTPException(status_code=503, detail="GoCardless service unavailable.")
+    
     institutions = client.institution.get_institutions(country="GB")
     filtered_list = [
         {"id": i["id"], "name": i["name"], "logo": i["logo"]}
@@ -169,22 +171,19 @@ async def gc_get_institutions():
     ]
     return filtered_list
 
-#
-# API for CREATING a new connection (Called by React modal)
-#
+
 @router.post("/create-requisition")
 async def gc_create_requisition_api(request: Request):
     """Create EUA and requisition."""
+    # (Content from the original routes.py function: gc_create_requisition_api)
     body = await request.json()
     institution_id = body.get("institution_id")
     owner = body.get("owner", "Unknown")
-    # --- FIX 1: Get base_url from frontend ---
     base_url = body.get("base_url") 
     
     if not institution_id:
         logger.error("API call: POST /api/gc/create-requisition FAILED: Missing institution_id")
         raise HTTPException(status_code=400, detail="institution_id is required")
-    # --- Add check for base_url ---
     if not base_url:
         logger.error("API call: POST /api/gc/create-requisition FAILED: Missing base_url")
         raise HTTPException(status_code=400, detail="base_url is required")
@@ -193,6 +192,8 @@ async def gc_create_requisition_api(request: Request):
     
     try:
         client = get_nordigen_client()
+        if client is None: raise HTTPException(status_code=503, detail="GoCardless service unavailable.")
+            
         token = client.token 
         
         # Step 1: Create EUA
@@ -222,15 +223,12 @@ async def gc_create_requisition_api(request: Request):
 
             reference = f"{owner} - {institution_name}"
         
-            # --- FIX 2: Build the dynamic redirect URL ---
-            # This now combines the base_url (e.g. http://192.168.1.70:6059)
-            # with your API path (/gc/callback)
             dynamic_redirect_url = f"{base_url.rstrip('/')}/gc/callback"
             logger.info(f"Using dynamic redirect URL: {dynamic_redirect_url}")
             
             # Step 2: Create requisition
             requisition_payload = {
-                "redirect": dynamic_redirect_url, # <-- Use the dynamic URL
+                "redirect": dynamic_redirect_url, 
                 "institution_id": institution_id,
                 "reference": reference,
                 "agreement": eua_id,
@@ -264,46 +262,38 @@ async def gc_create_requisition_api(request: Request):
         logger.error(f"Failed in create-requisition: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-#
-# This is the GoCardless CALLBACK, hit AFTER bank auth
-#
+
 @router.get("/callback")
 async def gc_callback(request: Request, ref: str):
+    """This is the GoCardless CALLBACK, hit AFTER bank auth."""
+    # (Content from the original routes.py function: gc_callback)
     logger.info(f"Callback received for ref: {ref}. Fetching account details.")
     
     requisition_id = ref
     
     try:
         metadata = load_gc_metadata()
-        if requisition_id not in metadata:
-            logger.error(f"Callback for unknown requisition {requisition_id}!")
-            owner = "Unknown"
-            reference = "Unknown (from callback)"
-        else:
-            owner = metadata[requisition_id].get("owner", "Unknown")
-            reference = metadata[requisition_id].get("reference", "Unknown")
+        owner = metadata[requisition_id].get("owner", "Unknown") if requisition_id in metadata else "Unknown"
+        reference = metadata[requisition_id].get("reference", "Unknown") if requisition_id in metadata else "Unknown (from callback)"
 
-        # Call helper function to get account details
         await fetch_and_store_account_details(requisition_id, reference, owner)
         
     except Exception as e:
         logger.error(f"Error in callback: {e}")
-        # --- FIX 3: Redirect to the correct page ---
         return RedirectResponse(url="/bank-connections?status=callback_failed")
     
-    # --- FIX 3: Redirect to the correct page ---
     return RedirectResponse(url="/bank-connections?status=success")
 
 
-#
-# API for reconfirming an existing connection
-#
 @router.get("/reconfirm/{agreement_id}")
 async def gc_reconfirm(agreement_id: str):
+    """API for reconfirming an existing connection."""
+    # (Content from the original routes.py function: gc_reconfirm)
     logger.info(f"API call: GET /api/gc/reconfirm/{agreement_id}")
     try:
         client = get_nordigen_client()
-        
+        if client is None: raise HTTPException(status_code=503, detail="GoCardless service unavailable.")
+            
         async with httpx.AsyncClient() as http_client:
             response = await http_client.put(
                 f"https://bankaccountdata.gocardless.com/api/v2/agreements/enduser/{agreement_id}/reconfirm/",
@@ -319,36 +309,4 @@ async def gc_reconfirm(agreement_id: str):
         return {"reconfirm_link": data.get("link")}
     except Exception as e:
         logger.error(f"Failed in reconfirm: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-#
-# API for toggling sync
-#
-@router.post("/toggle-sync/{requisition_id}/{account_id}")
-async def toggle_sync(requisition_id: str, account_id: str):
-    logger.info(f"API call: POST /api/gc/toggle-sync/{requisition_id}/{account_id}")
-    try:
-        metadata = load_gc_metadata()
-        if requisition_id not in metadata:
-            raise HTTPException(status_code=404, detail="Requisition not found")
-        
-        account_found = False
-        new_status = False
-        for account in metadata[requisition_id].get("accounts", []):
-            if account.get("account_id") == account_id:
-                account["sync_enabled"] = not account.get("sync_enabled", False)
-                new_status = account["sync_enabled"]
-                account_found = True
-                break
-        
-        if not account_found:
-            raise HTTPException(status_code=404, detail="Account not found")
-            
-        save_gc_metadata(metadata)
-        status_str = "ENABLED" if new_status else "DISABLED"
-        logger.info(f"Sync for account {account_id} set to {status_str}")
-        return {"success": True, "message": f"Sync {status_str} for account {account_id}"}
-
-    except Exception as e:
-        logger.error(f"Failed in toggle_sync: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,0 +1,148 @@
+{
+  "6b951121-a312-407d-99fe-2109bd4b9b17": {
+    "reference": "Anthony - American Express",
+    "owner": "Anthony",
+    "notes": "Primary Credit Card",
+    "created_at": "2025-11-02T23:04:00.964337",
+    "notification": null,
+    "accounts": [
+      {
+        "account_id": "6fd8025b-cee4-48fb-b695-1ab0c7ce8979",
+        "institution_name": "American Express",
+        "account_type": "CARD",
+        "last_four": "1006",
+        "scan": null,
+        "currency": "GBP",
+        "sync_enabled": true,
+        "last_synced": "2025-11-03T21:10:40.793397",
+        "last_api_call": "2025-11-03T21:10:37.798935",
+        "sync_status": "pending"
+      }
+    ]
+  },
+  "45b168f4-feaf-4cac-897b-e3fede30a294": {
+    "reference": "Children - Halifax Personal",
+    "owner": "Children",
+    "notes": "Bank account for all children's current accounts",
+    "created_at": "2025-11-03T21:35:43.588403",
+    "notification": null,
+    "requisition_id": "45b168f4-feaf-4cac-897b-e3fede30a294",
+    "institution_id": "HALIFAX_HLFXGB22",
+    "accounts": [
+      {
+        "account_id": "2659a736-f795-45e1-be02-9bae38859d66",
+        "owner_name": "Mr Anthony Broomfield",
+        "name": "Marina Kids Saver",
+        "institution_name": "Halifax Personal",
+        "account_type": "SVGS",
+        "last_four": "4862",
+        "scan": "11050311014862",
+        "currency": "GBP",
+        "sync_enabled": false,
+        "last_synced": null,
+        "last_api_call": null,
+        "sync_status": "pending"
+      },
+      {
+        "account_id": "3f68e147-9c72-48c0-b827-dba1e2aec384",
+        "owner_name": "Mr Anthony Broomfield",
+        "name": "Felix Kids Saver",
+        "institution_name": "Halifax Personal",
+        "account_type": "SVGS",
+        "last_four": "4965",
+        "scan": "11643416294965",
+        "currency": "GBP",
+        "sync_enabled": false,
+        "last_synced": null,
+        "last_api_call": null,
+        "sync_status": "pending"
+      },
+      {
+        "account_id": "ed6772ba-f87c-4642-a344-51f5309b5c4f",
+        "owner_name": "Mr Anthony Broomfield",
+        "name": "Alex Kids Saver",
+        "institution_name": "Halifax Personal",
+        "account_type": "SVGS",
+        "last_four": "4261",
+        "scan": "11643203844261",
+        "currency": "GBP",
+        "sync_enabled": false,
+        "last_synced": null,
+        "last_api_call": null,
+        "sync_status": "pending"
+      }
+    ]
+  },
+  "e945578f-48a5-4ef3-a125-5883a072e1b1": {
+    "reference": "Anthony - Santander",
+    "owner": "Anthony",
+    "notes": "Personal banking account for Anthony",
+    "created_at": "2025-11-03T21:40:46.145250",
+    "notification": null,
+    "requisition_id": "e945578f-48a5-4ef3-a125-5883a072e1b1",
+    "institution_id": "SANTANDER_GB_ABBYGB2L",
+    "accounts": [
+      {
+        "account_id": "5f5dda64-1be8-4173-94a3-049ef58763ac",
+        "owner_name": "MR ANTHONY ALVARO BROOMFIELD",
+        "name": null,
+        "institution_name": "Santander",
+        "account_type": "SVGS",
+        "last_four": "0882",
+        "scan": "09012988370882",
+        "currency": "GBP",
+        "sync_enabled": true,
+        "last_synced": "2025-11-03T23:22:47.543300",
+        "last_api_call": "2025-11-03T23:22:46.464047",
+        "sync_status": "pending"
+      },
+      {
+        "account_id": "f1adc121-d51e-4823-93cc-d39ac2e49fc2",
+        "owner_name": "MR ANTHONY ALVARO BROOMFIELD",
+        "name": null,
+        "institution_name": "Santander",
+        "account_type": "CACC",
+        "last_four": "1837",
+        "scan": "09012838161837",
+        "currency": "GBP",
+        "sync_enabled": false,
+        "last_synced": null,
+        "last_api_call": null,
+        "sync_status": "pending"
+      }
+    ]
+  },
+  "c480688e-04ba-41f6-8ec0-19afdffaed54": {
+    "reference": "Anthony - Starling",
+    "owner": "Anthony",
+    "notes": "Travel money account",
+    "created_at": "2025-11-03T21:45:50.622454",
+    "notification": null,
+    "requisition_id": "c480688e-04ba-41f6-8ec0-19afdffaed54",
+    "institution_id": "STARLING_SRLGGB3L",
+    "accounts": [
+      {
+        "account_id": "641b867c-6925-430d-8ca3-ccc0a0ca0800",
+        "owner_name": "Anthony Broomfield",
+        "name": "Personal Banking",
+        "institution_name": "Starling",
+        "account_type": "CACC",
+        "last_four": "8246",
+        "scan": "60837160978246",
+        "currency": "GBP",
+        "sync_enabled": true,
+        "last_synced": null,
+        "last_api_call": null,
+        "sync_status": "pending"
+      }
+    ]
+  },
+  "6dabad95-1d9d-499a-87aa-986216021f96": {
+    "reference": "Business - Starling",
+    "owner": "Business",
+    "notes": "Pending bank authorization...",
+    "created_at": "2025-11-07T16:13:41.343627",
+    "notification": null,
+    "accounts": []
+  }
+}
