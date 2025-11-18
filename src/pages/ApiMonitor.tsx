@@ -4,7 +4,8 @@ import { fetchMonitorStats, fetchMonitorLogs } from "@/lib/apiMonitorApi";
 import { StatsOverview } from "@/components/apiMonitor/StatsOverview";
 import { LogFilters } from "@/components/apiMonitor/LogFilters";
 import { LogTable } from "@/components/apiMonitor/LogTable";
-import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import type { LogFilters as LogFiltersType } from "@/components/apiMonitor/types";
 
 export default function ApiMonitor() {
@@ -117,14 +118,19 @@ export default function ApiMonitor() {
               Monitor automated API sync jobs across all platforms
             </p>
           </div>
-          <Button
-            variant={autoRefresh ? "default" : "outline"}
-            size="sm"
-            onClick={handleToggleAutoRefresh}
-            className="min-w-[140px]"
-          >
-            Auto refresh {autoRefresh ? `(${countdown}s)` : ''}
-          </Button>
+          <div className="flex items-center gap-3 px-4 py-2 rounded-md border border-border bg-background">
+            <Label
+              htmlFor="auto-refresh-api"
+              className="text-sm text-muted-foreground cursor-pointer"
+            >
+              Auto refresh {autoRefresh ? `(${countdown}s)` : ''}
+            </Label>
+            <Switch
+              id="auto-refresh-api"
+              checked={autoRefresh}
+              onCheckedChange={handleToggleAutoRefresh}
+            />
+          </div>
         </div>
 
         <StatsOverview stats={stats} isLoading={statsLoading} />
