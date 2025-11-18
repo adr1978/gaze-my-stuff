@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMonitorStats, fetchMonitorLogs } from "@/lib/apiMonitorApi";
 import { StatsOverview } from "@/components/apiMonitor/StatsOverview";
 import { LogFilters } from "@/components/apiMonitor/LogFilters";
 import { LogTable } from "@/components/apiMonitor/LogTable";
+import { Button } from "@/components/ui/button";
 import type { LogFilters as LogFiltersType } from "@/components/apiMonitor/types";
 
 export default function ApiMonitor() {
@@ -13,16 +14,39 @@ export default function ApiMonitor() {
     searchQuery: "",
     status: "all",
   });
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["monitorStats"],
     queryFn: fetchMonitorStats,
+    refetchInterval: autoRefresh ? 3000 : false,
   });
 
   const { data: logs, isLoading: logsLoading } = useQuery({
     queryKey: ["monitorLogs"],
     queryFn: () => fetchMonitorLogs(),
+    refetchInterval: autoRefresh ? 3000 : false,
   });
+
+  // Handle countdown timer for auto-refresh
+  useEffect(() => {
+    if (!autoRefresh) {
+      setCountdown(3);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev <= 1 ? 3 : prev - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [autoRefresh]);
+
+  const handleToggleAutoRefresh = () => {
+    setAutoRefresh(!autoRefresh);
+    setCountdown(3);
+  };
 
   // Apply client-side filters
   const filteredLogs = (logs || [])
@@ -86,11 +110,21 @@ export default function ApiMonitor() {
   return (
     <div className="h-screen bg-background p-8 flex flex-col">
       <div className="max-w-7xl mx-auto w-full space-y-6 flex flex-col flex-grow min-h-0">
-        <div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">API Monitor</h1>
-          <p className="text-muted-foreground">
-            Monitor automated API sync jobs across all platforms
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">API Monitor</h1>
+            <p className="text-muted-foreground">
+              Monitor automated API sync jobs across all platforms
+            </p>
+          </div>
+          <Button
+            variant={autoRefresh ? "default" : "outline"}
+            size="sm"
+            onClick={handleToggleAutoRefresh}
+            className="min-w-[140px]"
+          >
+            Auto refresh {autoRefresh ? `(${countdown}s)` : ''}
+          </Button>
         </div>
 
         <StatsOverview stats={stats} isLoading={statsLoading} />
