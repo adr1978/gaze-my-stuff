@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from banking_transactions.endpoints import sync_logs, sync_stats, sync_config
 from webhook_monitor.endpoints import get_webhooks, receive_webhook
 from api_monitor.endpoints import monitor_stats, monitor_logs
-from recipe_analyzer.endpoints import analyze
+from recipe_importer.endpoints import analyze
 from banking_connections.endpoints import requisition_router, account_router
 
 # Initialize FastAPI application
