@@ -55,23 +55,22 @@ interface RecipeData {
 
 // Predefined recipe categories for classification
 const CATEGORIES = [
-  "bread",
-  "christmas",
-  "drinks",
-  "easter",
-  "fish",
-  "halloween",
-  "high_protein",
-  "ice_cream",
-  "light_bites",
-  "lunches",
-  "poultry",
-  "red_meat",
-  "puddings",
-  "sandwiches",
-  "side_dishes",
-  "system",
-  "vegetarian",
+  "Bread",
+  "Christmas",
+  "Drinks",
+  "Easter",
+  "Fish",
+  "Halloween",
+  "High Protein",
+  "Ice Cream",
+  "Light Bites",
+  "Lunches",
+  "Meat (Poultry)",
+  "Meat (Red)",
+  "Puddings",
+  "Sandwiches",
+  "Side Dishes",
+  "Vegetarian",
 ];
 
 // Supported extraction methods
@@ -215,9 +214,8 @@ export default function RecipeAnalyser() {
         const decodedData = {
           ...data,
           url,
-          name: data.name ? decodeHtmlEntities(data.name) : null,
           imageUrl: data.imageUrl || null,
-          servings: data.servings ? decodeHtmlEntities(data.servings) : null,
+          servings: data.servings || null,
           ingredients: (data.ingredients || []).map((ing: string) => decodeHtmlEntities(ing)),
           instructions: (data.instructions || []).map((inst: string) => decodeHtmlEntities(inst)),
         };

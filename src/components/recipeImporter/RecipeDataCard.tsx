@@ -61,9 +61,9 @@ export function RecipeDataCard({
         {/* Recipe title */}
         <h3 className="text-xl font-semibold mb-2">{recipeData.title || "Untitled Recipe"}</h3>
         
-        {/* Recipe description - displayed under title */}
+        {/* Recipe description - displayed under title with no top padding */}
         {recipeData.description && (
-          <p className="text-muted-foreground mb-3 italic">{recipeData.description}</p>
+          <p className="text-muted-foreground text-sm">{recipeData.description}</p>
         )}
         
         {/* 3-column layout: Image | Servings/Times | Source/Category */}
@@ -122,7 +122,7 @@ export function RecipeDataCard({
                   <a 
                     href={recipeData.url} 
                     target="_blank" 
-                    rel="noopener noreferrer"
+                    rel="noopener noreferrer nofollow"
                     className="text-primary hover:underline flex items-center gap-1"
                   >
                     {recipeData.source}
@@ -138,10 +138,7 @@ export function RecipeDataCard({
             <div className="flex items-center gap-2">
               <span className="font-medium text-foreground">Category:</span>
               <span className="text-muted-foreground">
-                {recipeData.category 
-                  ? recipeData.category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
-                  : "–"
-                }
+                {recipeData.category || "–"}
               </span>
             </div>
           </div>
@@ -178,7 +175,7 @@ export function RecipeDataCard({
           </div>
         </div>
 
-        {/* Action buttons - Edit and View JSON */}
+        {/* Action buttons - Edit, View JSON, and Send to Whisk */}
         <div className="flex gap-2 pt-2">
           <Button onClick={onOpenEditModal} variant="outline" className="rounded-md">
             <Edit className="h-4 w-4" />
@@ -187,6 +184,10 @@ export function RecipeDataCard({
           <Button onClick={onOpenJsonModal} variant="outline" className="rounded-md">
             <Code className="h-4 w-4" />
             View JSON
+          </Button>
+          <Button onClick={onSendToBackend} variant="default" className="rounded-md">
+            <Send className="h-4 w-4" />
+            Send to Whisk
           </Button>
         </div>
       </CardContent>
