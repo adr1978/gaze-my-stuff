@@ -42,23 +42,16 @@ interface RecipeData {
   category: string | null;
 }
 
-interface RecipeMetadata {
-  source: string;
-  category: string;
-}
-
 interface JsonViewerModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   recipeData: RecipeData | null;
-  metadata: RecipeMetadata;
 }
 
 export function JsonViewerModal({
   isOpen,
   onOpenChange,
   recipeData,
-  metadata,
 }: JsonViewerModalProps) {
   const { theme } = useTheme();
   // State to track fullscreen mode - resets to false whenever modal opens
@@ -119,7 +112,7 @@ export function JsonViewerModal({
                 width: '100%',
               }}
             >
-              {JSON.stringify({ ...recipeData}, null, 2)}
+              {JSON.stringify(recipeData, null, 2)}
             </SyntaxHighlighter>
           </div>
         )}
