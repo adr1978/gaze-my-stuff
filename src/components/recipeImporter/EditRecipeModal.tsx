@@ -165,7 +165,7 @@ export function EditRecipeModal({
                       <SelectContent>
                         {categories.map((category) => (
                           <SelectItem key={category} value={category}>
-                            {category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                            {category}
                           </SelectItem>
                         ))}
                       </SelectContent>

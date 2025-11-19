@@ -76,8 +76,8 @@ export function JsonViewerModal({
           </DialogDescription>
         </DialogHeader>
         
-        {/* Fullscreen toggle button - minimal padding above code block */}
-        <div className="flex justify-start pt-2 pb-1">
+        {/* Fullscreen toggle button */}
+        <div className="flex justify-start pb-3">
           <Button
             variant="outline"
             size="sm"
@@ -110,6 +110,7 @@ export function JsonViewerModal({
                 lineHeight: '1.5',
                 margin: 0,
                 width: '100%',
+                padding: '1rem',
               }}
             >
               {JSON.stringify(recipeData, null, 2)}
