@@ -47,11 +47,6 @@ interface RecipeData {
   category: string | null;
 }
 
-interface RecipeMetadata {
-  source: string;
-  category: string;
-}
-
 interface EditRecipeModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -59,8 +54,6 @@ interface EditRecipeModalProps {
   setEditedRecipe: (recipe: RecipeData | null) => void;
   isNewRecipe: boolean;
   categories: string[];
-  metadata: RecipeMetadata;
-  setMetadata: (metadata: RecipeMetadata) => void;
   onSave: () => void;
 }
 
@@ -71,8 +64,6 @@ export function EditRecipeModal({
   setEditedRecipe,
   isNewRecipe,
   categories,
-  metadata,
-  setMetadata,
   onSave,
 }: EditRecipeModalProps) {
   // Ref for scroll area to detect scroll position
@@ -136,7 +127,20 @@ export function EditRecipeModal({
                   />
                 </div>
 
-                {/* Recipe Source and Category - moved below Title as requested */}
+                {/* Description field - displayed under title */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    className="bg-background"
+                    rows={3}
+                    placeholder="Brief description of the recipe"
+                    value={editedRecipe.description || ""}
+                    onChange={(e) => setEditedRecipe({ ...editedRecipe, description: e.target.value })}
+                  />
+                </div>
+
+                {/* Recipe Source and Category - now part of recipe data */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-source">Recipe Source</Label>
@@ -144,16 +148,16 @@ export function EditRecipeModal({
                       id="edit-source"
                       className="bg-background"
                       placeholder="e.g., Waitrose, BBC Good Food"
-                      value={metadata.source}
-                      onChange={(e) => setMetadata({ ...metadata, source: e.target.value })}
+                      value={editedRecipe.source || ""}
+                      onChange={(e) => setEditedRecipe({ ...editedRecipe, source: e.target.value })}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="edit-category">Category</Label>
                     <Select
-                      value={metadata.category}
-                      onValueChange={(value) => setMetadata({ ...metadata, category: value })}
+                      value={editedRecipe.category || ""}
+                      onValueChange={(value) => setEditedRecipe({ ...editedRecipe, category: value })}
                     >
                       <SelectTrigger id="edit-category" className="bg-background">
                         <SelectValue placeholder="Select a category" />

@@ -33,7 +33,6 @@ import { showToast } from "@/lib/toast-helper";
 import { analyzeRecipeDirect } from "@/lib/recipeApiDirect";
 import { RecipeSourceCard } from "@/components/recipeImporter/RecipeSourceCard";
 import { RecipeDataCard } from "@/components/recipeImporter/RecipeDataCard";
-import { MetadataCard } from "@/components/recipeImporter/MetadataCard";
 import { JsonViewerModal } from "@/components/recipeImporter/JsonViewerModal";
 import { EditRecipeModal } from "@/components/recipeImporter/EditRecipeModal";
 
@@ -53,11 +52,6 @@ interface RecipeData {
   category: string | null;
 }
 
-// Metadata interface for source and categorization
-interface RecipeMetadata {
-  source: string;
-  category: string;
-}
 
 // Predefined recipe categories for classification
 const CATEGORIES = [
@@ -88,10 +82,6 @@ export default function RecipeAnalyser() {
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recipeData, setRecipeData] = useState<RecipeData | null>(null);
-  const [metadata, setMetadata] = useState<RecipeMetadata>({
-    source: "",
-    category: "",
-  });
   const [extractionMethod, setExtractionMethod] = useState<ExtractionMethod>("ai");
   const [previousExtractionMethod, setPreviousExtractionMethod] = useState<ExtractionMethod>("ai");
   
@@ -113,14 +103,14 @@ export default function RecipeAnalyser() {
         prevMethod === "manual" ? "ai" : prevMethod
       );
       
-      // Open edit modal with blank recipe
+      // Open edit modal with blank recipe template
       setEditedRecipe({
         title: "",
         url: url || "",
         imageUrl: "",
-        servings: 0,
-        prep_time: 0,
-        cook_time: 0,
+        servings: null,
+        prep_time: null,
+        cook_time: null,
         ingredients: [],
         instructions: [],
         notes: "",
@@ -256,33 +246,27 @@ export default function RecipeAnalyser() {
   };
 
   /**
-   * Send complete recipe data with metadata to backend
-   * Validates metadata presence before submission
+   * Send complete recipe data to backend (Whisk integration)
+   * Validates that required fields (source, category) are present
    */
   const sendToBackend = async () => {
     if (!recipeData) return;
 
-    // Validation: metadata fields required
-    if (!metadata.source || !metadata.category) {
+    // Validation: source and category are required
+    if (!recipeData.source || !recipeData.category) {
       showToast.warning(
         "Missing Information",
-        "Please fill in all metadata fields"
+        "Please add both source and category in the Edit Recipe modal"
       );
       return;
     }
 
-    // Combine recipe data with metadata for backend submission
-    const payload = {
-      ...recipeData,
-      ...metadata,
-    };
-
-    // Placeholder for actual backend API call
-    console.log("Sending to backend:", payload);
+    // Placeholder for actual Whisk API integration
+    console.log("Sending to Whisk:", recipeData);
     
     showToast.info(
       "Ready to Send",
-      "Check console for JSON payload"
+      "Recipe data logged to console (Whisk integration pending)"
     );
   };
 
@@ -400,36 +384,25 @@ export default function RecipeAnalyser() {
 
           {/* Display extracted recipe data if available */}
           {recipeData && (
-            <>
-              <RecipeDataCard
-                recipeData={recipeData}
-                formatTime={formatTime}
-                metadata={metadata}
-                onOpenEditModal={openEditModal}
-                onOpenJsonModal={() => setIsJsonModalOpen(true)}
-              />
-
-              {/* Metadata collection card */}
-              <MetadataCard
-                metadata={metadata}
-                setMetadata={setMetadata}
-                categories={CATEGORIES}
-                onSendToBackend={sendToBackend}
-              />
-            </>
+            <RecipeDataCard
+              recipeData={recipeData}
+              formatTime={formatTime}
+              onOpenEditModal={openEditModal}
+              onOpenJsonModal={() => setIsJsonModalOpen(true)}
+              onSendToBackend={sendToBackend}
+            />
           )}
         </div>
 
 
-        {/* JSON viewer modal */}
+        {/* JSON viewer modal - displays complete recipe data */}
         <JsonViewerModal
           isOpen={isJsonModalOpen}
           onOpenChange={setIsJsonModalOpen}
           recipeData={recipeData}
-          metadata={metadata}
         />
 
-        {/* Edit recipe modal with special handling for Manual toggle */}
+        {/* Edit recipe modal - handles both new manual entry and editing existing recipes */}
         <EditRecipeModal
           isOpen={isEditModalOpen}
           onOpenChange={handleEditModalClose}
@@ -437,8 +410,6 @@ export default function RecipeAnalyser() {
           setEditedRecipe={setEditedRecipe}
           isNewRecipe={isNewRecipeModal}
           categories={CATEGORIES}
-          metadata={metadata}
-          setMetadata={setMetadata}
           onSave={saveEditedRecipe}
         />
       </div>

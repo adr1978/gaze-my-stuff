@@ -3,23 +3,23 @@
  * 
  * Displays extracted recipe information in a structured card format.
  * Features:
- * - Recipe title and thumbnail image
+ * - Recipe title, description, and thumbnail image
  * - Key properties (servings, prep time, cooking time, source, category)
  * - Ingredients list positioned to right of image
  * - Numbered instructions list
- * - Edit and View JSON action buttons
+ * - Edit, View JSON, and Send to Whisk action buttons
  * 
  * Props:
  * - recipeData: Complete recipe information to display
  * - formatTime: Helper function to format time durations
- * - metadata: Recipe source and category information
  * - onOpenEditModal: Callback to open edit modal
  * - onOpenJsonModal: Callback to open JSON viewer
+ * - onSendToBackend: Callback to send recipe data to backend
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Code, ImageIcon, ExternalLink } from "lucide-react";
+import { Edit, Code, ImageIcon, ExternalLink, Send } from "lucide-react";
 
 interface RecipeData {
   url: string;
@@ -36,25 +36,20 @@ interface RecipeData {
   category: string | null;
 }
 
-interface RecipeMetadata {
-  source: string;
-  category: string;
-}
-
 interface RecipeDataCardProps {
   recipeData: RecipeData;
   formatTime: (minutes: number | null) => string | null;
-  metadata: RecipeMetadata;
   onOpenEditModal: () => void;
   onOpenJsonModal: () => void;
+  onSendToBackend: () => void;
 }
 
 export function RecipeDataCard({
   recipeData,
   formatTime,
-  metadata,
   onOpenEditModal,
   onOpenJsonModal,
+  onSendToBackend,
 }: RecipeDataCardProps) {
   return (
     <Card>
@@ -64,7 +59,12 @@ export function RecipeDataCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Recipe title */}
-        <h3 className="text-xl font-semibold mb-3">{recipeData.title || "Untitled Recipe"}</h3>
+        <h3 className="text-xl font-semibold mb-2">{recipeData.title || "Untitled Recipe"}</h3>
+        
+        {/* Recipe description - displayed under title */}
+        {recipeData.description && (
+          <p className="text-muted-foreground mb-3 italic">{recipeData.description}</p>
+        )}
         
         {/* 3-column layout: Image | Servings/Times | Source/Category */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -113,11 +113,11 @@ export function RecipeDataCard({
             </div>
           </div>
 
-          {/* Column 3: Source, Category - always render with labels */}
+          {/* Column 3: Recipe Source and Category - now from recipeData */}
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center gap-2">
               <span className="font-medium text-foreground">Source:</span>
-              {metadata.source ? (
+              {recipeData.source ? (
                 recipeData.url ? (
                   <a 
                     href={recipeData.url} 
@@ -125,11 +125,11 @@ export function RecipeDataCard({
                     rel="noopener noreferrer"
                     className="text-primary hover:underline flex items-center gap-1"
                   >
-                    {metadata.source}
+                    {recipeData.source}
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 ) : (
-                  <span className="text-muted-foreground">{metadata.source}</span>
+                  <span className="text-muted-foreground">{recipeData.source}</span>
                 )
               ) : (
                 <span className="text-muted-foreground">–</span>
@@ -138,8 +138,8 @@ export function RecipeDataCard({
             <div className="flex items-center gap-2">
               <span className="font-medium text-foreground">Category:</span>
               <span className="text-muted-foreground">
-                {metadata.category 
-                  ? metadata.category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+                {recipeData.category 
+                  ? recipeData.category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
                   : "–"
                 }
               </span>
