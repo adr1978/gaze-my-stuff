@@ -33,14 +33,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Save, ChevronDown } from "lucide-react";
 
 interface RecipeData {
-  name: string | null;
+  title: string | null;
   url: string | null;
   imageUrl: string | null;
-  servings: string | null;
-  prepTime: string | null;
-  cookTime: string | null;
+  servings: number | null;
+  prep_time: number | null;
+  cook_time: number | null;
   ingredients: string[];
   instructions: string[];
+  notes: string | null;
+  description: string | null;
+  source: string | null;
+  category: string | null;
 }
 
 interface RecipeMetadata {
@@ -127,8 +131,8 @@ export function EditRecipeModal({
                   <Input
                     id="edit-title"
                     className="bg-background"
-                    value={editedRecipe.name || ""}
-                    onChange={(e) => setEditedRecipe({ ...editedRecipe, name: e.target.value })}
+                    value={editedRecipe.title || ""}
+                    onChange={(e) => setEditedRecipe({ ...editedRecipe, title: e.target.value })}
                   />
                 </div>
 
@@ -186,7 +190,7 @@ export function EditRecipeModal({
                       type="number"
                       className="bg-background"
                       value={editedRecipe.servings || ""}
-                      onChange={(e) => setEditedRecipe({ ...editedRecipe, servings: e.target.value })}
+                      onChange={(e) => setEditedRecipe({ ...editedRecipe, servings: Number(e.target.value) })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -195,8 +199,8 @@ export function EditRecipeModal({
                       id="edit-preptime"
                       type="number"
                       className="bg-background"
-                      value={editedRecipe.prepTime || ""}
-                      onChange={(e) => setEditedRecipe({ ...editedRecipe, prepTime: e.target.value })}
+                      value={editedRecipe.prep_time || ""}
+                      onChange={(e) => setEditedRecipe({ ...editedRecipe, prep_time: Number(e.target.value) })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -205,8 +209,8 @@ export function EditRecipeModal({
                       id="edit-cooktime"
                       type="number"
                       className="bg-background"
-                      value={editedRecipe.cookTime || ""}
-                      onChange={(e) => setEditedRecipe({ ...editedRecipe, cookTime: e.target.value })}
+                      value={editedRecipe.cook_time || ""}
+                      onChange={(e) => setEditedRecipe({ ...editedRecipe, cook_time: Number(e.target.value) })}
                     />
                   </div>
                 </div>

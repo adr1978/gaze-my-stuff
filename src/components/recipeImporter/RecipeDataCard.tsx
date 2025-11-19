@@ -22,14 +22,18 @@ import { Button } from "@/components/ui/button";
 import { Edit, Code, ImageIcon, ExternalLink } from "lucide-react";
 
 interface RecipeData {
-  name: string | null;
-  url: string | null;
-  imageUrl: string | null;
-  servings: string | null;
-  prepTime: string | null;
-  cookTime: string | null;
+  url: string;
+  title: string; 
+  servings: number | null; 
+  prep_time: number | null; 
+  cook_time: number | null; 
   ingredients: string[];
   instructions: string[];
+  notes: string | null;
+  imageUrl: string | null;
+  description: string | null;
+  source: string | null;
+  category: string | null;
 }
 
 interface RecipeMetadata {
@@ -60,7 +64,7 @@ export function RecipeDataCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Recipe title */}
-        <h3 className="text-xl font-semibold mb-3">{recipeData.name || "Untitled Recipe"}</h3>
+        <h3 className="text-xl font-semibold mb-3">{recipeData.title || "Untitled Recipe"}</h3>
         
         {/* 3-column layout: Image | Servings/Times | Source/Category */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -69,7 +73,7 @@ export function RecipeDataCard({
             {recipeData.imageUrl ? (
               <img 
                 src={recipeData.imageUrl} 
-                alt={recipeData.name || "Recipe"} 
+                alt={recipeData.title || "Recipe"} 
                 className="w-full h-48 object-cover rounded-md border border-border"
                 onError={(e) => {
                   // Fallback to placeholder SVG if image fails to load
@@ -92,8 +96,8 @@ export function RecipeDataCard({
             <div className="flex items-center gap-2">
               <span className="font-medium text-foreground">Prep Time:</span>
               <span className="text-muted-foreground">
-                {recipeData.prepTime 
-                  ? formatTime(typeof recipeData.prepTime === 'string' ? parseInt(recipeData.prepTime) : recipeData.prepTime) 
+                {recipeData.prep_time 
+                  ? formatTime(typeof recipeData.prep_time === 'string' ? parseInt(recipeData.prep_time) : recipeData.prep_time) 
                   : "–"
                 }
               </span>
@@ -101,8 +105,8 @@ export function RecipeDataCard({
             <div className="flex items-center gap-2">
               <span className="font-medium text-foreground">Cooking Time:</span>
               <span className="text-muted-foreground">
-                {recipeData.cookTime 
-                  ? formatTime(typeof recipeData.cookTime === 'string' ? parseInt(recipeData.cookTime) : recipeData.cookTime)
+                {recipeData.cook_time 
+                  ? formatTime(typeof recipeData.cook_time === 'string' ? parseInt(recipeData.cook_time) : recipeData.cook_time)
                   : "–"
                 }
               </span>

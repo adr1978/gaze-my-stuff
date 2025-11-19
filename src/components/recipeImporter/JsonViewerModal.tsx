@@ -28,14 +28,18 @@ import { useTheme } from "next-themes";
 SyntaxHighlighter.registerLanguage('json', json);
 
 interface RecipeData {
-  name: string | null;
-  url: string | null;
-  imageUrl: string | null;
-  servings: string | null;
-  prepTime: string | null;
-  cookTime: string | null;
+  url: string;
+  title: string; 
+  description: string | null;
+  servings: number | null; 
+  prep_time: number | null; 
+  cook_time: number | null; 
   ingredients: string[];
   instructions: string[];
+  notes: string | null;
+  imageUrl: string | null;
+  source: string | null;
+  category: string | null;
 }
 
 interface RecipeMetadata {
@@ -115,7 +119,7 @@ export function JsonViewerModal({
                 width: '100%',
               }}
             >
-              {JSON.stringify({ ...recipeData, ...metadata }, null, 2)}
+              {JSON.stringify({ ...recipeData}, null, 2)}
             </SyntaxHighlighter>
           </div>
         )}

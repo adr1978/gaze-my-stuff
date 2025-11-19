@@ -39,14 +39,18 @@ import { EditRecipeModal } from "@/components/recipeImporter/EditRecipeModal";
 
 // Recipe data structure interface
 interface RecipeData {
-  name: string | null;
+  title: string | null;
   url: string | null;
   imageUrl: string | null;
-  servings: string | null;
-  prepTime: string | null;
-  cookTime: string | null;
+  servings: number | null;
+  prep_time: number | null;
+  cook_time: number | null;
   ingredients: string[];
   instructions: string[];
+  notes: string | null;
+  description: string | null;
+  source: string | null;
+  category: string | null;
 }
 
 // Metadata interface for source and categorization
@@ -111,14 +115,18 @@ export default function RecipeAnalyser() {
       
       // Open edit modal with blank recipe
       setEditedRecipe({
-        name: "",
+        title: "",
         url: url || "",
-        imageUrl: null,
-        servings: "",
-        prepTime: "",
-        cookTime: "",
+        imageUrl: "",
+        servings: 0,
+        prep_time: 0,
+        cook_time: 0,
         ingredients: [],
         instructions: [],
+        notes: "",
+        description: "",
+        source: "",
+        category: "",
       });
       setIsNewRecipeModal(true);
       setIsEditModalOpen(true);

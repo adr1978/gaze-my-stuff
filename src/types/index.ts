@@ -1,5 +1,25 @@
 import { PatternType } from "@/components/notionCoverStudio/PatternControls";
 
+// --- RECIPE IMPORTER TYPES ---
+
+// Defines the structure of recipe data returned by the Python/Gemini Backend
+export interface RecipeData {
+  url: string;
+  title: string; 
+  servings: number | null; 
+  prep_time: number | null; 
+  cook_time: number | null; 
+  ingredients: string[];
+  instructions: string[];
+  notes: string | null;
+  imageUrl: string | null;
+  description: string | null;
+  source: string | null;
+  category: string | null;
+}
+
+// --- NOTION COVER STUDIO TYPES ---
+
 // Stores the random x/y, rotation, and scale for pattern generation
 export type RandomPatternData = {
   x: number;
@@ -20,7 +40,7 @@ export interface LayerInitialState {
 export interface LayerState {
   id: string;
   image: HTMLImageElement;
-  thumbnailUrl: string; // Data URL for the preview
+  thumbnailUrl: string; 
   scale: number;
   rotation: number;
   opacity: number;
@@ -28,5 +48,5 @@ export interface LayerState {
   pattern: PatternType;
   spacing: number;
   randomPatternData: RandomPatternData[];
-  initialState: LayerInitialState; // NEW: Store initial state for resetting
+  initialState: LayerInitialState; 
 }

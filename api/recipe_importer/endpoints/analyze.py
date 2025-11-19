@@ -1,120 +1,147 @@
-"""
-Recipe Analysis Endpoint using Google Gemini API
-Fetches HTML from URL and extracts recipe data using AI
-"""
-
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-import os
-import requests
+import logging
+import os 
 import json
-import re
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel, Field
+from typing import List
 
+# Import Google GenAI SDK components
+from google import genai
+from google.genai import types 
+
+# --- Configuration ---
+logger = logging.getLogger("uvicorn.error")
+
+# IMPORTANT: API Key is read from environment variable set in .env
+GEMINI_API_KEY = os.getenv("GOOGLE_GEMINI_API_KEY")
+
+# --- FastAPI Router Setup ---
 router = APIRouter()
 
-class AnalyzeRequest(BaseModel):
-    url: str
+# --- Pydantic Schemas for Request and Response ---
 
-class RecipeResponse(BaseModel):
-    name: str | None
-    url: str | None
-    imageUrl: str | None
-    servings: str | None
-    prepTime: str | None
-    cookTime: str | None
-    ingredients: list[str]
-    instructions: list[str]
+class RecipeUrl(BaseModel):
+    """Schema for the incoming request body."""
+    url: str = Field(..., description="The URL of the recipe page to analyze.")
 
-@router.post("/analyze", response_model=RecipeResponse)
-async def analyze_recipe(request: AnalyzeRequest):
-    """
-    Analyze a recipe URL using Google Gemini API
-    """
-    try:
-        # Fetch HTML content from URL
-        html_response = requests.get(request.url, timeout=10)
-        html_response.raise_for_status()
-        html_content = html_response.text
-        
-        # Truncate HTML if too large (Gemini has token limits)
-        if len(html_content) > 50000:
-            html_content = html_content[:50000]
-        
-        # Get Gemini API key from environment
-        api_key = os.getenv("GOOGLE_GEMINI_API_KEY")
-        if not api_key:
-            raise HTTPException(status_code=500, detail="Gemini API key not configured")
-        
-        # Prepare Gemini API request
-        gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
-        
-        system_prompt = """You are a recipe extraction assistant. Extract recipe details from the provided HTML and return ONLY a JSON object with this exact structure:
-{
-  "name": "Recipe name",
-  "imageUrl": "URL of recipe image",
-  "servings": "Number of servings",
-  "prepTime": "Preparation time in minutes",
-  "cookTime": "Cooking time in minutes",
-  "ingredients": ["ingredient 1", "ingredient 2"],
-  "instructions": ["step 1", "step 2"]
-}
+class RecipeData(BaseModel):
+    """Schema for the structured JSON response from the LLM."""
+    url: str = Field(..., description="Original source URL.")
+    title: str = Field(..., description="The title of the recipe.")
+    description: str = Field(..., description="The description of the recipe.")
+    servings: int = Field(None, description="The number of servings (e.g., 6).")
+    prep_time: int = Field(None, description="The preparation time (e.g., 15).")
+    cook_time: int = Field(None, description="The cooking time (e.g., 120).")
+    ingredients: List[str] = Field(..., description="A list of ingredients, with quantities.")
+    instructions: List[str] = Field(..., description="A list of numbered instruction steps, one sentence per list item")
+    notes: str = Field(None, description="Any additional notes or tips.")
+    source: str = Field(None, description="Which site / chef the recipe should be attributed to")
+    category: str = Field(None, description="The most relevant category for this recipe, based on the prompt options")
+    imageUrl: str = Field(None, description="The image url for the recipe image")
 
-Rules:
-- Return ONLY valid JSON, no markdown formatting
-- If a field is not found, use null
-- Times should be numbers only (e.g., "30" not "30 minutes")
-- Split instructions into separate steps
-- Keep ingredient formatting simple and clean"""
 
-        payload = {
-            "contents": [{
-                "parts": [{
-                    "text": f"{system_prompt}\n\nHTML content:\n{html_content}"
-                }]
-            }],
-            "generationConfig": {
-                "temperature": 0.7,
-                "topK": 40,
-                "topP": 0.95,
-                "maxOutputTokens": 2048,
-            }
-        }
-        
-        # Call Gemini API
-        gemini_response = requests.post(
-            gemini_url,
-            headers={"Content-Type": "application/json"},
-            json=payload,
-            timeout=30
+# ----------------------------------------------------------------------
+# DEPENDENCY INJECTION FUNCTION
+# Uses the high-level Client to avoid internal API conflicts.
+# ----------------------------------------------------------------------
+
+async def get_gemini_client():
+    """Dependency injector that creates and yields a properly initialized Client."""
+    
+    # 1. Check for key availability
+    if not GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini AI Service is unavailable. GOOGLE_GEMINI_API_KEY is not configured."
         )
-        gemini_response.raise_for_status()
-        gemini_data = gemini_response.json()
+    
+    try:
+        # 2. Initialize the standard Client with the API key explicitly.
+        client = genai.Client(api_key=GEMINI_API_KEY)
         
-        # Extract text from Gemini response
-        if not gemini_data.get("candidates") or not gemini_data["candidates"][0].get("content"):
-            raise HTTPException(status_code=500, detail="Invalid response from Gemini API")
+        # 3. Yield the client for use in the endpoint function
+        yield client
         
-        generated_text = gemini_data["candidates"][0]["content"]["parts"][0]["text"]
-        
-        # Parse JSON from response (handle potential markdown wrapping)
-        json_text = generated_text.strip()
-        if json_text.startswith("```"):
-            # Remove markdown code blocks
-            json_text = re.sub(r'^```(?:json)?\s*\n', '', json_text)
-            json_text = re.sub(r'\n```\s*$', '', json_text)
-        
-        recipe_data = json.loads(json_text)
-        
-        # Add the original URL
-        recipe_data["url"] = request.url
-        
-        return recipe_data
-        
-    except requests.Timeout:
-        raise HTTPException(status_code=408, detail="Request timeout while fetching recipe")
-    except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch URL: {str(e)}")
-    except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to parse recipe data: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        logger.error(f"FATAL: Gemini Client Setup Failed. Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to initialize AI Client.")
+        
+    # No manual 'finally' block needed for the high-level client in this context
+    # as it manages its own connection pool.
+
+
+# --- API Endpoint ---
+
+@router.post("/analyze", response_model=RecipeData)
+async def analyze_recipe(
+    recipe_url: RecipeUrl,
+    # Inject the client dependency here
+    client: genai.Client = Depends(get_gemini_client) 
+):
+    """
+    Analyzes a recipe URL using the Gemini API and returns structured recipe data.
+    """
+    logger.info(f"API call: POST /api/recipe/analyze for URL: {recipe_url.url}")
+    
+    # Define the instruction prompt for the model
+    system_prompt = (
+        "You are a professional recipe extraction engine. "
+        "Your task is to visit the provided URL, read the recipe details, and extract "
+        "the recipe information into a clean, structured JSON object that strictly adheres "
+        "to the provided JSON schema. Ensure the instructions and ingredients are in lists. "
+        "If a field (like servings or cook_time) is not found, return an empty string or null."
+        "All timings (prep + cook) must be converted into minutes and only return the integer value"
+        "All instructions must be split so that each sentence is one instruction"
+        "Recipe images for these domains typically look something like;"
+        "- For Tesco -> realfood.tesco.com/media/images/"
+        "- For Waitrose -> /waitrose-prod.scene7.com/is/image/waitroseprod/ with a uuid query parameter"
+        "Go through all urls in the code and extract out the most suitable / appropriate image URL, including all query parameters"
+        "If the domain is waitrose.com, make the Source property `Waitrose`"
+        "If the domain is tesco.com make the Source property `Tesco`.  Recipe data can be extracted from the <script type='application/ld+json'> script."
+        "If multipe images are available, the selectied one must be the highest quality available"
+        "Do not make anything up.  Only include real data that has been extracted, especially image URLs.  Validate the URL gives a 200.  If not find another suitable image."
+        "Automatically associate the recipe to a category, but only one from the following (choose the most appropriate);"
+        "Bread, Christmas, Drinks, Easter, Fish, Halloween, Ice Cream, Light Bites, Meat (Poultry), Meat (Red), Puddings, Sandwiches, Side Dishes, Vegetarian"
+    )
+
+    try:
+        # Create the configuration for structured JSON output
+        config = types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            response_mime_type="application/json",
+            response_schema=RecipeData,
+        )
+        
+        # Define the user query (instructing the model to act on the URL)
+        user_query = f"Extract the recipe from this URL: {recipe_url.url}"
+
+        # Use the async method on the models property
+        response = await client.aio.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=user_query,
+            config=config,
+        )
+
+        # The response text will be a JSON string adhering to the RecipeData schema
+        if not response.text:
+            raise ValueError("AI returned an empty response. Could not extract recipe from the source.")
+        
+        # --- DEBUG LOGGING START ---
+        logger.critical("--- RAW AI RESPONSE START ---")
+        logger.critical(response.text)
+        logger.critical("--- RAW AI RESPONSE END ---")
+        # --- DEBUG LOGGING END ---
+        
+        # Parse the JSON string into the Pydantic model for validation and return
+        recipe_data = RecipeData.model_validate_json(response.text)
+        recipe_data.url = recipe_url.url # Ensure the original URL is retained
+
+        logger.info(f"Successfully extracted recipe: {recipe_data.title}")
+        return recipe_data
+
+    except Exception as e:
+        logger.error(f"Internal processing error during recipe analysis: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal Server Error: Failed to process AI response. {str(e)}"
+        )
