@@ -21,7 +21,7 @@ interface CallDetailsModalProps {
 }
 
 export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   if (!call) return null;
 
   const isError = call.status === "error";
@@ -86,7 +86,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
               <p className="text-sm font-medium mb-2">Request Headers</p>
               <SyntaxHighlighter
                 language="json"
-                style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                style={resolvedTheme === "dark" ? atelierCaveDark : atelierCaveLight}
                 customStyle={{
                   borderRadius: "6px",
                   fontSize: "12px",
@@ -103,7 +103,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
                 <p className="text-sm font-medium mb-2">Request Parameters</p>
                 <SyntaxHighlighter
                   language="json"
-                  style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                  style={resolvedTheme === "dark" ? atelierCaveDark : atelierCaveLight}
                   customStyle={{
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -121,7 +121,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
                 <p className="text-sm font-medium mb-2">Request Body</p>
                 <SyntaxHighlighter
                   language="json"
-                  style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                  style={resolvedTheme === "dark" ? atelierCaveDark : atelierCaveLight}
                   customStyle={{
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -139,7 +139,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
                 <p className="text-sm font-medium mb-2">Response Body</p>
                 <SyntaxHighlighter
                   language="json"
-                  style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                  style={resolvedTheme === "dark" ? atelierCaveDark : atelierCaveLight}
                   customStyle={{
                     borderRadius: "6px",
                     fontSize: "12px",
@@ -157,7 +157,7 @@ export function CallDetailsModal({ call, open, onOpenChange }: CallDetailsModalP
                 <p className="text-sm font-medium mb-2">Error Details</p>
                 <SyntaxHighlighter
                   language="json"
-                  style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+                  style={resolvedTheme === "dark" ? atelierCaveDark : atelierCaveLight}
                   customStyle={{
                     borderRadius: "6px",
                     fontSize: "12px",
