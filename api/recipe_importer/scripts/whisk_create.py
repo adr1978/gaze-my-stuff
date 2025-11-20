@@ -17,13 +17,26 @@ logger = logging.getLogger(__name__)
 # Whisk API endpoint for creating recipes
 RECIPES_API_URL = "https://graph.whisk.com/v1/recipes"
 
-def create_recipe_in_whisk(access_token: str, scraped_data: dict) -> dict:
+def create_recipe_in_whisk(access_token: str, recipe_data: dict) -> dict:
     """
-    Create a recipe in Samsung Food (Whisk) using scraped data.
+    Create a recipe in Samsung Food (Whisk) using recipe data.
+    
+    This function accepts data in Whisk-compatible format (from whisk_handler transformation).
     
     Args:
         access_token: Valid Whisk API access token
-        scraped_data: Dictionary with scraped recipe data
+        recipe_data: Dictionary with recipe data in Whisk format:
+            - name: Recipe title
+            - description: Recipe description
+            - servings: Number of servings (integer)
+            - prep_time: Prep time in minutes
+            - cook_time: Cook time in minutes
+            - total_time: Total time in minutes
+            - ingredients: List of dicts with "text" key (and optional "group")
+            - instructions: List of instruction strings
+            - cooks_tip: Cook's tip text (optional)
+            - source_url: Original URL (optional)
+            - image_url: Recipe image URL (optional)
         
     Returns:
         Dictionary with Whisk API response including recipe ID
@@ -32,11 +45,12 @@ def create_recipe_in_whisk(access_token: str, scraped_data: dict) -> dict:
         Exception with error_info attribute if creation fails
     """
     
-    logger.info(f"Creating recipe: {scraped_data['name']}")
+    logger.info(f"Creating recipe: {recipe_data['name']}")
     
     # Transform ingredients to Whisk format (with optional groups)
+    # Input: list of dicts like [{"text": "ingredient"}, {"text": "ing2", "group": "For sauce"}]
     ingredients_list = []
-    for ing in scraped_data['ingredients']:
+    for ing in recipe_data['ingredients']:
         ing_dict = {"text": ing['text']}
         # Only add group attribute if the ingredient has one
         if ing.get('group'):
@@ -46,13 +60,13 @@ def create_recipe_in_whisk(access_token: str, scraped_data: dict) -> dict:
     # Transform instructions to Whisk format (no group attribute for regular steps)
     instructions_list = [
         {"text": instruction, "customLabels": []}
-        for instruction in scraped_data['instructions']
+        for instruction in recipe_data['instructions']
     ]
     
     # If there's a cook's tip, add as additional instruction steps with group="Cook's tip"
-    if scraped_data.get('cooks_tip'):
+    if recipe_data.get('cooks_tip'):
         # Handle both list (new format) and string (old format)
-        tips = scraped_data['cooks_tip']
+        tips = recipe_data['cooks_tip']
         if isinstance(tips, str):
             # Old format - split by double newlines
             tips = [t.strip() for t in tips.split('\n\n') if t.strip()]
@@ -68,20 +82,20 @@ def create_recipe_in_whisk(access_token: str, scraped_data: dict) -> dict:
     
     # Build durations object (times in minutes)
     durations = {}
-    if scraped_data.get('prep_time') is not None:
-        durations['prepTime'] = int(scraped_data['prep_time'])
-    if scraped_data.get('cook_time') is not None:
-        durations['cookTime'] = int(scraped_data['cook_time'])
-    if scraped_data.get('total_time') is not None:
-        durations['totalTime'] = int(scraped_data['total_time'])
+    if recipe_data.get('prep_time') is not None:
+        durations['prepTime'] = int(recipe_data['prep_time'])
+    if recipe_data.get('cook_time') is not None:
+        durations['cookTime'] = int(recipe_data['cook_time'])
+    if recipe_data.get('total_time') is not None:
+        durations['totalTime'] = int(recipe_data['total_time'])
     
     # Build images array
     images = []
-    if scraped_data.get('image_url'):
-        images.append({"url": scraped_data['image_url']})
+    if recipe_data.get('image_url'):
+        images.append({"url": recipe_data['image_url']})
     
     # Ensure servings is an integer
-    servings = scraped_data.get('servings', 1)
+    servings = recipe_data.get('servings', 1)
     try:
         servings = int(servings)
     except (ValueError, TypeError):
@@ -89,19 +103,27 @@ def create_recipe_in_whisk(access_token: str, scraped_data: dict) -> dict:
     
     # Build source object (author + URL without query strings)
     source = None
-    if scraped_data.get('source_url'):
+    if recipe_data.get('source_url'):
         # Parse URL and remove query string
-        parsed = urlparse(scraped_data['source_url'])
+        parsed = urlparse(recipe_data['source_url'])
         clean_url = urlunparse((parsed.scheme, parsed.netloc, parsed.path, '', '', ''))
+        
+        # Determine source name from URL or use provided source
+        source_name = "Unknown"
+        if 'waitrose.com' in parsed.netloc:
+            source_name = "Waitrose"
+        elif 'tesco.com' in parsed.netloc:
+            source_name = "Tesco"
+        
         source = {
-            "name": "Waitrose",
-            "displayName": "Waitrose",
+            "name": source_name,
+            "displayName": source_name,
             "sourceRecipeUrl": clean_url
         }
     
-    # Determine which collection(s) this recipe belongs to
-    collection_ids = get_collection_id_for_recipe(scraped_data['name'])
-    collection_names = get_collection_names_for_recipe(scraped_data['name'])
+    # Determine which collection(s) this recipe belongs to based on title
+    collection_ids = get_collection_id_for_recipe(recipe_data['name'])
+    collection_names = get_collection_names_for_recipe(recipe_data['name'])
 
     if collection_ids:
         logger.info(f"Auto-assigned to {len(collection_ids)} collection(s): {', '.join(collection_names)}")
@@ -114,8 +136,8 @@ def create_recipe_in_whisk(access_token: str, scraped_data: dict) -> dict:
     # Build the recipe payload for Whisk API
     recipe_payload = {
         "payload": {
-            "name": scraped_data['name'],
-            "description": scraped_data.get('description', ''),
+            "name": recipe_data['name'],
+            "description": recipe_data.get('description', ''),
             "servings": servings,
             "language": "en-GB",
             "durations": durations,
