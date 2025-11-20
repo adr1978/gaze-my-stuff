@@ -1,1 +1,1 @@
-# Recipe analyzer endpoints
+# Recipe analyser endpoints

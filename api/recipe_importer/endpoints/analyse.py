@@ -22,7 +22,7 @@ router = APIRouter()
 
 class RecipeUrl(BaseModel):
     """Schema for the incoming request body."""
-    url: str = Field(..., description="The URL of the recipe page to analyze.")
+    url: str = Field(..., description="The URL of the recipe page to analyse.")
 
 class RecipeData(BaseModel):
     """Schema for the structured JSON response from the LLM."""
@@ -72,16 +72,16 @@ async def get_gemini_client():
 
 # --- API Endpoint ---
 
-@router.post("/analyze", response_model=RecipeData)
-async def analyze_recipe(
+@router.post("/analyse", response_model=RecipeData)
+async def analyse_recipe(
     recipe_url: RecipeUrl,
     # Inject the client dependency here
     client: genai.Client = Depends(get_gemini_client) 
 ):
     """
-    Analyzes a recipe URL using the Gemini API and returns structured recipe data.
+    Analyses a recipe URL using the Gemini API and returns structured recipe data.
     """
-    logger.info(f"API call: POST /api/recipe/analyze for URL: {recipe_url.url}")
+    logger.info(f"API call: POST /api/recipe/analyse for URL: {recipe_url.url}")
     
     # Define the instruction prompt for the model
     system_prompt = (

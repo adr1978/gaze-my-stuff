@@ -1,1 +1,1 @@
-# Recipe analyzer module
+# Recipe analyser module

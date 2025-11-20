@@ -62,7 +62,7 @@ export function RecipeDocumentation() {
             <section>
               <h3 className="text-lg font-semibold mb-3 text-foreground">Extraction Methods</h3>
               <ul className="space-y-2 text-muted-foreground">
-                <li><strong>AI Magic (Default):</strong> Uses AI to intelligently extract recipe data from any URL. Calls Supabase edge function 'analyze-recipe' with Lovable AI integration</li>
+                <li><strong>AI Magic (Default):</strong> Uses AI to intelligently extract recipe data from any URL. Calls Supabase edge function 'analyse-recipe' with Lovable AI integration</li>
                 <li><strong>Waitrose Parser:</strong> Specialized parser optimized for Waitrose recipe pages. More reliable for this specific source</li>
                 <li><strong>Manual:</strong> Opens empty recipe form for manual data entry. Useful when no URL is available</li>
                 <li><strong>Selection UI:</strong> Toggle-style buttons with active state highlighting using primary colors</li>
@@ -143,8 +143,8 @@ export function RecipeDocumentation() {
                     <li>- RecipeDocumentation: This documentation modal</li>
                   </ul>
                 </li>
-                <li><strong>AI Integration:</strong> Calls Supabase edge function 'analyze-recipe' which uses Lovable AI (Gemini models)</li>
-                <li><strong>Edge Function:</strong> Located at supabase/functions/analyze-recipe/index.ts</li>
+                <li><strong>AI Integration:</strong> Calls Supabase edge function 'analyse-recipe' which uses Lovable AI (Gemini models)</li>
+                <li><strong>Edge Function:</strong> Located at supabase/functions/analyse-recipe/index.ts</li>
                 <li><strong>HTML Decoding:</strong> Uses decodeHtmlEntities helper to clean special characters (°, etc.)</li>
                 <li><strong>State Management:</strong> React useState hooks manage recipe data, modals, and form state</li>
                 <li><strong>Data Flow:</strong> URL → Edge Function → Recipe Data → Display Cards → Edit → Backend</li>

@@ -12,8 +12,8 @@
  * - setUrl: Function to update URL
  * - extractionMethod: Currently selected extraction method
  * - setExtractionMethod: Function to change extraction method
- * - isAnalyzing: Loading state during extraction
- * - onAnalyze: Callback to trigger recipe extraction
+ * - isAnalysing: Loading state during extraction
+ * - onAnalyse: Callback to trigger recipe extraction
  */
 
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,8 @@ interface RecipeSourceCardProps {
   setUrl: (url: string) => void;
   extractionMethod: ExtractionMethod;
   setExtractionMethod: (method: ExtractionMethod) => void;
-  isAnalyzing: boolean;
-  onAnalyze: () => void;
+  isAnalysing: boolean;
+  onAnalyse: () => void;
 }
 
 export function RecipeSourceCard({
@@ -39,8 +39,8 @@ export function RecipeSourceCard({
   setUrl,
   extractionMethod,
   setExtractionMethod,
-  isAnalyzing,
-  onAnalyze,
+  isAnalysing,
+  onAnalyse,
 }: RecipeSourceCardProps) {
   return (
     <Card>
@@ -81,15 +81,15 @@ export function RecipeSourceCard({
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => {
               // Trigger extraction on Enter key press
-              if (e.key === 'Enter' && !isAnalyzing) {
-                onAnalyze();
+              if (e.key === 'Enter' && !isAnalysing) {
+                onAnalyse();
               }
             }}
             disabled={extractionMethod === "manual"}
             className="flex-1"
           />
-          <Button onClick={onAnalyze} disabled={isAnalyzing || extractionMethod === "manual"} className="rounded-md">
-            {isAnalyzing ? (
+          <Button onClick={onAnalyse} disabled={isAnalysing || extractionMethod === "manual"} className="rounded-md">
+            {isAnalysing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Search className="h-4 w-4" />

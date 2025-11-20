@@ -16,7 +16,6 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict
-
 from dotenv import load_dotenv
 
 # Load environment variables

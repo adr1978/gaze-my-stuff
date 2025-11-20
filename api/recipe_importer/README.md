@@ -1,16 +1,16 @@
-# Recipe Analyzer API
+# Recipe Analyser API
 
-Backend endpoint for analyzing recipe URLs using Google Gemini API.
+Backend endpoint for analysing recipe URLs using Google Gemini API.
 
 ## Setup
 
 1. Set the `GOOGLE_GEMINI_API_KEY` environment variable
-2. The endpoint will be available at `/api/recipe/analyze`
+2. The endpoint will be available at `/api/recipe/analyse`
 
 ## Usage
 
 ```bash
-POST /api/recipe/analyze
+POST /api/recipe/analyse
 Content-Type: application/json
 
 {
@@ -46,4 +46,4 @@ To test the frontend approach, you need to:
 To remove the temporary frontend code:
 1. Delete `src/lib/recipeApiDirect.ts`
 2. Remove the import from `src/pages/RecipeImporter.tsx`
-3. Remove the fallback logic in the `analyzeRecipe` function
+3. Remove the fallback logic in the `analyseRecipe` function

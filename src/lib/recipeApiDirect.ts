@@ -16,7 +16,7 @@ interface RecipeData {
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-export async function analyzeRecipeDirect(url: string): Promise<RecipeData> {
+export async function analyseRecipeDirect(url: string): Promise<RecipeData> {
   try {
     // Fetch HTML content
     const htmlResponse = await fetch(url);

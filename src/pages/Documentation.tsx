@@ -255,7 +255,7 @@ export default function Documentation() {
                   <section>
                     <h3 className="text-lg font-semibold mb-3 text-foreground">Technical Details</h3>
                     <ul className="space-y-2 text-muted-foreground text-sm">
-                      <li><strong>Edge Function:</strong> analyze-recipe function at supabase/functions/analyze-recipe/index.ts</li>
+                      <li><strong>Edge Function:</strong> analyse-recipe function at supabase/functions/analyse-recipe/index.ts</li>
                       <li><strong>HTML Decoding:</strong> Helper function cleans special characters (°C, etc.)</li>
                       <li><strong>Data Structure:</strong> RecipeData and RecipeMetadata interfaces with typed fields</li>
                       <li><strong>Time Format:</strong> Stored as minutes, displayed as "X hrs Y mins"</li>

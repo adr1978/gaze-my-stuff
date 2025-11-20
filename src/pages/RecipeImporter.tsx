@@ -30,7 +30,7 @@
 
 import { useState, useEffect } from "react";
 import { showToast } from "@/lib/toast-helper";
-import { analyzeRecipeDirect } from "@/lib/recipeApiDirect";
+import { analyseRecipeDirect } from "@/lib/recipeApiDirect";
 import { RecipeSourceCard } from "@/components/recipeImporter/RecipeSourceCard";
 import { RecipeDataCard } from "@/components/recipeImporter/RecipeDataCard";
 import { JsonViewerModal } from "@/components/recipeImporter/JsonViewerModal";
@@ -79,7 +79,7 @@ type ExtractionMethod = "ai" | "waitrose" | "manual";
 export default function RecipeAnalyser() {
   // Core state
   const [url, setUrl] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAnalysing, setIsAnalysing] = useState(false);
   const [recipeData, setRecipeData] = useState<RecipeData | null>(null);
   const [extractionMethod, setExtractionMethod] = useState<ExtractionMethod>("ai");
   const [previousExtractionMethod, setPreviousExtractionMethod] = useState<ExtractionMethod>("ai");
@@ -162,18 +162,18 @@ export default function RecipeAnalyser() {
    * Handles AI extraction, Waitrose parser, or manual entry
    * Uses backend API with fallback to direct Gemini calls
    */
-  const analyzeRecipe = async () => {
+  const analyseRecipe = async () => {
     // Validation: URL required for non-manual methods
     if (!url && extractionMethod !== "manual") {
       showToast.error("Error", "Please enter a recipe URL");
       return;
     }
 
-    setIsAnalyzing(true);
+    setIsAnalysing(true);
     try {
       // Manual entry is handled by useEffect watching extractionMethod
       if (extractionMethod === "manual") {
-        setIsAnalyzing(false);
+        setIsAnalysing(false);
         return;
       }
 
@@ -184,7 +184,7 @@ export default function RecipeAnalyser() {
         const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
         
         try {
-          const response = await fetch(`${API_BASE_URL}/api/recipe/analyze`, {
+          const response = await fetch(`${API_BASE_URL}/api/recipe/analyse`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: url.trim() })
@@ -195,18 +195,18 @@ export default function RecipeAnalyser() {
           }
           
           data = await response.json();
-          console.log('Recipe analyzed via backend:', data);
+          console.log('Recipe analysed via backend:', data);
         } catch (backendError) {
           console.warn('Backend failed, using direct API:', backendError);
-          data = await analyzeRecipeDirect(url.trim());
-          console.log('Recipe analyzed via direct API:', data);
+          data = await analyseRecipeDirect(url.trim());
+          console.log('Recipe analysed via direct API:', data);
         }
       } else if (extractionMethod === "waitrose") {
         showToast.info(
           "Waitrose Parser",
           "Waitrose parser not implemented, using AI"
         );
-        data = await analyzeRecipeDirect(url.trim());
+        data = await analyseRecipeDirect(url.trim());
       }
 
       if (data) {
@@ -224,22 +224,22 @@ export default function RecipeAnalyser() {
         
         // Save to localStorage
         const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
-        savedRecipes.push({ ...decodedData, analyzedAt: new Date().toISOString() });
+        savedRecipes.push({ ...decodedData, analysedAt: new Date().toISOString() });
         localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
         
         showToast.success(
           "Success",
-          "Recipe analyzed successfully!"
+          "Recipe analysed successfully!"
         );
       }
     } catch (error) {
-      console.error("Error analyzing recipe:", error);
+      console.error("Error analysing recipe:", error);
       showToast.error(
-        "Unable to Analyze",
+        "Unable to Analyse",
         "Could not extract recipe data from this URL"
       );
     } finally {
-      setIsAnalyzing(false);
+      setIsAnalysing(false);
     }
   };
 
@@ -376,8 +376,8 @@ export default function RecipeAnalyser() {
             setUrl={setUrl}
             extractionMethod={extractionMethod}
             setExtractionMethod={setExtractionMethod}
-            isAnalyzing={isAnalyzing}
-            onAnalyze={analyzeRecipe}
+            isAnalysing={isAnalysing}
+            onAnalyse={analyseRecipe}
           />
 
           {/* Display extracted recipe data if available */}
