@@ -52,8 +52,16 @@ app.include_router(receive_webhook.router, prefix="/api/webhooks", tags=["webhoo
 app.include_router(monitor_stats.router, prefix="/api/api_monitor", tags=["api_monitor"])
 app.include_router(monitor_logs.router, prefix="/api/api_monitor", tags=["api_monitor"])
 
-# Register recipe analyser endpoints
+# Register recipe endpoints
+# - AI-powered recipe analysis from any URL
+# - Waitrose-specific parser for structured extraction
+# - Whisk upload for saving recipes to Samsung Food
 app.include_router(analyse.router, prefix="/api/recipe", tags=["recipe"])
+
+# Import and register new recipe endpoints
+from recipe_importer.endpoints import parse_waitrose, upload_whisk
+app.include_router(parse_waitrose.router, prefix="/api/recipe", tags=["recipe"])
+app.include_router(upload_whisk.router, prefix="/api/recipe", tags=["recipe"])
 
 @app.get("/")
 async def root():

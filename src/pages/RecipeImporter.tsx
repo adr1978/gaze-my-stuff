@@ -160,7 +160,7 @@ export default function RecipeAnalyser() {
   /**
    * Main recipe analysis function
    * Handles AI extraction, Waitrose parser, or manual entry
-   * Uses backend API with fallback to direct Gemini calls
+   * Uses backend API with fallback to direct Gemini calls for AI
    */
   const analyseRecipe = async () => {
     // Validation: URL required for non-manual methods
@@ -177,13 +177,13 @@ export default function RecipeAnalyser() {
         return;
       }
 
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
       let data;
       
       if (extractionMethod === "ai") {
         // Try backend first, fallback to direct API
-        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-        
         try {
+          console.log('Calling AI backend endpoint:', `${API_BASE_URL}/api/recipe/analyse`);
           const response = await fetch(`${API_BASE_URL}/api/recipe/analyse`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -195,25 +195,48 @@ export default function RecipeAnalyser() {
           }
           
           data = await response.json();
-          console.log('Recipe analysed via backend:', data);
+          console.log('✅ Recipe analysed via AI backend:', data);
         } catch (backendError) {
           console.warn('Backend failed, using direct API:', backendError);
           data = await analyseRecipeDirect(url.trim());
-          console.log('Recipe analysed via direct API:', data);
+          console.log('✅ Recipe analysed via direct API:', data);
         }
       } else if (extractionMethod === "waitrose") {
-        showToast.info(
-          "Waitrose Parser",
-          "Waitrose parser not implemented, using AI"
-        );
-        data = await analyseRecipeDirect(url.trim());
+        // Call Waitrose parser backend endpoint
+        try {
+          console.log('Calling Waitrose parser endpoint:', `${API_BASE_URL}/api/recipe/parse-waitrose`);
+          const response = await fetch(`${API_BASE_URL}/api/recipe/parse-waitrose`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url.trim() })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Waitrose parser failed:', errorData);
+            throw new Error('Waitrose parser failed');
+          }
+          
+          const responseData = await response.json();
+          data = responseData.data; // Extract data from response wrapper
+          console.log('✅ Recipe parsed via Waitrose backend:', data);
+        } catch (waitroseError) {
+          console.error('Waitrose parser error:', waitroseError);
+          showToast.error(
+            "Waitrose Parser Failed",
+            "Could not parse Waitrose recipe. Please try AI extraction instead."
+          );
+          setIsAnalysing(false);
+          return;
+        }
       }
 
       if (data) {
         // Decode HTML entities in extracted data
+        // Note: servings should already be a number from backend, don't decode it
         const decodedData = {
           ...data,
-          url,
+          url: data.url || url, // Use URL from response or fallback to input
           imageUrl: data.imageUrl || null,
           servings: data.servings || null,
           ingredients: (data.ingredients || []).map((ing: string) => decodeHtmlEntities(ing)),
@@ -229,7 +252,7 @@ export default function RecipeAnalyser() {
         
         showToast.success(
           "Success",
-          "Recipe analysed successfully!"
+          `Recipe ${extractionMethod === 'waitrose' ? 'parsed' : 'analysed'} successfully!`
         );
       }
     } catch (error) {
@@ -246,11 +269,12 @@ export default function RecipeAnalyser() {
   /**
    * Send complete recipe data to backend (Whisk integration)
    * Validates that required fields (source, category) are present
+   * Uploads recipe to Samsung Food (Whisk) via backend API
    */
   const sendToBackend = async () => {
     if (!recipeData) return;
 
-    // Validation: source and category are required
+    // Validation: source and category are required for proper categorization
     if (!recipeData.source || !recipeData.category) {
       showToast.warning(
         "Missing Information",
@@ -259,13 +283,52 @@ export default function RecipeAnalyser() {
       return;
     }
 
-    // Placeholder for actual Whisk API integration
-    console.log("Sending to Whisk:", recipeData);
-    
-    showToast.info(
-      "Ready to Send",
-      "Recipe data logged to console (Whisk integration pending)"
-    );
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      
+      console.log('=== Starting Whisk Upload ===');
+      console.log('Recipe to upload:', {
+        title: recipeData.title,
+        servings: recipeData.servings,
+        ingredientCount: recipeData.ingredients.length,
+        instructionCount: recipeData.instructions.length,
+        category: recipeData.category,
+        source: recipeData.source
+      });
+
+      showToast.info(
+        "Uploading...",
+        "Sending recipe to Samsung Food"
+      );
+
+      const response = await fetch(`${API_BASE_URL}/api/recipe/upload-whisk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recipeData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Whisk upload failed:', errorData);
+        throw new Error(errorData.detail?.message || 'Upload failed');
+      }
+
+      const result = await response.json();
+      console.log('✅ Whisk upload successful:', result);
+      console.log('Workflow steps:', result.steps);
+      console.log('=== Upload Complete ===');
+
+      showToast.success(
+        "Upload Successful",
+        `Recipe "${recipeData.title}" has been saved to Samsung Food!`
+      );
+    } catch (error) {
+      console.error('❌ Error uploading to Whisk:', error);
+      showToast.error(
+        "Upload Failed",
+        error instanceof Error ? error.message : "Could not upload recipe to Samsung Food"
+      );
+    }
   };
 
   /**

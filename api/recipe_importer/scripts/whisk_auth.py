@@ -1,9 +1,25 @@
+"""
+Whisk Authentication Module
+
+Handles authentication with Samsung Food (Whisk) API.
+Manages token storage and refresh cycles.
+
+Environment Variables Required:
+- WHISK_CLIENT_ID: Whisk application client ID
+- WHISK_EMAIL: User email for authentication
+- WHISK_PASSWORD: User password for authentication
+"""
+
 import json
 import time
+import os
 import requests
 from pathlib import Path
 import logging
 from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Token storage and logging setup
@@ -23,6 +39,8 @@ logger = logging.getLogger(__name__)
 
 ANON_URL = "https://login.whisk.com/x/v1/auth/anonymous/create"
 LOGIN_URL = "https://login.whisk.com/x/v1/auth/login"
+
+# Fetch sensitive data from environment variables (never hardcode!)
 WHISK_CLIENT_ID = os.getenv("WHISK_CLIENT_ID", "")
 WHISK_EMAIL = os.getenv("WHISK_EMAIL", "")
 WHISK_PASSWORD = os.getenv("WHISK_PASSWORD", "")
@@ -147,13 +165,24 @@ def refresh_token_if_needed(email: str, password: str) -> tuple[str, str]:
 
 
 def authenticate() -> tuple[str, str]:
+    """
+    Main authentication function - checks for valid stored token, refreshes if needed.
+    
+    Returns:
+        Tuple of (access_token, token_source) where token_source is "stored" or "refreshed"
+    
+    Raises:
+        Exception: If authentication fails
+    """
     token_data = load_token()
     access_token = token_data.get("access_token")
     expires_at = token_data.get("expires_at", 0)
     
+    # Check if stored token is still valid
     if access_token and time.time() < expires_at:
-        logger.info("Using stored access token")
+        logger.info("✅ Using stored access token")
         return access_token, "stored"
     else:
-        return refresh_token_if_needed(EMAIL, PASSWORD)
-    # ❌ Remove the try/except fallback here too!
+        # Token expired or doesn't exist - perform full authentication
+        logger.info("Token expired or missing - performing full authentication")
+        return refresh_token_if_needed(WHISK_EMAIL, WHISK_PASSWORD)
