@@ -59,11 +59,11 @@ export function RecipeDataCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Recipe title */}
-        <h3 className="text-xl font-semibold mb-2">{recipeData.title || "Untitled Recipe"}</h3>
+        <h3 className="text-xl font-semibold">{recipeData.title || "Untitled Recipe"}</h3>
         
-        {/* Recipe description - displayed under title with no top padding */}
+        {/* Recipe description - displayed directly under title with no spacing */}
         {recipeData.description && (
-          <p className="text-muted-foreground text-sm">{recipeData.description}</p>
+          <p className="text-muted-foreground text-sm mt-1">{recipeData.description}</p>
         )}
         
         {/* 3-column layout: Image | Servings/Times | Source/Category */}
@@ -175,16 +175,18 @@ export function RecipeDataCard({
           </div>
         </div>
 
-        {/* Action buttons - Edit, View JSON, and Send to Whisk */}
-        <div className="flex gap-2 pt-2">
-          <Button onClick={onOpenEditModal} variant="outline" className="rounded-md">
-            <Edit className="h-4 w-4" />
-            Edit Recipe
-          </Button>
-          <Button onClick={onOpenJsonModal} variant="outline" className="rounded-md">
-            <Code className="h-4 w-4" />
-            View JSON
-          </Button>
+        {/* Action buttons - Edit and View JSON on left, Send to Whisk on right */}
+        <div className="flex justify-between items-center pt-6">
+          <div className="flex gap-2">
+            <Button onClick={onOpenEditModal} variant="outline" className="rounded-md">
+              <Edit className="h-4 w-4" />
+              Edit Recipe
+            </Button>
+            <Button onClick={onOpenJsonModal} variant="outline" className="rounded-md">
+              <Code className="h-4 w-4" />
+              View JSON
+            </Button>
+          </div>
           <Button onClick={onSendToBackend} variant="default" className="rounded-md">
             <Send className="h-4 w-4" />
             Send to Whisk
