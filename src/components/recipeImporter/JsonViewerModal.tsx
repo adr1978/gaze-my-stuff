@@ -53,7 +53,7 @@ export function JsonViewerModal({
   onOpenChange,
   recipeData,
 }: JsonViewerModalProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   // State to track fullscreen mode - resets to false whenever modal opens
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -67,17 +67,17 @@ export function JsonViewerModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className={isFullScreen ? "max-w-full max-h-full w-screen h-screen p-6" : "max-w-3xl max-h-[90vh] p-6"}>
-        {/* Fixed header section - stays at top with reduced spacing */}
-        <DialogHeader>
+      <DialogContent className={isFullScreen ? "max-w-full max-h-full w-screen h-screen p-6 flex flex-col" : "max-w-3xl max-h-[90vh] p-6 flex flex-col"}>
+        {/* Fixed header section */}
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Recipe JSON Data</DialogTitle>
           <DialogDescription>
             This is the complete recipe data in JSON format that will be sent to the backend.
           </DialogDescription>
         </DialogHeader>
         
-        {/* Fullscreen toggle button */}
-        <div className="flex justify-start pb-3">
+        {/* Fullscreen toggle button - fixed spacing */}
+        <div className="flex justify-start py-3 flex-shrink-0">
           <Button
             variant="outline"
             size="sm"
@@ -98,12 +98,12 @@ export function JsonViewerModal({
           </Button>
         </div>
 
-        {/* Scrollable code block container */}
+        {/* Scrollable code block container - grows to fill available space */}
         {recipeData && (
-          <div className="w-full overflow-x-auto">
+          <div className="flex-1 overflow-auto min-h-0">
             <SyntaxHighlighter 
               language="json" 
-              style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+              style={resolvedTheme === "dark" ? atelierCaveDark : atelierCaveLight}
               customStyle={{
                 borderRadius: '0.5rem',
                 fontSize: '0.875rem',
@@ -111,6 +111,7 @@ export function JsonViewerModal({
                 margin: 0,
                 width: '100%',
                 padding: '1rem',
+                paddingRight: '1rem',
               }}
             >
               {JSON.stringify(recipeData, null, 2)}
