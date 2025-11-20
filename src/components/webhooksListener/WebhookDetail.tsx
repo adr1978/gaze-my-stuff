@@ -20,7 +20,7 @@ const methodColors = {
 };
 
 export function WebhookDetail({ webhook }: WebhookDetailProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   
   if (!webhook) {
     return (
@@ -113,7 +113,7 @@ export function WebhookDetail({ webhook }: WebhookDetailProps) {
             <h3 className="text-lg font-semibold mb-4">Request Body</h3>
             <SyntaxHighlighter
               language="json"
-              style={theme === "dark" ? atelierCaveDark : atelierCaveLight}
+              style={resolvedTheme === "dark" ? atelierCaveDark : atelierCaveLight}
               customStyle={{
                 borderRadius: "6px",
                 fontSize: "12px",
