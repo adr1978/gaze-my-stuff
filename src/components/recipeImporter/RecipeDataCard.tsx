@@ -58,14 +58,15 @@ export function RecipeDataCard({
         <CardDescription>Extracted information from the recipe</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Recipe title */}
-        <h3 className="text-xl font-semibold">{recipeData.title || "Untitled Recipe"}</h3>
-        
-        {/* Recipe description - displayed directly under title with no spacing */}
-        {recipeData.description && (
-          <p className="text-muted-foreground text-sm mt-1">{recipeData.description}</p>
-        )}
-        
+        <div>
+          {/* Recipe title */}
+          <h3 className="text-xl font-semibold">{recipeData.title || "Untitled Recipe"}</h3>
+          
+          {/* Recipe description - displayed directly under title with no spacing */}
+          {recipeData.description && (
+            <p className="text-muted-foreground text-sm">{recipeData.description}</p>
+          )}
+        </div>
         {/* 3-column layout: Image | Servings/Times | Source/Category */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Column 1: Recipe thumbnail image */}
