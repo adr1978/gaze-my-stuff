@@ -1,17 +1,26 @@
+## LAST REVIEWED: 21-NOV-2025
+
 # FastAPI and server dependencies
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+fastapi
+uvicorn[standard]
 
 # Date and time utilities
-python-dateutil==2.8.2
+python-dateutil
 
 # HTTP requests for GoCardless API integration
-requests==2.31.0
+requests
 nordigen==1.4.2   # Required for the GoCardless client
-httpx==0.27.0      # Required for asynchronous API calls (create/reconfirm requisition)
+httpx      # Required for asynchronous API calls (create/reconfirm requisition)
 
 # Notion API client (for future integration)
-notion-client==2.2.1
+notion-client
 
 # Environment variable management
-python-dotenv==1.0.0
+python-dotenv
+
+# Python SDK for Google Gemini
+google-genai==1.51.0
+anyio
+
+# For parsing websites
+beautifulsoup4
