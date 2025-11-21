@@ -25,7 +25,7 @@ load_dotenv()
 # Token storage and logging setup
 # ---------------------------------------------------------------------------
 
-TOKEN_FILE = Path(__file__).parent / "whisk_token.json"
+TOKEN_FILE = Path(__file__).parent.parent / "data" / "whisk_token.json"
 
 logging.basicConfig(
     level=logging.INFO,  # Change to DEBUG for more detail
@@ -106,11 +106,6 @@ def get_anonymous_token() -> tuple[str, str]:
     data = response.json()
     token_info = data["authenticated"]["token"]
     anon_token = token_info["access_token"]
-    
-    # ❌ REMOVE THESE LINES - don't save anonymous token!
-    # expires_in = int(token_info.get("expires_in", 3600))
-    # expires_at = time.time() + expires_in
-    # save_token({"access_token": anon_token, "expires_at": expires_at})
     
     logger.info("✅ Anonymous token obtained (not saved)")
     return anon_token, "anonymous"
