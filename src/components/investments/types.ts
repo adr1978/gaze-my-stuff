@@ -10,7 +10,6 @@
  * Represents a single purchase transaction of shares
  */
 export interface SharePurchase {
-  id: string;
   date: string; // ISO format: YYYY-MM-DD
   shares: number;
 }
@@ -26,10 +25,11 @@ export type ChartInterval = 'Week' | 'Month' | 'Year';
  * Represents a complete investment account with all associated data
  */
 export interface FundAccount {
-  id: string;
   accountName: string;
   owner: string;
   fundName: string;
+  fundID: string;
+  dataSource: string;
   totalShares: number;
   purchases: SharePurchase[];
   historicalData: { date: string; closePrice: number }[];

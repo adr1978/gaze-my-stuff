@@ -33,90 +33,133 @@ import { ChartingCard } from "@/components/investments/ChartingCard";
 import { PurchaseHistoryCard } from "@/components/investments/PurchaseHistoryCard";
 import { AddPurchaseDialog } from "@/components/investments/AddPurchaseDialog";
 import { FundAccount, SharePurchase, ChartInterval } from "@/components/investments/types";
-import { aggregateDataByInterval, generateHistoricalData } from "@/components/investments/utils";
+import { aggregateDataByInterval, loadHistoricalDataFromCSV } from "@/components/investments/utils";
 
-/**
- * Initial Mock Accounts Data
- * Provides default investment accounts with sample historical data
- * Used as fallback when localStorage is empty
- * 
- * Note: generateHistoricalData creates daily weekday price data between min and max values
- */
-const initialMockAccounts: FundAccount[] = [
-  {
-    id: "1",
-    accountName: "Anthony ISA",
-    owner: "Anthony",
-    fundName: "Vanguard FTSE Global All Cap Index Fund",
-    totalShares: 450.25,
-    purchases: [
-      { id: "1", date: "2024-01-15", shares: 100 },
-      { id: "2", date: "2024-03-10", shares: 150 },
-      { id: "3", date: "2024-06-05", shares: 200.25 },
-    ],
-    historicalData: generateHistoricalData("2024-01-01", 250, 280),
-  },
-  {
-    id: "2",
-    accountName: "Sarah ISA",
-    owner: "Sarah",
-    fundName: "Vanguard LifeStrategy 80% Equity Fund",
-    totalShares: 320.50,
-    purchases: [
-      { id: "4", date: "2024-01-20", shares: 120 },
-      { id: "5", date: "2024-04-15", shares: 200.50 },
-    ],
-    historicalData: generateHistoricalData("2024-01-01", 180, 205),
-  },
-  {
-    id: "3",
-    accountName: "Oliver JISA",
-    owner: "Oliver",
-    fundName: "Vanguard FTSE Developed World ex-UK Equity Index Fund",
-    totalShares: 150.00,
-    purchases: [
-      { id: "6", date: "2024-02-01", shares: 150 },
-    ],
-    historicalData: generateHistoricalData("2024-01-01", 320, 355),
-  },
-];
 
 /**
  * Main Investments Component
  * Manages state for account selection, purchases, chart interval, and data persistence
- * Refactored to use dedicated component for cleaner code organisation
+ * Loads account metadata from JSON and historical prices from CSV files
  */
 export default function Investments() {
-  // Load accounts from localStorage or use initial mock data
-  const [accountsData, setAccountsData] = useState<FundAccount[]>(() => {
-    const saved = localStorage.getItem('investmentAccounts');
-    return saved ? JSON.parse(saved) : initialMockAccounts;
-  });
+  // State for accounts data and loading status
+  const [accountsData, setAccountsData] = useState<FundAccount[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   
   // State for UI interactions
-  const [selectedAccount, setSelectedAccount] = useState<string>(accountsData[0].id);
+  const [selectedAccount, setSelectedAccount] = useState<string>("");
   const [newShares, setNewShares] = useState<string>("");
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<SharePurchase | null>(null);
   const [chartInterval, setChartInterval] = useState<ChartInterval>('Month');
 
+  // Load accounts metadata from JSON file on mount
+  useEffect(() => {
+    const loadAccountsMetadata = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/investments_tracker/data/investment_accounts.json');
+        
+        if (!response.ok) {
+          throw new Error('Failed to load investment accounts');
+        }
+        
+        const accounts = await response.json();
+        
+        // Initialize accounts with empty historical data (will be loaded separately)
+        const accountsWithEmptyData = accounts.map((account: any) => ({
+          ...account,
+          historicalData: []
+        }));
+        
+        setAccountsData(accountsWithEmptyData);
+        
+        // Set first account as selected
+        if (accountsWithEmptyData.length > 0) {
+          setSelectedAccount(accountsWithEmptyData[0].accountName);
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading investment accounts:', error);
+        showToast.error("Failed to Load", "Could not load investment accounts");
+        setIsLoading(false);
+      }
+    };
+    
+    loadAccountsMetadata();
+  }, []);
+
+  // Load historical data when selected account changes
+  useEffect(() => {
+    if (!selectedAccount || accountsData.length === 0) return;
+    
+    const currentAccount = accountsData.find(acc => acc.accountName === selectedAccount);
+    if (!currentAccount) return;
+    
+    // Skip if data already loaded for this data source
+    if (currentAccount.historicalData.length > 0) return;
+    
+    const loadHistoricalData = async () => {
+      try {
+        setHasError(false);
+        const data = await loadHistoricalDataFromCSV(currentAccount.dataSource);
+        
+        // Update the account with loaded historical data
+        setAccountsData(prevAccounts =>
+          prevAccounts.map(acc =>
+            acc.accountName === selectedAccount
+              ? { ...acc, historicalData: data }
+              : acc
+          )
+        );
+      } catch (error) {
+        console.error('Error loading historical data:', error);
+        setHasError(true);
+        showToast.error("Data Error", "Failed to load historical price data");
+      }
+    };
+    
+    loadHistoricalData();
+  }, [selectedAccount, accountsData]);
+
   // Save to localStorage whenever accountsData changes
   useEffect(() => {
-    localStorage.setItem('investmentAccounts', JSON.stringify(accountsData));
+    if (accountsData.length > 0) {
+      localStorage.setItem('investmentAccounts', JSON.stringify(accountsData));
+    }
   }, [accountsData]);
 
   // Get current account data and derived values
-  const currentAccount = accountsData.find(acc => acc.id === selectedAccount)!;
-  const currentPrice = currentAccount.historicalData[currentAccount.historicalData.length - 1].closePrice;
+  const currentAccount = accountsData.find(acc => acc.accountName === selectedAccount);
+  
+  // Show loading state
+  if (isLoading || !currentAccount) {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Investments</h1>
+          <p className="text-muted-foreground mb-6">Loading investment data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const currentPrice = currentAccount.historicalData.length > 0
+    ? currentAccount.historicalData[currentAccount.historicalData.length - 1].closePrice
+    : 0;
   const totalValue = currentAccount.totalShares * currentPrice;
 
   // Aggregate historical data based on selected interval
-  const chartData = aggregateDataByInterval(
-    currentAccount.historicalData,
-    currentAccount.purchases,
-    chartInterval
-  );
+  const chartData = currentAccount.historicalData.length > 0
+    ? aggregateDataByInterval(
+        currentAccount.historicalData,
+        currentAccount.purchases,
+        chartInterval
+      )
+    : [];
 
   /**
    * Open the Add/Edit Purchase modal
@@ -159,12 +202,12 @@ export default function Investments() {
     // Update accounts data with new or edited purchase
     setAccountsData(prevAccounts => 
       prevAccounts.map(account => {
-        if (account.id !== selectedAccount) return account;
+        if (account.accountName !== selectedAccount) return account;
 
         if (editingPurchase) {
           // Update existing purchase
           const updatedPurchases = account.purchases.map(p =>
-            p.id === editingPurchase.id
+            p.date === editingPurchase.date
               ? { ...p, date: formattedDate, shares: sharesAmount }
               : p
           );
@@ -173,7 +216,6 @@ export default function Investments() {
         } else {
           // Add new purchase
           const newPurchase: SharePurchase = {
-            id: Date.now().toString(),
             date: formattedDate,
             shares: sharesAmount,
           };
@@ -223,6 +265,7 @@ export default function Investments() {
             chartData={chartData}
             interval={chartInterval}
             onIntervalChange={setChartInterval}
+            hasError={hasError}
           />
 
           {/* Purchase History Card with edit functionality */}

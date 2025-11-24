@@ -1,0 +1,38 @@
+[
+  {
+    "accountName": "Anthony ISA",
+    "owner": "Anthony",
+    "fundName": "Vanguard FTSE Global All Cap Index Fund",
+    "fundID": "GB00BMJJJF91",
+    "dataSource": "hsbc_all_world_prices",
+    "totalShares": 450.25,
+    "purchases": [
+      { "date": "2024-01-15", "shares": 100 },
+      { "date": "2024-03-10", "shares": 150 },
+      { "date": "2024-06-05", "shares": 200.25 }
+    ]
+  },
+  {
+    "accountName": "Sarah ISA",
+    "owner": "Sarah",
+    "fundName": "Vanguard LifeStrategy 80% Equity Fund",
+    "fundID": "GB00BMJJJF91",
+    "dataSource": "hsbc_all_world_prices",
+    "totalShares": 320.50,
+    "purchases": [
+      { "date": "2024-01-20", "shares": 120 },
+      { "date": "2024-04-15", "shares": 200.50 }
+    ]
+  },
+  {
+    "accountName": "Oliver JISA",
+    "owner": "Oliver",
+    "fundName": "Vanguard FTSE Developed World ex-UK Equity Index Fund",
+    "fundID": "GB00BMJJJF91",
+    "dataSource": "hsbc_all_world_prices",
+    "totalShares": 150.00,
+    "purchases": [
+      { "date": "2024-02-01", "shares": 150 }
+    ]
+  }
+]
