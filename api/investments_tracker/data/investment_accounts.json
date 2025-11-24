@@ -16,7 +16,7 @@
     "owner": "Sarah",
     "fundName": "Vanguard LifeStrategy 80% Equity Fund",
     "fundID": "GB00BMJJJF91",
-    "dataSource": "hsbc_all_world_prices",
+    "dataSource": "hsbc_all_world_prices2",
     "totalShares": 320.50,
     "purchases": [
       { "date": "2024-01-20", "shares": 120 },
