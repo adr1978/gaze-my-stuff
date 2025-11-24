@@ -11,8 +11,10 @@ interface CanvasEditorProps {
   onPositionChange: (position: { x: number; y: number }) => void;
   transformMode: boolean;
   onTransformModeExit: () => void;
+  onTransformModeEnter: () => void; // NEW: activate transform mode
   onScaleChange: (scale: number) => void;
   onRotationChange: (rotation: number) => void;
+  onActiveLayerChange: (layerId: string | null) => void; // NEW: change active layer
 }
 
 export const CanvasEditor = ({
@@ -24,8 +26,10 @@ export const CanvasEditor = ({
   onPositionChange,
   transformMode,
   onTransformModeExit,
+  onTransformModeEnter,
   onScaleChange,
   onRotationChange,
+  onActiveLayerChange,
 }: CanvasEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +46,10 @@ export const CanvasEditor = ({
   const [initialAnchorPoint, setInitialAnchorPoint] = useState<{ x: number; y: number } | null>(null);
   const [initialDistCornerAnchor, setInitialDistCornerAnchor] = useState<number>(1);
   const [initialDistCornerCenter, setInitialDistCornerCenter] = useState<number>(1);
+
+  // NEW: Track initial position for Shift-constrained dragging
+  const [initialDragPosition, setInitialDragPosition] = useState<{ x: number; y: number } | null>(null);
+  const [hasDragged, setHasDragged] = useState(false); // Track if user has moved mouse after mousedown
 
   const handleSize = 12;
   const padding = 8;
@@ -222,10 +230,90 @@ export const CanvasEditor = ({
     return Math.abs(localX) <= w && Math.abs(localY) <= h;
   };
 
+  // NEW: Check if a point hits a non-transparent pixel of a layer
+  const isPointOnLayer = (layer: LayerState, x: number, y: number): boolean => {
+    const { image, scale, rotation, position, pattern } = layer;
+    
+    // Only check for "none" pattern layers
+    if (pattern !== "none") return false;
+
+    const rad = (rotation * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    
+    // Transform point to layer's local space
+    const dx = x - position.x;
+    const dy = y - position.y;
+    const localX = dx * cos + dy * sin;
+    const localY = -dx * sin + dy * cos;
+    
+    const scaledWidth = image.width * scale;
+    const scaledHeight = image.height * scale;
+    
+    // Check if point is within layer bounds
+    if (Math.abs(localX) > scaledWidth / 2 || Math.abs(localY) > scaledHeight / 2) {
+      return false;
+    }
+    
+    // Convert to image pixel coordinates
+    const imgX = Math.floor((localX + scaledWidth / 2) / scale);
+    const imgY = Math.floor((localY + scaledHeight / 2) / scale);
+    
+    // Check bounds
+    if (imgX < 0 || imgX >= image.width || imgY < 0 || imgY >= image.height) {
+      return false;
+    }
+    
+    // Check alpha value at this pixel
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = image.width;
+    tempCanvas.height = image.height;
+    const ctx = tempCanvas.getContext('2d');
+    if (!ctx) return false;
+    
+    ctx.drawImage(image, 0, 0);
+    const pixelData = ctx.getImageData(imgX, imgY, 1, 1).data;
+    
+    // Check if alpha > 10 (essentially non-transparent)
+    return pixelData[3] > 10;
+  };
+
+  // NEW: Find topmost layer at point (checking from top to bottom)
+  const getLayerAtPoint = (x: number, y: number): string | null => {
+    // Check layers in reverse order (top to bottom)
+    for (let i = layers.length - 1; i >= 0; i--) {
+      const layer = layers[i];
+      if (isPointOnLayer(layer, x, y)) {
+        return layer.id;
+      }
+    }
+    return null;
+  };
+
   // Mouse down: generalized to HTMLElement so it can be attached to overlay/container
   const handleMouseDown = (e: React.MouseEvent<HTMLElement>) => {
-    if (!activeLayerPosition || !activeLayer) return;
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    
+    // Reset drag tracking
+    setHasDragged(false);
+    
+    if (!activeLayerPosition || !activeLayer) {
+      // No active layer - check if clicking on any layer
+      const clickedLayerId = getLayerAtPoint(x, y);
+      if (clickedLayerId) {
+        onActiveLayerChange(clickedLayerId);
+        setDragMode(null);
+        setIsDragging(true);
+        setDragStart({ x, y });
+        
+        // Store initial position of the clicked layer
+        const clickedLayer = layers.find(l => l.id === clickedLayerId);
+        if (clickedLayer) {
+          setInitialDragPosition({ x: clickedLayer.position.x, y: clickedLayer.position.y });
+        }
+      }
+      return;
+    }
 
     if (transformMode) {
       // Rotation handle
@@ -273,18 +361,45 @@ export const CanvasEditor = ({
         onTransformModeExit();
         return;
       }
+    } else {
+      // Not in transform mode - check if clicking on a different layer
+      const clickedLayerId = getLayerAtPoint(x, y);
+      if (clickedLayerId && clickedLayerId !== activeLayerId) {
+        onActiveLayerChange(clickedLayerId);
+        setDragMode(null);
+        setIsDragging(true);
+        setDragStart({ x, y });
+        
+        // Store initial position
+        const clickedLayer = layers.find(l => l.id === clickedLayerId);
+        if (clickedLayer) {
+          setInitialDragPosition({ x: clickedLayer.position.x, y: clickedLayer.position.y });
+        }
+        return;
+      }
     }
 
     // Regular move drag
     setDragMode(null);
     setIsDragging(true);
     setDragStart({ x, y });
+    
+    // Store initial position for Shift-constrained dragging
+    setInitialDragPosition({ x: activeLayerPosition.x, y: activeLayerPosition.y });
   };
 
   // Mouse move: generalized to HTMLElement so can be attached to overlay/container
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     if (!isDragging || !activeLayerPosition || !activeLayer) return;
     const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+    
+    // Track that user has moved the mouse
+    if (!hasDragged) {
+      const distance = Math.hypot(x - dragStart.x, y - dragStart.y);
+      if (distance > 3) { // 3px threshold to distinguish click from drag
+        setHasDragged(true);
+      }
+    }
 
     if (dragMode === "rotation") {
       const centerX = activeLayerPosition.x;
@@ -332,21 +447,56 @@ export const CanvasEditor = ({
       // Regular move dragging (translate)
       const deltaX = x - dragStart.x;
       const deltaY = y - dragStart.y;
-      onPositionChange({
-        x: activeLayerPosition.x + deltaX,
-        y: activeLayerPosition.y + deltaY,
-      });
+      
+      // NEW: Shift-key constrained dragging along X or Y axis
+      if (e.shiftKey && initialDragPosition) {
+        // Calculate total delta from initial position
+        const totalDeltaX = (activeLayerPosition.x + deltaX) - initialDragPosition.x;
+        const totalDeltaY = (activeLayerPosition.y + deltaY) - initialDragPosition.y;
+        
+        // Constrain to axis with larger movement
+        if (Math.abs(totalDeltaX) > Math.abs(totalDeltaY)) {
+          // Horizontal movement only
+          onPositionChange({
+            x: activeLayerPosition.x + deltaX,
+            y: initialDragPosition.y,
+          });
+        } else {
+          // Vertical movement only
+          onPositionChange({
+            x: initialDragPosition.x,
+            y: activeLayerPosition.y + deltaY,
+          });
+        }
+      } else {
+        // Normal unconstrained movement
+        onPositionChange({
+          x: activeLayerPosition.x + deltaX,
+          y: activeLayerPosition.y + deltaY,
+        });
+      }
       setDragStart({ x, y });
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent<HTMLElement>) => {
+    // NEW: If this was a click (not a drag) on the active layer, activate transform mode
+    if (!hasDragged && isDragging && !dragMode && activeLayer && activeLayer.pattern === "none") {
+      const { x, y } = getCanvasCoords(e.clientX, e.clientY);
+      const clickedLayerId = getLayerAtPoint(x, y);
+      if (clickedLayerId === activeLayerId && !transformMode) {
+        onTransformModeEnter();
+      }
+    }
+    
     setIsDragging(false);
     setDragMode(null);
     setDragCorner(null);
     setInitialAnchorPoint(null);
     setInitialCornerPoint(null);
     setInitialCenter(null);
+    setInitialDragPosition(null);
+    setHasDragged(false);
   };
 
   // Render transform overlay and handles

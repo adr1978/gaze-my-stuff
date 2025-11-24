@@ -450,8 +450,10 @@ const Index = () => {
                 onPositionChange={(newPosition) => updateActiveLayer({ position: newPosition })}
                 transformMode={transformMode}
                 onTransformModeExit={() => setTransformMode(false)}
+                onTransformModeEnter={() => setTransformMode(true)}
                 onScaleChange={(scale) => updateActiveLayer({ scale })}
                 onRotationChange={(rotation) => updateActiveLayer({ rotation })}
+                onActiveLayerChange={setActiveLayerId}
               />
             </div>
 
