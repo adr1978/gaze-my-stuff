@@ -1,14 +1,15 @@
 [
   {
-    "accountName": "Anthony ISA",
+    "accountName": "Anthony ISA v2",
     "owner": "Anthony",
-    "fundName": "HSBC FTSE All-World Index Fund Accumulation C",
+    "fundName": "Vanguard FTSE Global All Cap Index Fund",
     "fundID": "GB00BMJJJF91",
     "dataSource": "hsbc_all_world_prices",
-    "totalShares": 16871.77,
+    "totalShares": 450.25,
     "purchases": [
-      { "date": "2024-10-03", "shares": 11277.16 },
-      { "date": "2024-05-01", "shares": 5594.61 }
+      { "date": "2024-01-15", "shares": 100 },
+      { "date": "2024-03-10", "shares": 150 },
+      { "date": "2024-06-05", "shares": 200.25 }
     ]
   },
   {
