@@ -27,7 +27,7 @@ import { FundAccount } from "./types";
 interface AccountSelectionCardProps {
   accounts: FundAccount[];
   selectedAccountId: string;
-  onAccountChange: (accountId: string) => void;
+  onAccountChange: (accountName: string) => void;
   currentAccount: FundAccount;
   currentPrice: number;
   totalValue: number;
@@ -71,7 +71,7 @@ export function AccountSelectionCard({
           </SelectTrigger>
           <SelectContent>
             {accounts.map((account) => (
-              <SelectItem key={account.id} value={account.id}>
+              <SelectItem key={account.accountName} value={account.accountName}>
                 {account.accountName}
               </SelectItem>
             ))}

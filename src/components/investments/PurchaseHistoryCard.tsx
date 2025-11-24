@@ -56,7 +56,7 @@ export function PurchaseHistoryCard({
         <div className="space-y-2">
           {purchases.map((purchase) => (
             <div
-              key={purchase.id}
+              key={purchase.date}
               onClick={() => onEditPurchase(purchase)}
               className="flex justify-between items-center p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors group"
             >

@@ -154,41 +154,46 @@ export function aggregateDataByInterval(data: any[], purchases: SharePurchase[],
 }
 
 /**
- * Generate mock historical price data for weekdays only
- * Creates daily close prices with random variation trending from min to max
- * Only includes weekdays (Monday-Friday) to simulate real market data
+ * Load Historical Price Data from CSV
+ * Fetches price data from CSV files in the API data directory
  * 
- * @param startDate - Start date in ISO format (YYYY-MM-DD)
- * @param minPrice - Starting/minimum price
- * @param maxPrice - Ending/maximum price
- * @returns Array of {date, closePrice} objects for weekdays only
+ * @param dataSource - Name of the data source (e.g., "hsbc_all_world_prices")
+ * @returns Promise resolving to array of historical data points with date and closePrice
+ * 
+ * CSV Format: Date,Price (e.g., "02/01/2024,2.699")
+ * Dates are parsed from DD/MM/YYYY format and converted to YYYY-MM-DD ISO format
+ * 
+ * @throws Error if CSV file cannot be loaded or parsed
  */
-export function generateHistoricalData(startDate: string, minPrice: number, maxPrice: number) {
-  const data = [];
-  const start = new Date(startDate);
-  const today = new Date();
-  const daysDiff = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-  let currentPrice = minPrice;
-  const trend = (maxPrice - minPrice) / daysDiff;
-
-  for (let i = 0; i <= daysDiff; i++) {
-    const date = new Date(start);
-    date.setDate(date.getDate() + i);
-
-    // Only include weekdays (Monday = 1 through Friday = 5)
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Skip weekends
-
-    // Add random variation to price
-    const variation = (Math.random() - 0.5) * 5;
-    currentPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice + trend + variation));
-
-    data.push({
-      date: date.toISOString().split('T')[0],
-      closePrice: parseFloat(currentPrice.toFixed(2)),
+export async function loadHistoricalDataFromCSV(dataSource: string) {
+  try {
+    // Fetch CSV file from API data directory
+    const response = await fetch(`/api/investments_tracker/data/${dataSource}.csv`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load CSV: ${response.status} ${response.statusText}`);
+    }
+    
+    const csvText = await response.text();
+    const lines = csvText.trim().split('\n');
+    
+    // Skip header row and parse data
+    const data = lines.slice(1).map(line => {
+      const [dateStr, priceStr] = line.split(',');
+      
+      // Parse DD/MM/YYYY format to YYYY-MM-DD
+      const [day, month, year] = dateStr.trim().split('/');
+      const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      
+      return {
+        date: isoDate,
+        closePrice: parseFloat(priceStr.trim())
+      };
     });
+    
+    return data;
+  } catch (error) {
+    console.error('Error loading historical data from CSV:', error);
+    throw error;
   }
-
-  return data;
 }

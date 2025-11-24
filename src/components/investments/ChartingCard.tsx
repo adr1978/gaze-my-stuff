@@ -28,6 +28,7 @@ interface ChartingCardProps {
   chartData: any[];
   interval: ChartInterval;
   onIntervalChange: (interval: ChartInterval) => void;
+  hasError?: boolean;
 }
 
 /**
@@ -101,6 +102,7 @@ export function ChartingCard({
   chartData,
   interval,
   onIntervalChange,
+  hasError = false,
 }: ChartingCardProps) {
   return (
     <Card>
@@ -123,47 +125,64 @@ export function ChartingCard({
         </div>
       </CardHeader>
       <CardContent>
-        {/* Responsive line chart */}
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis
-              dataKey="date"
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                if (interval === 'Year') {
-                  return date.toLocaleDateString('en-GB', { year: 'numeric' });
-                } else if (interval === 'Month') {
-                  return date.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
-                } else {
-                  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-                }
-              }}
-            />
-            <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => `£${value.toLocaleString('en-GB', { maximumFractionDigits: 0 })}`}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            {/* Main value line with purchase markers */}
-            <Line
-              type="monotone"
-              dataKey="totalValue"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              dot={<CustomDot />}
-              activeDot={{
-                r: 6,
-                fill: "hsl(var(--background))",
-                stroke: "hsl(var(--primary))",
-                strokeWidth: 2
-              }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {/* Chart container with error overlay */}
+        <div className="relative">
+          {/* Responsive line chart */}
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="date"
+                stroke="hsl(var(--muted-foreground))"
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  if (interval === 'Year') {
+                    return date.toLocaleDateString('en-GB', { year: 'numeric' });
+                  } else if (interval === 'Month') {
+                    return date.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+                  } else {
+                    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                  }
+                }}
+              />
+              <YAxis
+                stroke="hsl(var(--muted-foreground))"
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value) => `£${value.toLocaleString('en-GB', { maximumFractionDigits: 0 })}`}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              {/* Main value line with purchase markers */}
+              <Line
+                type="monotone"
+                dataKey="totalValue"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={<CustomDot />}
+                activeDot={{
+                  r: 6,
+                  fill: "hsl(var(--background))",
+                  stroke: "hsl(var(--primary))",
+                  strokeWidth: 2
+                }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+
+          {/* Error overlay */}
+          {hasError && (
+            <div className="absolute inset-0 bg-muted/50 backdrop-blur-sm flex items-center justify-center rounded-lg">
+              <div className="text-center p-6">
+                <p className="text-lg font-semibold text-destructive mb-2">
+                  Error Loading Historical Data
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Unable to load price data for this fund
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
