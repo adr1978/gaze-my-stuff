@@ -6,7 +6,7 @@
  * and managing Notion cover images.
  */
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Upload,
@@ -18,9 +18,10 @@ import { CanvasControls } from "@/components/notionCoverStudio/CanvasControls";
 import { ImageControls } from "@/components/notionCoverStudio/ImageControls";
 import { PatternControls, PatternType } from "@/components/notionCoverStudio/PatternControls";
 import { getCanvasDimensions } from "@/components/notionCoverStudio/CanvasSizeConfig";
-import { LayerState, RandomPatternData, LayerInitialState } from "@/types"; // Import new type
+import { LayerState, RandomPatternData, LayerInitialState } from "@/types";
 import { Card } from "@/components/ui/card";
-import { LayerManager } from "@/components/notionCoverStudio/LayerManager"; // Import LayerManager
+import { LayerManager } from "@/components/notionCoverStudio/LayerManager";
+import { AlignmentMenu } from "@/components/notionCoverStudio/AlignmentMenu";
 
 const MAX_LAYERS = 5;
 // Set max display height to the Notion Cover height
@@ -37,8 +38,20 @@ const Index = () => {
 
   // --- LAYER STATE ---
   const [layers, setLayers] = useState<LayerState[]>([]);
-  const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
+  const [selectedLayerIds, setSelectedLayerIds] = useState<string[]>([]);
   const [transformMode, setTransformMode] = useState(false);
+  
+  // --- UNDO/REDO STATE ---
+  const [history, setHistory] = useState<LayerState[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  // Capture initial state when layers are first added
+  useEffect(() => {
+    if (layers.length > 0 && history.length === 0) {
+      setHistory([JSON.parse(JSON.stringify(layers))]);
+      setHistoryIndex(0);
+    }
+  }, [layers.length]);
 
   // --- LOGICAL CANVAS DIMENSIONS ---
   const logicalCanvasDimensions = useMemo(
@@ -49,9 +62,13 @@ const Index = () => {
   const CANVAS_HEIGHT = logicalCanvasDimensions.height;
 
   // --- DERIVED STATE (Memoized) ---
+  const activeLayerId = selectedLayerIds.length === 1 ? selectedLayerIds[0] : null;
   const activeLayer = useMemo(() => {
     return layers.find((l) => l.id === activeLayerId);
   }, [layers, activeLayerId]);
+  const selectedLayers = useMemo(() => {
+    return layers.filter((l) => selectedLayerIds.includes(l.id));
+  }, [layers, selectedLayerIds]);
 
   // NEW: Check if the active layer is at its initial state
   const isAtDefaultState = useMemo(() => {
@@ -67,16 +84,41 @@ const Index = () => {
   }, [activeLayer]);
 
   // --- HELPER FUNCTIONS ---
+  const captureHistory = (newLayers: LayerState[]) => {
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push(JSON.parse(JSON.stringify(newLayers)));
+      return newHistory.slice(-50); // Keep last 50 states
+    });
+    setHistoryIndex(prev => Math.min(prev + 1, 49));
+  };
+
   const updateActiveLayer = (
     props: Partial<Omit<LayerState, "id" | "image" | "thumbnailUrl">>,
   ) => {
     if (!activeLayerId) return;
 
-    setLayers((prevLayers) =>
-      prevLayers.map((layer) =>
+    setLayers((prevLayers) => {
+      const newLayers = prevLayers.map((layer) =>
         layer.id === activeLayerId ? { ...layer, ...props } : layer,
-      ),
-    );
+      );
+      captureHistory(newLayers);
+      return newLayers;
+    });
+  };
+
+  const updateSelectedLayers = (
+    updateFn: (layer: LayerState) => Partial<Omit<LayerState, "id" | "image" | "thumbnailUrl">>
+  ) => {
+    if (selectedLayerIds.length === 0) return;
+
+    setLayers((prevLayers) => {
+      const newLayers = prevLayers.map((layer) =>
+        selectedLayerIds.includes(layer.id) ? { ...layer, ...updateFn(layer) } : layer
+      );
+      captureHistory(newLayers);
+      return newLayers;
+    });
   };
 
   const generateRandomPatternData = (
@@ -196,8 +238,12 @@ const Index = () => {
           initialState: initialState,
         };
 
-        setLayers((prevLayers) => [...prevLayers, newLayer]);
-        setActiveLayerId(newLayerId);
+        setLayers((prevLayers) => {
+          const newLayers = [...prevLayers, newLayer];
+          captureHistory(newLayers);
+          return newLayers;
+        });
+        setSelectedLayerIds([newLayerId]);
 
         // NEW: enable transform mode automatically for newly added images
         setTransformMode(true);
@@ -214,12 +260,16 @@ const Index = () => {
   const handleRemoveLayer = (idToRemove: string) => {
     setLayers((prevLayers) => {
       const newLayers = prevLayers.filter((l) => l.id !== idToRemove);
+      captureHistory(newLayers);
 
-      if (activeLayerId === idToRemove) {
-        if (newLayers.length > 0) {
-          setActiveLayerId(newLayers[newLayers.length - 1].id);
+      if (selectedLayerIds.includes(idToRemove)) {
+        const remainingSelected = selectedLayerIds.filter(id => id !== idToRemove);
+        if (remainingSelected.length > 0) {
+          setSelectedLayerIds(remainingSelected);
+        } else if (newLayers.length > 0) {
+          setSelectedLayerIds([newLayers[newLayers.length - 1].id]);
         } else {
-          setActiveLayerId(null);
+          setSelectedLayerIds([]);
         }
       }
       return newLayers;
@@ -259,7 +309,7 @@ const Index = () => {
     const newDimensions = getCanvasDimensions(newSize);
 
     setLayers((prevLayers) => {
-      return prevLayers.map((layer) => ({
+      const newLayers = prevLayers.map((layer) => ({
         ...layer,
         position: { x: newDimensions.width / 2, y: newDimensions.height / 2 },
         initialState: {
@@ -274,6 +324,8 @@ const Index = () => {
           layer.spacing,
         ),
       }));
+      captureHistory(newLayers);
+      return newLayers;
     });
 
     showToast.success("Canvas size updated");
@@ -417,6 +469,145 @@ const Index = () => {
   // Handler for drag-and-drop reordering
   const handleSetLayers = (newLayers: LayerState[]) => {
     setLayers(newLayers);
+    captureHistory(newLayers);
+  };
+
+  // Undo/Redo handlers
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      const historicalLayers = history[newIndex];
+      
+      // Restore images from current layers
+      const restoredLayers = historicalLayers.map(histLayer => {
+        const currentLayer = layers.find(l => l.id === histLayer.id);
+        return currentLayer ? { ...histLayer, image: currentLayer.image } : histLayer;
+      });
+      
+      setLayers(restoredLayers);
+      showToast.success("Undo");
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      const historicalLayers = history[newIndex];
+      
+      // Restore images from current layers
+      const restoredLayers = historicalLayers.map(histLayer => {
+        const currentLayer = layers.find(l => l.id === histLayer.id);
+        return currentLayer ? { ...histLayer, image: currentLayer.image } : histLayer;
+      });
+      
+      setLayers(restoredLayers);
+      showToast.success("Redo");
+    }
+  };
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        handleRedo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [historyIndex, history, layers]);
+
+  // Toggle layer selection with shift
+  const handleLayerSelection = (layerId: string, shiftKey: boolean) => {
+    if (shiftKey) {
+      setSelectedLayerIds(prev => 
+        prev.includes(layerId) 
+          ? prev.filter(id => id !== layerId)
+          : [...prev, layerId]
+      );
+    } else {
+      setSelectedLayerIds([layerId]);
+    }
+  };
+
+  // Alignment handler for multiple layers
+  const handleAlign = (type: 'left' | 'right' | 'centerH' | 'top' | 'bottom' | 'centerV' | 'distributeH' | 'distributeV') => {
+    if (selectedLayerIds.length < 2) return;
+
+    setLayers(prevLayers => {
+      const newLayers = [...prevLayers];
+      const selectedLayerObjects = newLayers.filter(l => selectedLayerIds.includes(l.id));
+      
+      if (type === 'left') {
+        const minX = Math.min(...selectedLayerObjects.map(l => l.position.x - (l.image.width * l.scale) / 2));
+        selectedLayerObjects.forEach(l => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.x = minX + (l.image.width * l.scale) / 2;
+        });
+      } else if (type === 'right') {
+        const maxX = Math.max(...selectedLayerObjects.map(l => l.position.x + (l.image.width * l.scale) / 2));
+        selectedLayerObjects.forEach(l => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.x = maxX - (l.image.width * l.scale) / 2;
+        });
+      } else if (type === 'centerH') {
+        const avgX = selectedLayerObjects.reduce((sum, l) => sum + l.position.x, 0) / selectedLayerObjects.length;
+        selectedLayerObjects.forEach(l => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.x = avgX;
+        });
+      } else if (type === 'top') {
+        const minY = Math.min(...selectedLayerObjects.map(l => l.position.y - (l.image.height * l.scale) / 2));
+        selectedLayerObjects.forEach(l => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.y = minY + (l.image.height * l.scale) / 2;
+        });
+      } else if (type === 'bottom') {
+        const maxY = Math.max(...selectedLayerObjects.map(l => l.position.y + (l.image.height * l.scale) / 2));
+        selectedLayerObjects.forEach(l => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.y = maxY - (l.image.height * l.scale) / 2;
+        });
+      } else if (type === 'centerV') {
+        const avgY = selectedLayerObjects.reduce((sum, l) => sum + l.position.y, 0) / selectedLayerObjects.length;
+        selectedLayerObjects.forEach(l => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.y = avgY;
+        });
+      } else if (type === 'distributeH') {
+        const sorted = [...selectedLayerObjects].sort((a, b) => a.position.x - b.position.x);
+        const leftMost = sorted[0].position.x;
+        const rightMost = sorted[sorted.length - 1].position.x;
+        const gap = (rightMost - leftMost) / (sorted.length - 1);
+        sorted.forEach((l, i) => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.x = leftMost + gap * i;
+        });
+      } else if (type === 'distributeV') {
+        const sorted = [...selectedLayerObjects].sort((a, b) => a.position.y - b.position.y);
+        const topMost = sorted[0].position.y;
+        const bottomMost = sorted[sorted.length - 1].position.y;
+        const gap = (bottomMost - topMost) / (sorted.length - 1);
+        sorted.forEach((l, i) => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.y = topMost + gap * i;
+        });
+      }
+
+      captureHistory(newLayers);
+      return newLayers;
+    });
+
+    showToast.success(`Layers aligned: ${type}`);
   };
 
   const isLayerActive = !!activeLayer;
@@ -441,26 +632,37 @@ const Index = () => {
                 maxWidth: "100%",
               }}
             >
+              {/* Alignment Menu for multi-select */}
+              {selectedLayerIds.length > 1 && (
+                <AlignmentMenu onAlign={handleAlign} />
+              )}
+              
               <CanvasEditor
                 layers={layers}
                 backgroundColor={backgroundColor}
                 canvasWidth={CANVAS_WIDTH}
                 canvasHeight={CANVAS_HEIGHT}
-                activeLayerId={activeLayerId}
-                onPositionChange={(newPosition) => updateActiveLayer({ position: newPosition })}
+                selectedLayerIds={selectedLayerIds}
+                onPositionChange={(newPosition) => {
+                  if (selectedLayerIds.length === 1) {
+                    updateActiveLayer({ position: newPosition });
+                  } else {
+                    // Multi-layer drag not yet implemented
+                  }
+                }}
                 transformMode={transformMode}
                 onTransformModeExit={() => setTransformMode(false)}
                 onTransformModeEnter={() => setTransformMode(true)}
                 onScaleChange={(scale) => updateActiveLayer({ scale })}
                 onRotationChange={(rotation) => updateActiveLayer({ rotation })}
-                onActiveLayerChange={setActiveLayerId}
+                onLayerSelection={handleLayerSelection}
               />
             </div>
 
             <LayerManager
               layers={layers}
-              activeLayerId={activeLayerId}
-              onSelectLayer={setActiveLayerId}
+              selectedLayerIds={selectedLayerIds}
+              onSelectLayer={handleLayerSelection}
               onRemoveLayer={handleRemoveLayer}
               onSetLayers={handleSetLayers}
               className="absolute top-6 right-6 z-10 flex flex-col gap-2"

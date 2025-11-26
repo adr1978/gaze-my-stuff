@@ -7,14 +7,14 @@ interface CanvasEditorProps {
   backgroundColor: string;
   canvasWidth: number;
   canvasHeight: number;
-  activeLayerId: string | null;
+  selectedLayerIds: string[];
   onPositionChange: (position: { x: number; y: number }) => void;
   transformMode: boolean;
   onTransformModeExit: () => void;
-  onTransformModeEnter: () => void; // NEW: activate transform mode
+  onTransformModeEnter: () => void;
   onScaleChange: (scale: number) => void;
   onRotationChange: (rotation: number) => void;
-  onActiveLayerChange: (layerId: string | null) => void; // NEW: change active layer
+  onLayerSelection: (layerId: string, shiftKey: boolean) => void;
 }
 
 export const CanvasEditor = ({
@@ -22,15 +22,16 @@ export const CanvasEditor = ({
   backgroundColor,
   canvasWidth,
   canvasHeight,
-  activeLayerId,
+  selectedLayerIds,
   onPositionChange,
   transformMode,
   onTransformModeExit,
   onTransformModeEnter,
   onScaleChange,
   onRotationChange,
-  onActiveLayerChange,
+  onLayerSelection,
 }: CanvasEditorProps) => {
+  const activeLayerId = selectedLayerIds.length === 1 ? selectedLayerIds[0] : null;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -301,7 +302,7 @@ export const CanvasEditor = ({
       // No active layer - check if clicking on any layer
       const clickedLayerId = getLayerAtPoint(x, y);
       if (clickedLayerId) {
-        onActiveLayerChange(clickedLayerId);
+        onLayerSelection(clickedLayerId, e.shiftKey);
         setDragMode(null);
         setIsDragging(true);
         setDragStart({ x, y });
@@ -362,10 +363,10 @@ export const CanvasEditor = ({
         return;
       }
     } else {
-      // Not in transform mode - check if clicking on a different layer
+      // Not in transform mode - check if clicking on a layer
       const clickedLayerId = getLayerAtPoint(x, y);
-      if (clickedLayerId && clickedLayerId !== activeLayerId) {
-        onActiveLayerChange(clickedLayerId);
+      if (clickedLayerId) {
+        onLayerSelection(clickedLayerId, e.shiftKey);
         setDragMode(null);
         setIsDragging(true);
         setDragStart({ x, y });

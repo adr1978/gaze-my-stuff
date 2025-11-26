@@ -2,6 +2,8 @@
   {
     "accountName": "Anthony ISA v2",
     "owner": "Anthony",
+    "institution": "Vanguard",
+    "type": "ISA",
     "fundName": "Vanguard FTSE Global All Cap Index Fund",
     "fundID": "GB00BMJJJF91",
     "dataSource": "hsbc_all_world_prices",
@@ -15,6 +17,8 @@
   {
     "accountName": "Sarah ISA",
     "owner": "Sarah",
+    "institution": "Vanguard",
+    "type": "ISA",
     "fundName": "Vanguard LifeStrategy 80% Equity Fund",
     "fundID": "GB00BMJJJF91",
     "dataSource": "hsbc_all_world_prices",
@@ -27,6 +31,8 @@
   {
     "accountName": "Oliver JISA",
     "owner": "Oliver",
+    "institution": "Vanguard",
+    "type": "JISA",
     "fundName": "Vanguard FTSE Developed World ex-UK Equity Index Fund",
     "fundID": "GB00BMJJJF91",
     "dataSource": "hsbc_all_world_prices",
