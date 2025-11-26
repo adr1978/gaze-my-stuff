@@ -8,13 +8,7 @@
 
 import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Upload,
-  Download,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-} from "lucide-react";
+import {CheckCircle2, AlertCircle} from "lucide-react";
 import { toast } from "sonner";
 import { CanvasEditor } from "@/components/notionCoverStudio/CanvasEditor";
 import { CanvasControls } from "@/components/notionCoverStudio/CanvasControls";
@@ -157,65 +151,87 @@ const Index = () => {
   };
 
   // --- EVENT HANDLERS ---
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (layers.length >= MAX_LAYERS) {
-      toast.error(`You can only add up to ${MAX_LAYERS} layers`, {
-        icon: <XCircle className="h-5 w-5 text-red-400" />,
-      });
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Check layer limits
+    const availableSlots = MAX_LAYERS - layers.length;
+    if (availableSlots <= 0) {
+      showToast.error(`You have reached the maximum of ${MAX_LAYERS} layers`);
+      e.target.value = "";
       return;
     }
 
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload a valid image file", {
-        icon: <XCircle className="h-5 w-5 text-red-400" />,
-      });
-      return;
+    // Determine how many files we can actually accept
+    const filesToProcess = Array.from(files).slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      showToast.warning(`Only adding ${availableSlots} files to fit limit`);
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const scaleX = CANVAS_WIDTH / img.width;
-        const scaleY = CANVAS_HEIGHT / img.height;
-        const initialScale = Math.min(scaleX, scaleY, 1);
-        const newLayerId = crypto.randomUUID();
-        const thumbnailUrl = createThumbnail(img);
+    // Create a promise for each file to load and process
+    const layerPromises = filesToProcess.map((file) => {
+      return new Promise<LayerState | null>((resolve) => {
+        if (!file.type.startsWith("image/")) {
+          resolve(null); // Skip non-images
+          return;
+        }
 
-        const initialState: LayerInitialState = {
-          scale: initialScale,
-          rotation: 0,
-          opacity: 1,
-          position: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const scaleX = CANVAS_WIDTH / img.width;
+            const scaleY = CANVAS_HEIGHT / img.height;
+            const initialScale = Math.min(scaleX, scaleY, 1);
+            const newLayerId = crypto.randomUUID();
+            const thumbnailUrl = createThumbnail(img);
+
+            // Store image in ref cache
+            imageRefs.current[newLayerId] = img;
+
+            const initialState: LayerInitialState = {
+              scale: initialScale,
+              rotation: 0,
+              opacity: 1,
+              position: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
+            };
+
+            const newLayer: LayerState = {
+              id: newLayerId,
+              image: img,
+              thumbnailUrl: thumbnailUrl,
+              ...initialState,
+              pattern: "none",
+              spacing: 20,
+              randomPatternData: [],
+              initialState: initialState,
+            };
+            resolve(newLayer);
+          };
+          img.src = event.target?.result as string;
         };
+        reader.readAsDataURL(file);
+      });
+    });
 
-        const newLayer: LayerState = {
-          id: newLayerId,
-          image: img,
-          thumbnailUrl: thumbnailUrl,
-          ...initialState,
-          pattern: "none",
-          spacing: 20,
-          randomPatternData: [],
-          initialState: initialState,
-        };
+    // Wait for all images to process
+    const results = await Promise.all(layerPromises);
+    const validNewLayers = results.filter((l): l is LayerState => l !== null);
 
-        setLayers((prevLayers) => [...prevLayers, newLayer]);
-        setActiveLayerId(newLayerId);
-
-        // NEW: enable transform mode automatically for newly added images
-        setTransformMode(true);
-
-        toast.success("Image uploaded as new layer", {
-          icon: <CheckCircle2 className="h-5 w-5 text-green-400" />,
-        });
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+    if (validNewLayers.length > 0) {
+      setLayers((prevLayers) => {
+        const newLayers = [...prevLayers, ...validNewLayers];
+        captureHistory(newLayers);
+        return newLayers;
+      });
+      // Select the newly added layers
+      setSelectedLayerIds(validNewLayers.map((l) => l.id));
+      setTransformMode(true);
+      showToast.success(`Added ${validNewLayers.length} new layer(s)`);
+    } else {
+      showToast.error("No valid images were loaded");
+    }
 
     e.target.value = "";
   };
@@ -449,7 +465,14 @@ const Index = () => {
         <h1 className="text-4xl font-bold text-foreground mb-2">Notion Cover Studio</h1>
         <p className="text-muted-foreground mb-6">Design beautiful Notion cover images with ease.  Upload and manipulate up to five images.</p>
 
-        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+        <input 
+          ref={fileInputRef} 
+          type="file" 
+          accept="image/*" 
+          multiple
+          onChange={handleFileUpload} 
+          className="hidden" 
+        />
 
         {/* --- MODIFIED CANVAS/LAYER AREA --- */}
         <div className="w-full flex justify-center pb-6">
