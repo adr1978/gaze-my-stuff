@@ -1,0 +1,47 @@
+[
+  {
+    "accountName": "Anthony - iWeb ISA",
+    "owner": "Anthony",
+    "institution": "iWeb",
+    "type": "ISA",
+    "fundName": "HSBC FTSE All-World Index Fund Accumulation C",
+    "fundID": "GB00BMJJJF91",
+    "dataSource": "hsbc_all_world_prices",
+    "totalShares": 16871.77,
+    "purchases": [
+      { "date": "2024-05-01", "shares": 5594.61 },
+      { "date": "2025-10-03", "shares": 11277.16 }
+    ]
+  },
+  {
+    "accountName": "Anthony - Dodl LISA",
+    "owner": "Anthony",
+    "institution": "Dodl",
+    "type": "LISA",
+    "fundName": "HSBC FTSE All-World Index Fund Accumulation C",
+    "fundID": "GB00BMJJJF91",
+    "dataSource": "hsbc_all_world_prices",
+    "totalShares": 1022.21,
+    "purchases": [
+      { "date": "2024-04-08", "shares": 1368.93 },
+      { "date": "2024-05-01", "shares": 1395.68 },
+      { "date": "2024-05-09", "shares": 347.57 },
+      { "date": "2024-06-07", "shares": 340.39 },
+      { "date": "2024-11-08", "shares": -1.99 },
+      { "date": "2025-04-04", "shares": -2.26 },
+      { "date": "2025-09-08", "shares": -1.99 },
+      { "date": "2025-09-18", "shares": 575.88 }
+    ]
+  },
+  {
+    "accountName": "Oliver JISA",
+    "owner": "Oliver",
+    "fundName": "Vanguard FTSE Developed World ex-UK Equity Index Fund",
+    "fundID": "GB00BMJJJF91",
+    "dataSource": "hsbc_all_world_prices",
+    "totalShares": 150.00,
+    "purchases": [
+      { "date": "2024-02-01", "shares": 150 }
+    ]
+  }
+]
