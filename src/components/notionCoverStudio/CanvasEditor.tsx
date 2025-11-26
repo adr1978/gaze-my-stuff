@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, Fragment } from "react";
 import { LayerState } from "@/types";
 import { RotateCw } from "lucide-react";
 
@@ -166,9 +166,9 @@ export const CanvasEditor = ({
   };
 
   // Compute bounding box corners in canvas coords (order: tl, tr, br, bl)
-  const getBoundingBox = () => {
-    if (!activeLayer) return null;
-    const { image, scale, rotation, position } = activeLayer;
+  const getBoundingBox = (layer: LayerState) => {
+    if (!layer) return null;
+    const { image, scale, rotation, position } = layer;
     const w = image.width * scale;
     const h = image.height * scale;
 
@@ -191,7 +191,9 @@ export const CanvasEditor = ({
 
   // Return corner key at point (if within handle)
   const getCornerAtPoint = (x: number, y: number, handle = handleSize) => {
-    const box = getBoundingBox();
+    // Only works for active layer in transform mode
+    if (!activeLayer) return null;
+    const box = getBoundingBox(activeLayer);
     if (!box) return null;
     const corners = [
       { key: "tl" as const, pos: box[0] },
@@ -208,17 +210,18 @@ export const CanvasEditor = ({
 
   // Rotation handle check (midpoint of top edge)
   const isNearRotationHandle = (x: number, y: number, handle = handleSize) => {
-    const box = getBoundingBox();
+    if (!activeLayer) return false;
+    const box = getBoundingBox(activeLayer);
     if (!box) return false;
     const midX = (box[0].x + box[1].x) / 2;
     const midY = (box[0].y + box[1].y) / 2;
     return Math.hypot(x - midX, y - midY) <= handle;
   };
 
-  // Is point inside extended bounding box
-  const isInsideBoundingBox = (x: number, y: number, extra = 30) => {
-    if (!activeLayer) return false;
-    const { image, scale, rotation, position } = activeLayer;
+  // Is point inside extended bounding box of a specific layer
+  const isInsideBoundingBox = (layer: LayerState, x: number, y: number, extra = 30) => {
+    if (!layer) return false;
+    const { image, scale, rotation, position } = layer;
     const rad = (rotation * Math.PI) / 180;
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
@@ -298,25 +301,8 @@ export const CanvasEditor = ({
     // Reset drag tracking
     setHasDragged(false);
     
-    if (!activeLayerPosition || !activeLayer) {
-      // No active layer - check if clicking on any layer
-      const clickedLayerId = getLayerAtPoint(x, y);
-      if (clickedLayerId) {
-        onLayerSelection(clickedLayerId, e.shiftKey);
-        setDragMode(null);
-        setIsDragging(true);
-        setDragStart({ x, y });
-        
-        // Store initial position of the clicked layer
-        const clickedLayer = layers.find(l => l.id === clickedLayerId);
-        if (clickedLayer) {
-          setInitialDragPosition({ x: clickedLayer.position.x, y: clickedLayer.position.y });
-        }
-      }
-      return;
-    }
-
-    if (transformMode) {
+    // Check for rotation/scale handles FIRST (only available for single active layer in transform mode)
+    if (transformMode && activeLayer) {
       // Rotation handle
       if (isNearRotationHandle(x, y)) {
         setDragMode("rotation");
@@ -329,7 +315,7 @@ export const CanvasEditor = ({
       // Corner handle
       const corner = getCornerAtPoint(x, y);
       if (corner) {
-        const box = getBoundingBox();
+        const box = getBoundingBox(activeLayer);
         if (!box) return;
 
         const idxMap: Record<string, number> = { tl: 0, tr: 1, br: 2, bl: 3 };
@@ -357,36 +343,56 @@ export const CanvasEditor = ({
         return;
       }
 
-      // Click outside to exit transform mode
-      if (!isInsideBoundingBox(x, y)) {
-        onTransformModeExit();
-        return;
+      // Check if clicking inside the ACTIVE bounding box
+      // If we are, we are dragging the active layer
+      if (isInsideBoundingBox(activeLayer, x, y)) {
+         setDragMode(null);
+         setIsDragging(true);
+         setDragStart({ x, y });
+         setInitialDragPosition({ x: activeLayer.position.x, y: activeLayer.position.y });
+         return;
       }
-    } else {
-      // Not in transform mode - check if clicking on a layer
+
+      // If we are here, we clicked OUTSIDE the active layer's controls
+      // Check if we clicked ON TOP of another layer
       const clickedLayerId = getLayerAtPoint(x, y);
-      if (clickedLayerId) {
-        onLayerSelection(clickedLayerId, e.shiftKey);
-        setDragMode(null);
-        setIsDragging(true);
-        setDragStart({ x, y });
-        
-        // Store initial position
-        const clickedLayer = layers.find(l => l.id === clickedLayerId);
-        if (clickedLayer) {
-          setInitialDragPosition({ x: clickedLayer.position.x, y: clickedLayer.position.y });
-        }
-        return;
+      if (clickedLayerId && clickedLayerId !== activeLayer.id) {
+          // Fluid switching: Select the new layer
+          onLayerSelection(clickedLayerId, e.shiftKey);
+          
+          // Note: we can't immediately drag the new layer because activeLayerId
+          // is prop-driven and won't update until next render.
+          // But we prevented deselecting.
+          return;
       }
+
+      // Clicked on empty space -> Exit transform mode
+      onTransformModeExit();
+      return;
     }
 
-    // Regular move drag
-    setDragMode(null);
-    setIsDragging(true);
-    setDragStart({ x, y });
-    
-    // Store initial position for Shift-constrained dragging
-    setInitialDragPosition({ x: activeLayerPosition.x, y: activeLayerPosition.y });
+    // Not in transform mode OR no active layer (multi-select)
+    // Check if clicking on any layer
+    const clickedLayerId = getLayerAtPoint(x, y);
+    if (clickedLayerId) {
+      onLayerSelection(clickedLayerId, e.shiftKey);
+      setDragMode(null);
+      setIsDragging(true);
+      setDragStart({ x, y });
+      
+      // Store initial position
+      const clickedLayer = layers.find(l => l.id === clickedLayerId);
+      if (clickedLayer) {
+        setInitialDragPosition({ x: clickedLayer.position.x, y: clickedLayer.position.y });
+      }
+      return;
+    }
+
+    // Clicked empty space
+    if (selectedLayerIds.length > 0) {
+       onLayerSelection("", false); // Deselect all
+       onTransformModeExit();
+    }
   };
 
   // Mouse move: generalized to HTMLElement so can be attached to overlay/container
@@ -502,14 +508,9 @@ export const CanvasEditor = ({
 
   // Render transform overlay and handles
   const renderTransformOverlay = () => {
-    // If transform mode is disabled or no active layer, nothing to render
-    if (!transformMode || !activeLayer) return null;
+    // If no layers selected, nothing to render
+    if (selectedLayerIds.length === 0) return null;
 
-    // Defensive: do not render overlay if the active layer has a pattern applied
-    if ((activeLayer as any)?.pattern && (activeLayer as any).pattern !== "none") return null;
-
-    const box = getBoundingBox();
-    if (!box) return null;
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
@@ -517,9 +518,6 @@ export const CanvasEditor = ({
     const scaleY = rect.height / canvas.height;
 
     const toScreen = (p: { x: number; y: number }) => ({ x: p.x * scaleX, y: p.y * scaleY });
-    const screenBox = box.map(toScreen);
-
-    const rotationHandle = { x: (screenBox[0].x + screenBox[1].x) / 2, y: (screenBox[0].y + screenBox[1].y) / 2 };
 
     return (
       <div
@@ -530,41 +528,74 @@ export const CanvasEditor = ({
         onMouseLeave={handleMouseUp}
       >
         <svg className="w-full h-full">
-          <polygon
-            points={screenBox.map((p) => `${p.x},${p.y}`).join(" ")}
-            fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth="2"
-            strokeDasharray="5,5"
-          />
-          {screenBox.map((pt, i) => {
-            const cursorClass = i === 0 || i === 2 ? "cursor-nwse-resize" : "cursor-nesw-resize";
-            return (
-              <rect
-                key={i}
-                x={pt.x - 6}
-                y={pt.y - 6}
-                width="12"
-                height="12"
-                fill="hsl(var(--background))"
-                stroke="hsl(var(--primary))"
-                strokeWidth="2"
-                className={`pointer-events-auto ${cursorClass}`}
-              />
-            );
+          {/* Render bounding box for ALL selected layers */}
+          {selectedLayerIds.map((layerId) => {
+             const layer = layers.find(l => l.id === layerId);
+             if (!layer) return null;
+             
+             // Defensive: do not render overlay if the layer has a pattern applied
+             if ((layer as any)?.pattern && (layer as any).pattern !== "none") return null;
+
+             const box = getBoundingBox(layer);
+             if (!box) return null;
+             
+             const screenBox = box.map(toScreen);
+             
+             const isPrimary = activeLayerId === layerId && transformMode;
+
+             return (
+              <Fragment key={layerId}>
+                 <polygon
+                    points={screenBox.map((p) => `${p.x},${p.y}`).join(" ")}
+                    fill="none"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="2"
+                    strokeDasharray={isPrimary ? "5,5" : "2,2"}
+                    className={!isPrimary ? "opacity-60" : ""}
+                  />
+                  {/* Only render handles for the primary active layer in transform mode */}
+                  {isPrimary && (
+                    <>
+                      {screenBox.map((pt, i) => {
+                        const cursorClass = i === 0 || i === 2 ? "cursor-nwse-resize" : "cursor-nesw-resize";
+                        return (
+                          <rect
+                            key={i}
+                            x={pt.x - 6}
+                            y={pt.y - 6}
+                            width="12"
+                            height="12"
+                            fill="hsl(var(--background))"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth="2"
+                            className={`pointer-events-auto ${cursorClass}`}
+                          />
+                        );
+                      })}
+                      {(() => {
+                        const rotationHandle = { x: (screenBox[0].x + screenBox[1].x) / 2, y: (screenBox[0].y + screenBox[1].y) / 2 };
+                        return (
+                          <>
+                            <circle
+                              cx={rotationHandle.x}
+                              cy={rotationHandle.y}
+                              r="12"
+                              fill="hsl(var(--background))"
+                              stroke="hsl(var(--primary))"
+                              strokeWidth="2"
+                              className="pointer-events-auto cursor-grab"
+                            />
+                            <foreignObject x={rotationHandle.x - 8} y={rotationHandle.y - 8} width="16" height="16" className="pointer-events-none">
+                              <RotateCw className="w-4 h-4 text-primary" />
+                            </foreignObject>
+                          </>
+                        );
+                      })()}
+                    </>
+                  )}
+              </Fragment>
+             );
           })}
-          <circle
-            cx={rotationHandle.x}
-            cy={rotationHandle.y}
-            r="12"
-            fill="hsl(var(--background))"
-            stroke="hsl(var(--primary))"
-            strokeWidth="2"
-            className="pointer-events-auto cursor-grab"
-          />
-          <foreignObject x={rotationHandle.x - 8} y={rotationHandle.y - 8} width="16" height="16" className="pointer-events-none">
-            <RotateCw className="w-4 h-4 text-primary" />
-          </foreignObject>
         </svg>
       </div>
     );
