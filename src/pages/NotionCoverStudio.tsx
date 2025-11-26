@@ -1,8 +1,17 @@
 /**
  * Notion Cover Studio Page
+ * 
+ * Placeholder page for the Notion Cover Studio feature.
+ * This page will be developed to provide tools for creating
+ * and managing Notion cover images.
  */
 
 import { useState, useRef, useMemo, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Upload,
+  Download,
+} from "lucide-react";
 import { showToast } from "@/lib/toast-helper";
 import { CanvasEditor } from "@/components/notionCoverStudio/CanvasEditor";
 import { CanvasControls } from "@/components/notionCoverStudio/CanvasControls";
@@ -187,91 +196,67 @@ const Index = () => {
   };
 
   // --- EVENT HANDLERS ---
-const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    // Check layer limits
-    const availableSlots = MAX_LAYERS - layers.length;
-    if (availableSlots <= 0) {
-      showToast.error(`You have reached the maximum of ${MAX_LAYERS} layers`);
-      e.target.value = "";
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (layers.length >= MAX_LAYERS) {
+      showToast.error(`You can only add up to ${MAX_LAYERS} layers`);
       return;
     }
 
-    // Determine how many files we can actually accept
-    const filesToProcess = Array.from(files).slice(0, availableSlots);
-    if (files.length > availableSlots) {
-      showToast.warning(`Only adding ${availableSlots} files to fit limit`);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showToast.error("Please upload a valid image file");
+      return;
     }
 
-    // Create a promise for each file to load and process
-    const layerPromises = filesToProcess.map((file) => {
-      return new Promise<LayerState | null>((resolve) => {
-        if (!file.type.startsWith("image/")) {
-          resolve(null); // Skip non-images
-          return;
-        }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const scaleX = CANVAS_WIDTH / img.width;
+        const scaleY = CANVAS_HEIGHT / img.height;
+        const initialScale = Math.min(scaleX, scaleY, 1);
+        const newLayerId = crypto.randomUUID();
+        const thumbnailUrl = createThumbnail(img);
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            const scaleX = CANVAS_WIDTH / img.width;
-            const scaleY = CANVAS_HEIGHT / img.height;
-            const initialScale = Math.min(scaleX, scaleY, 1);
-            const newLayerId = crypto.randomUUID();
-            const thumbnailUrl = createThumbnail(img);
-
-            // Store image in ref cache
-            imageRefs.current[newLayerId] = img;
-
-            const initialState: LayerInitialState = {
-              scale: initialScale,
-              rotation: 0,
-              opacity: 1,
-              position: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
-            };
-
-            const newLayer: LayerState = {
-              id: newLayerId,
-              image: img,
-              thumbnailUrl: thumbnailUrl,
-              ...initialState,
-              pattern: "none",
-              spacing: 20,
-              randomPatternData: [],
-              initialState: initialState,
-            };
-            resolve(newLayer);
-          };
-          img.src = event.target?.result as string;
+        const initialState: LayerInitialState = {
+          scale: initialScale,
+          rotation: 0,
+          opacity: 1,
+          position: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
         };
-        reader.readAsDataURL(file);
-      });
-    });
 
-    // Wait for all images to process
-    const results = await Promise.all(layerPromises);
-    const validNewLayers = results.filter((l): l is LayerState => l !== null);
+        const newLayer: LayerState = {
+          id: newLayerId,
+          image: img,
+          thumbnailUrl: thumbnailUrl,
+          ...initialState,
+          pattern: "none",
+          spacing: 20,
+          randomPatternData: [],
+          initialState: initialState,
+        };
 
-    if (validNewLayers.length > 0) {
-      setLayers((prevLayers) => {
-        const newLayers = [...prevLayers, ...validNewLayers];
-        captureHistory(newLayers);
-        return newLayers;
-      });
-      // Select the newly added layers
-      setSelectedLayerIds(validNewLayers.map((l) => l.id));
-      setTransformMode(true);
-      showToast.success(`Added ${validNewLayers.length} new layer(s)`);
-    } else {
-      showToast.error("No valid images were loaded");
-    }
+        setLayers((prevLayers) => {
+          const newLayers = [...prevLayers, newLayer];
+          captureHistory(newLayers);
+          return newLayers;
+        });
+        setSelectedLayerIds([newLayerId]);
+
+        // NEW: enable transform mode automatically for newly added images
+        setTransformMode(true);
+
+        showToast.success("Image uploaded as new layer");
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
 
     e.target.value = "";
   };
-  
+
   const handleRemoveLayer = (idToRemove: string) => {
     setLayers((prevLayers) => {
       const newLayers = prevLayers.filter((l) => l.id !== idToRemove);
@@ -522,10 +507,9 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   };
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Undo/Redo
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
         e.preventDefault();
         handleRedo();
@@ -535,13 +519,6 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       } else if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         e.preventDefault();
         handleRedo();
-      } 
-      // Select All
-      else if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
-        e.preventDefault();
-        // Select all layers
-        setSelectedLayerIds(layers.map(l => l.id));
-        showToast.info(`Selected ${layers.length} layers`);
       }
     };
 
@@ -562,206 +539,68 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   };
 
-  // --- ALIGNMENT HELPERS ---
-  
-  // Scans image data to find the bounding box of non-transparent pixels (alpha > 0)
-  const getImageContentBounds = (img: HTMLImageElement) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return { x: 0, y: 0, w: img.width, h: img.height };
-    
-    ctx.drawImage(img, 0, 0);
-    const { data } = ctx.getImageData(0, 0, img.width, img.height);
-    
-    let minX = img.width, minY = img.height, maxX = 0, maxY = 0;
-    let found = false;
-    
-    // Check every pixel's alpha channel (every 4th byte)
-    for (let i = 0; i < data.length; i += 4) {
-      if (data[i + 3] > 0) { // If not transparent
-        const idx = i / 4;
-        const x = idx % img.width;
-        const y = Math.floor(idx / img.width);
-        
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-        found = true;
-      }
-    }
-    
-    if (!found) return { x: 0, y: 0, w: img.width, h: img.height }; // If fully transparent or empty
-    
-    return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
-  };
-
-  // Computes the global (canvas) coordinates of the visual content
-  // accounting for scale, rotation, and transparency trimming.
-  const getVisualBounds = (layer: LayerState) => {
-    const content = getImageContentBounds(layer.image);
-    
-    // Corners of the non-transparent content rectangle in local image space
-    // content.x/y is relative to the top-left of the image source
-    const corners = [
-      { x: content.x, y: content.y },
-      { x: content.x + content.w, y: content.y },
-      { x: content.x + content.w, y: content.y + content.h },
-      { x: content.x, y: content.y + content.h }
-    ];
-    
-    // Image center in local space
-    const imgCX = layer.image.width / 2;
-    const imgCY = layer.image.height / 2;
-    
-    const rad = (layer.rotation * Math.PI) / 180;
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-    
-    // Transform corners to global canvas space
-    const globalCorners = corners.map(p => {
-      // 1. Shift to center origin
-      const lx = (p.x - imgCX) * layer.scale;
-      const ly = (p.y - imgCY) * layer.scale;
-      
-      // 2. Rotate
-      const rx = lx * cos - ly * sin;
-      const ry = lx * sin + ly * cos;
-      
-      // 3. Translate to layer position
-      return {
-        x: rx + layer.position.x,
-        y: ry + layer.position.y
-      };
-    });
-    
-    const xs = globalCorners.map(p => p.x);
-    const ys = globalCorners.map(p => p.y);
-    
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-
-    return {
-      minX,
-      maxX,
-      minY,
-      maxY,
-      centerX: (minX + maxX) / 2,
-      centerY: (minY + maxY) / 2,
-      width: maxX - minX,
-      height: maxY - minY
-    };
-  };
-
   // Alignment handler for multiple layers
   const handleAlign = (type: 'left' | 'right' | 'centerH' | 'top' | 'bottom' | 'centerV' | 'distributeH' | 'distributeV') => {
     if (selectedLayerIds.length < 2) return;
 
-    // Calculate visual bounds for all selected layers once
-    const boundsMap = new Map();
-    const selectedLayersList = layers.filter(l => selectedLayerIds.includes(l.id));
-    
-    selectedLayersList.forEach(l => {
-      boundsMap.set(l.id, getVisualBounds(l));
-    });
-
     setLayers(prevLayers => {
       const newLayers = [...prevLayers];
+      const selectedLayerObjects = newLayers.filter(l => selectedLayerIds.includes(l.id));
       
       if (type === 'left') {
-        // Find the left-most edge among all visual bounds
-        const targetX = Math.min(...selectedLayersList.map(l => boundsMap.get(l.id).minX));
-        
-        selectedLayersList.forEach(l => {
+        const minX = Math.min(...selectedLayerObjects.map(l => l.position.x - (l.image.width * l.scale) / 2));
+        selectedLayerObjects.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
-          const bounds = boundsMap.get(l.id);
-          // Delta needed to move this layer's visual left edge to targetX
-          const delta = targetX - bounds.minX;
-          if (layer) layer.position.x += delta;
+          if (layer) layer.position.x = minX + (l.image.width * l.scale) / 2;
         });
       } else if (type === 'right') {
-        const targetX = Math.max(...selectedLayersList.map(l => boundsMap.get(l.id).maxX));
-        
-        selectedLayersList.forEach(l => {
+        const maxX = Math.max(...selectedLayerObjects.map(l => l.position.x + (l.image.width * l.scale) / 2));
+        selectedLayerObjects.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
-          const bounds = boundsMap.get(l.id);
-          const delta = targetX - bounds.maxX;
-          if (layer) layer.position.x += delta;
+          if (layer) layer.position.x = maxX - (l.image.width * l.scale) / 2;
         });
       } else if (type === 'centerH') {
-        const avgX = selectedLayersList.reduce((sum, l) => sum + boundsMap.get(l.id).centerX, 0) / selectedLayersList.length;
-        
-        selectedLayersList.forEach(l => {
+        const avgX = selectedLayerObjects.reduce((sum, l) => sum + l.position.x, 0) / selectedLayerObjects.length;
+        selectedLayerObjects.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
-          const bounds = boundsMap.get(l.id);
-          const delta = avgX - bounds.centerX;
-          if (layer) layer.position.x += delta;
+          if (layer) layer.position.x = avgX;
         });
       } else if (type === 'top') {
-        const targetY = Math.min(...selectedLayersList.map(l => boundsMap.get(l.id).minY));
-        
-        selectedLayersList.forEach(l => {
+        const minY = Math.min(...selectedLayerObjects.map(l => l.position.y - (l.image.height * l.scale) / 2));
+        selectedLayerObjects.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
-          const bounds = boundsMap.get(l.id);
-          const delta = targetY - bounds.minY;
-          if (layer) layer.position.y += delta;
+          if (layer) layer.position.y = minY + (l.image.height * l.scale) / 2;
         });
       } else if (type === 'bottom') {
-        const targetY = Math.max(...selectedLayersList.map(l => boundsMap.get(l.id).maxY));
-        
-        selectedLayersList.forEach(l => {
+        const maxY = Math.max(...selectedLayerObjects.map(l => l.position.y + (l.image.height * l.scale) / 2));
+        selectedLayerObjects.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
-          const bounds = boundsMap.get(l.id);
-          const delta = targetY - bounds.maxY;
-          if (layer) layer.position.y += delta;
+          if (layer) layer.position.y = maxY - (l.image.height * l.scale) / 2;
         });
       } else if (type === 'centerV') {
-        const avgY = selectedLayersList.reduce((sum, l) => sum + boundsMap.get(l.id).centerY, 0) / selectedLayersList.length;
-        
-        selectedLayersList.forEach(l => {
+        const avgY = selectedLayerObjects.reduce((sum, l) => sum + l.position.y, 0) / selectedLayerObjects.length;
+        selectedLayerObjects.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
-          const bounds = boundsMap.get(l.id);
-          const delta = avgY - bounds.centerY;
-          if (layer) layer.position.y += delta;
+          if (layer) layer.position.y = avgY;
         });
       } else if (type === 'distributeH') {
-        // Sort by visual center X
-        const sorted = [...selectedLayersList].sort((a, b) => boundsMap.get(a.id).centerX - boundsMap.get(b.id).centerX);
-        
-        if (sorted.length > 1) {
-          const leftMost = boundsMap.get(sorted[0].id).centerX;
-          const rightMost = boundsMap.get(sorted[sorted.length - 1].id).centerX;
-          const gap = (rightMost - leftMost) / (sorted.length - 1);
-          
-          sorted.forEach((l, i) => {
-            const layer = newLayers.find(nl => nl.id === l.id);
-            const bounds = boundsMap.get(l.id);
-            const targetCenter = leftMost + gap * i;
-            const delta = targetCenter - bounds.centerX;
-            if (layer) layer.position.x += delta;
-          });
-        }
+        const sorted = [...selectedLayerObjects].sort((a, b) => a.position.x - b.position.x);
+        const leftMost = sorted[0].position.x;
+        const rightMost = sorted[sorted.length - 1].position.x;
+        const gap = (rightMost - leftMost) / (sorted.length - 1);
+        sorted.forEach((l, i) => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.x = leftMost + gap * i;
+        });
       } else if (type === 'distributeV') {
-        // Sort by visual center Y
-        const sorted = [...selectedLayersList].sort((a, b) => boundsMap.get(a.id).centerY - boundsMap.get(b.id).centerY);
-        
-        if (sorted.length > 1) {
-          const topMost = boundsMap.get(sorted[0].id).centerY;
-          const bottomMost = boundsMap.get(sorted[sorted.length - 1].id).centerY;
-          const gap = (bottomMost - topMost) / (sorted.length - 1);
-          
-          sorted.forEach((l, i) => {
-            const layer = newLayers.find(nl => nl.id === l.id);
-            const bounds = boundsMap.get(l.id);
-            const targetCenter = topMost + gap * i;
-            const delta = targetCenter - bounds.centerY;
-            if (layer) layer.position.y += delta;
-          });
-        }
+        const sorted = [...selectedLayerObjects].sort((a, b) => a.position.y - b.position.y);
+        const topMost = sorted[0].position.y;
+        const bottomMost = sorted[sorted.length - 1].position.y;
+        const gap = (bottomMost - topMost) / (sorted.length - 1);
+        sorted.forEach((l, i) => {
+          const layer = newLayers.find(nl => nl.id === l.id);
+          if (layer) layer.position.y = topMost + gap * i;
+        });
       }
 
       captureHistory(newLayers);
@@ -777,17 +616,10 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-foreground mb-2">Notion Cover Studio v4</h1>
+        <h1 className="text-4xl font-bold text-foreground mb-2">Notion Cover Studio</h1>
         <p className="text-muted-foreground mb-6">Design beautiful Notion cover images with ease.  Upload and manipulate up to five images.</p>
 
-        <input 
-          ref={fileInputRef} 
-          type="file" 
-          accept="image/*" 
-          multiple
-          onChange={handleFileUpload} 
-          className="hidden" 
-        />
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
 
         {/* --- MODIFIED CANVAS/LAYER AREA --- */}
         <div className="w-full flex justify-center pb-6">
@@ -795,9 +627,9 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
             <div
               className="relative mx-auto"
               style={{
-              aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
-              maxHeight: `${MAX_DISPLAY_HEIGHT}px`,
-              maxWidth: "100%",
+                aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
+                maxHeight: `${MAX_DISPLAY_HEIGHT}px`,
+                maxWidth: "100%",
               }}
             >
               {/* Alignment Menu for multi-select */}
