@@ -6,20 +6,20 @@ import { cn } from "@/lib/utils";
 
 interface LayerManagerProps {
   layers: LayerState[];
-  activeLayerId: string | null;
-  onSelectLayer: (id: string) => void;
+  selectedLayerIds: string[];
+  onSelectLayer: (id: string, shiftKey: boolean) => void;
   onRemoveLayer: (id: string) => void;
   onSetLayers: (layers: LayerState[]) => void;
-  className?: string; // Accept a className prop
+  className?: string;
 }
 
 export const LayerManager = ({
   layers,
-  activeLayerId,
+  selectedLayerIds,
   onSelectLayer,
   onRemoveLayer,
   onSetLayers,
-  className, // Use the className prop
+  className,
 }: LayerManagerProps) => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
@@ -75,22 +75,20 @@ export const LayerManager = ({
         >
           <button
             type="button"
-            onClick={() => onSelectLayer(layer.id)}
+            onClick={(e) => onSelectLayer(layer.id, e.shiftKey)}
             className={cn(
               `
               w-16 h-16 rounded-lg transition-all p-1 bg-background/80 backdrop-blur-sm
               cursor-grab active:cursor-grabbing
               hover:scale-105 hover:shadow-xl
             `,
-              // Active: Strong shadow, primary ring
-              // Inactive: Milder shadow, solid darker grey ring
-              activeLayerId === layer.id
+              selectedLayerIds.includes(layer.id)
                 ? "scale-105 shadow-2xl ring-2 ring-primary"
                 : "shadow-md ring-2 ring-slate-400",
 
               draggedId === layer.id ? "opacity-50" : "",
             )}
-            title={`Select layer (Drag to reorder)`}
+            title={`Select layer (Shift+Click for multi-select, Drag to reorder)`}
           >
             <div
               className="w-full h-full rounded bg-cover bg-center"

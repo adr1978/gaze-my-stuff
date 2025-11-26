@@ -27,6 +27,8 @@ export type ChartInterval = 'Week' | 'Month' | 'Year';
 export interface FundAccount {
   accountName: string;
   owner: string;
+  institution: string;
+  type: string;
   fundName: string;
   fundID: string;
   dataSource: string;
