@@ -80,6 +80,36 @@ export function AccountSelectionCard({
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Row 1: Total Shares, Current Price, Total Value */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
+          {/* Institution */}
+          <div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+              <Building2 className="h-4 w-4" />
+              <span>Institution</span>
+            </div>
+            <p className="text-lg font-medium">{currentAccount.institution}</p>
+          </div>
+
+          {/* Owner */}
+          <div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+              <User className="h-4 w-4" />
+              <span>Owner</span>
+            </div>
+            <p className="text-lg font-medium">{currentAccount.owner}</p>
+          </div>
+
+          {/* Type */}
+          <div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+              <FileText className="h-4 w-4" />
+              <span>Type</span>
+            </div>
+            <p className="text-lg font-medium">{currentAccount.type}</p>
+          </div>
+        </div>
+        
+        {/* Row 2: Institution, Owner, Type */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Total Shares with chart-pie icon */}
           <div>
@@ -109,36 +139,6 @@ export function AccountSelectionCard({
               <p className="text-2xl font-semibold">{formatCurrency(totalValue)}</p>
               <TrendingUp className="h-5 w-5 text-success" />
             </div>
-          </div>
-        </div>
-
-        {/* Row 2: Institution, Owner, Type */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
-          {/* Institution */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Building2 className="h-4 w-4" />
-              <span>Institution</span>
-            </div>
-            <p className="text-lg font-medium">{currentAccount.institution}</p>
-          </div>
-
-          {/* Owner */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <User className="h-4 w-4" />
-              <span>Owner</span>
-            </div>
-            <p className="text-lg font-medium">{currentAccount.owner}</p>
-          </div>
-
-          {/* Type */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <FileText className="h-4 w-4" />
-              <span>Type</span>
-            </div>
-            <p className="text-lg font-medium">{currentAccount.type}</p>
           </div>
         </div>
       </CardContent>

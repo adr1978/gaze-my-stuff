@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { 
-  AlignLeft, 
-  AlignRight, 
+  AlignStartHorizontal, 
+  AlignStartVertical, 
   AlignHorizontalJustifyCenter,
   AlignStartVertical, 
   AlignEndVertical, 
@@ -24,7 +24,7 @@ export function AlignmentMenu({ onAlign }: AlignmentMenuProps) {
         onClick={() => onAlign('left')}
         title="Align Left"
       >
-        <AlignLeft className="h-4 w-4" />
+        <align-start-vertical className="h-4 w-4" />
       </Button>
       <Button
         variant="ghost"
@@ -42,7 +42,7 @@ export function AlignmentMenu({ onAlign }: AlignmentMenuProps) {
         onClick={() => onAlign('right')}
         title="Align Right"
       >
-        <AlignRight className="h-4 w-4" />
+        <AlignEndVertical className="h-4 w-4" />
       </Button>
       
       <div className="w-px bg-border mx-1" />
@@ -54,7 +54,7 @@ export function AlignmentMenu({ onAlign }: AlignmentMenuProps) {
         onClick={() => onAlign('top')}
         title="Align Top"
       >
-        <AlignStartVertical className="h-4 w-4" />
+        <AlignStartHorizontal className="h-4 w-4" />
       </Button>
       <Button
         variant="ghost"
@@ -72,7 +72,7 @@ export function AlignmentMenu({ onAlign }: AlignmentMenuProps) {
         onClick={() => onAlign('bottom')}
         title="Align Bottom"
       >
-        <AlignEndVertical className="h-4 w-4" />
+        <AlignStartVertical className="h-4 w-4" />
       </Button>
       
       <div className="w-px bg-border mx-1" />
