@@ -1,8 +1,9 @@
 /**
  * Notion Cover Studio Page
+ * 
  */
 
-import { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { showToast } from "@/lib/toast-helper";
 import { CanvasEditor } from "@/components/notionCoverStudio/CanvasEditor";
 import { CanvasControls } from "@/components/notionCoverStudio/CanvasControls";
@@ -33,19 +34,13 @@ const Index = () => {
   const [transformMode, setTransformMode] = useState(false);
   
   // --- UNDO/REDO STATE ---
-  const [history, setHistory] = useState<Omit<LayerState, "image">[][]>([]);
+  const [history, setHistory] = useState<LayerState[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  
-  // Image Cache: Persist HTMLImageElements across undo/redo cycles
-  // History state only stores serializable data; images are re-attached from here.
-  const imageRefs = useRef<Record<string, HTMLImageElement>>({});
 
   // Capture initial state when layers are first added
   useEffect(() => {
     if (layers.length > 0 && history.length === 0) {
-      // Create a stripped version for history (no image objects)
-      const historyState = layers.map(({ image, ...rest }) => rest);
-      setHistory([JSON.parse(JSON.stringify(historyState))]);
+      setHistory([JSON.parse(JSON.stringify(layers))]);
       setHistoryIndex(0);
     }
   }, [layers.length]);
@@ -63,7 +58,10 @@ const Index = () => {
   const activeLayer = useMemo(() => {
     return layers.find((l) => l.id === activeLayerId);
   }, [layers, activeLayerId]);
-  
+  const selectedLayers = useMemo(() => {
+    return layers.filter((l) => selectedLayerIds.includes(l.id));
+  }, [layers, selectedLayerIds]);
+
   // NEW: Check if the active layer is at its initial state
   const isAtDefaultState = useMemo(() => {
     if (!activeLayer) return true;
@@ -80,10 +78,8 @@ const Index = () => {
   // --- HELPER FUNCTIONS ---
   const captureHistory = (newLayers: LayerState[]) => {
     setHistory(prev => {
-      // Strip image objects before storing in history
-      const historyState = newLayers.map(({ image, ...rest }) => rest);
       const newHistory = prev.slice(0, historyIndex + 1);
-      newHistory.push(JSON.parse(JSON.stringify(historyState)));
+      newHistory.push(JSON.parse(JSON.stringify(newLayers)));
       return newHistory.slice(-50); // Keep last 50 states
     });
     setHistoryIndex(prev => Math.min(prev + 1, 49));
@@ -97,6 +93,20 @@ const Index = () => {
     setLayers((prevLayers) => {
       const newLayers = prevLayers.map((layer) =>
         layer.id === activeLayerId ? { ...layer, ...props } : layer,
+      );
+      captureHistory(newLayers);
+      return newLayers;
+    });
+  };
+
+  const updateSelectedLayers = (
+    updateFn: (layer: LayerState) => Partial<Omit<LayerState, "id" | "image" | "thumbnailUrl">>
+  ) => {
+    if (selectedLayerIds.length === 0) return;
+
+    setLayers((prevLayers) => {
+      const newLayers = prevLayers.map((layer) =>
+        selectedLayerIds.includes(layer.id) ? { ...layer, ...updateFn(layer) } : layer
       );
       captureHistory(newLayers);
       return newLayers;
@@ -202,9 +212,6 @@ const Index = () => {
         const newLayerId = crypto.randomUUID();
         const thumbnailUrl = createThumbnail(img);
 
-        // Store image in ref cache
-        imageRefs.current[newLayerId] = img;
-
         const initialState: LayerInitialState = {
           scale: initialScale,
           rotation: 0,
@@ -243,7 +250,6 @@ const Index = () => {
   };
 
   const handleRemoveLayer = (idToRemove: string) => {
-    // Note: We don't delete from imageRefs here to support Undo, or we could if we want to clean up memory
     setLayers((prevLayers) => {
       const newLayers = prevLayers.filter((l) => l.id !== idToRemove);
       captureHistory(newLayers);
@@ -263,18 +269,6 @@ const Index = () => {
 
     showToast.success("Layer removed");
   };
-
-  const handleBulkRemove = () => {
-    if (selectedLayerIds.length === 0) return;
-    
-    setLayers((prevLayers) => {
-      const newLayers = prevLayers.filter((l) => !selectedLayerIds.includes(l.id));
-      captureHistory(newLayers);
-      return newLayers;
-    });
-    setSelectedLayerIds([]);
-    showToast.success("Layers removed");
-  }
 
   const handleResetImage = () => {
     if (!activeLayer) return;
@@ -475,22 +469,14 @@ const Index = () => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
-      const historicalData = history[newIndex];
+      const historicalLayers = history[newIndex];
       
-      // Reconstitute layers by attaching images from cache
-      const restoredLayers = historicalData.map(data => {
-        // Find the image in cache, otherwise try to use what we can (though should be in cache)
-        const img = imageRefs.current[data.id];
-        if (!img) {
-            console.warn(`Image for layer ${data.id} missing from cache during undo`);
-            // In a real app we might try to reload from thumbnailUrl here
-        }
-        return {
-            ...data,
-            image: img! // We assume it exists for now
-        } as LayerState; 
-      }).filter(l => l.image); // Filter out any corrupt layers
-
+      // Restore images from current layers
+      const restoredLayers = historicalLayers.map(histLayer => {
+        const currentLayer = layers.find(l => l.id === histLayer.id);
+        return currentLayer ? { ...histLayer, image: currentLayer.image } : histLayer;
+      });
+      
       setLayers(restoredLayers);
       showToast.success("Undo");
     }
@@ -500,16 +486,14 @@ const Index = () => {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
-      const historicalData = history[newIndex];
+      const historicalLayers = history[newIndex];
       
-      const restoredLayers = historicalData.map(data => {
-        const img = imageRefs.current[data.id];
-        return {
-            ...data,
-            image: img!
-        } as LayerState;
-      }).filter(l => l.image);
-
+      // Restore images from current layers
+      const restoredLayers = historicalLayers.map(histLayer => {
+        const currentLayer = layers.find(l => l.id === histLayer.id);
+        return currentLayer ? { ...histLayer, image: currentLayer.image } : histLayer;
+      });
+      
       setLayers(restoredLayers);
       showToast.success("Redo");
     }
@@ -532,21 +516,15 @@ const Index = () => {
       // Select All
       else if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
         e.preventDefault();
+        // Select all layers
         setSelectedLayerIds(layers.map(l => l.id));
         showToast.info(`Selected ${layers.length} layers`);
-      }
-      // Delete / Backspace
-      else if (e.key === 'Backspace' || e.key === 'Delete') {
-        if (selectedLayerIds.length > 0) {
-            e.preventDefault();
-            handleBulkRemove();
-        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [historyIndex, history, layers, selectedLayerIds]);
+  }, [historyIndex, history, layers]);
 
   // Toggle layer selection with shift
   const handleLayerSelection = (layerId: string, shiftKey: boolean) => {
@@ -559,43 +537,6 @@ const Index = () => {
     } else {
       setSelectedLayerIds([layerId]);
     }
-  };
-
-  // --- MULTI-LAYER DRAG SUPPORT ---
-  
-  // Store initial positions of layers at start of drag
-  const dragInitialPositions = useRef<Record<string, {x: number, y: number}>>({});
-
-  const handleDragStart = () => {
-    const positions: Record<string, {x: number, y: number}> = {};
-    layers.forEach(l => {
-        if (selectedLayerIds.includes(l.id)) {
-            positions[l.id] = { ...l.position };
-        }
-    });
-    dragInitialPositions.current = positions;
-  };
-
-  const handleDragMove = (delta: {x: number, y: number}) => {
-    setLayers(prevLayers => prevLayers.map(l => {
-        if (selectedLayerIds.includes(l.id) && dragInitialPositions.current[l.id]) {
-            const initial = dragInitialPositions.current[l.id];
-            return {
-                ...l,
-                position: {
-                    x: initial.x + delta.x,
-                    y: initial.y + delta.y
-                }
-            };
-        }
-        return l;
-    }));
-  };
-
-  const handleDragEnd = () => {
-    // Capture history only once at the end of the drag
-    captureHistory(layers);
-    dragInitialPositions.current = {};
   };
 
   // --- ALIGNMENT HELPERS ---
@@ -614,6 +555,7 @@ const Index = () => {
     let minX = img.width, minY = img.height, maxX = 0, maxY = 0;
     let found = false;
     
+    // Check every pixel's alpha channel (every 4th byte)
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] > 0) { // If not transparent
         const idx = i / 4;
@@ -628,14 +570,18 @@ const Index = () => {
       }
     }
     
-    if (!found) return { x: 0, y: 0, w: img.width, h: img.height };
+    if (!found) return { x: 0, y: 0, w: img.width, h: img.height }; // If fully transparent or empty
     
     return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
   };
 
+  // Computes the global (canvas) coordinates of the visual content
+  // accounting for scale, rotation, and transparency trimming.
   const getVisualBounds = (layer: LayerState) => {
     const content = getImageContentBounds(layer.image);
     
+    // Corners of the non-transparent content rectangle in local image space
+    // content.x/y is relative to the top-left of the image source
     const corners = [
       { x: content.x, y: content.y },
       { x: content.x + content.w, y: content.y },
@@ -643,6 +589,7 @@ const Index = () => {
       { x: content.x, y: content.y + content.h }
     ];
     
+    // Image center in local space
     const imgCX = layer.image.width / 2;
     const imgCY = layer.image.height / 2;
     
@@ -650,13 +597,17 @@ const Index = () => {
     const cos = Math.cos(rad);
     const sin = Math.sin(rad);
     
+    // Transform corners to global canvas space
     const globalCorners = corners.map(p => {
+      // 1. Shift to center origin
       const lx = (p.x - imgCX) * layer.scale;
       const ly = (p.y - imgCY) * layer.scale;
       
+      // 2. Rotate
       const rx = lx * cos - ly * sin;
       const ry = lx * sin + ly * cos;
       
+      // 3. Translate to layer position
       return {
         x: rx + layer.position.x,
         y: ry + layer.position.y
@@ -683,9 +634,11 @@ const Index = () => {
     };
   };
 
+  // Alignment handler for multiple layers
   const handleAlign = (type: 'left' | 'right' | 'centerH' | 'top' | 'bottom' | 'centerV' | 'distributeH' | 'distributeV') => {
     if (selectedLayerIds.length < 2) return;
 
+    // Calculate visual bounds for all selected layers once
     const boundsMap = new Map();
     const selectedLayersList = layers.filter(l => selectedLayerIds.includes(l.id));
     
@@ -697,15 +650,19 @@ const Index = () => {
       const newLayers = [...prevLayers];
       
       if (type === 'left') {
+        // Find the left-most edge among all visual bounds
         const targetX = Math.min(...selectedLayersList.map(l => boundsMap.get(l.id).minX));
+        
         selectedLayersList.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
           const bounds = boundsMap.get(l.id);
+          // Delta needed to move this layer's visual left edge to targetX
           const delta = targetX - bounds.minX;
           if (layer) layer.position.x += delta;
         });
       } else if (type === 'right') {
         const targetX = Math.max(...selectedLayersList.map(l => boundsMap.get(l.id).maxX));
+        
         selectedLayersList.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
           const bounds = boundsMap.get(l.id);
@@ -714,6 +671,7 @@ const Index = () => {
         });
       } else if (type === 'centerH') {
         const avgX = selectedLayersList.reduce((sum, l) => sum + boundsMap.get(l.id).centerX, 0) / selectedLayersList.length;
+        
         selectedLayersList.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
           const bounds = boundsMap.get(l.id);
@@ -722,6 +680,7 @@ const Index = () => {
         });
       } else if (type === 'top') {
         const targetY = Math.min(...selectedLayersList.map(l => boundsMap.get(l.id).minY));
+        
         selectedLayersList.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
           const bounds = boundsMap.get(l.id);
@@ -730,6 +689,7 @@ const Index = () => {
         });
       } else if (type === 'bottom') {
         const targetY = Math.max(...selectedLayersList.map(l => boundsMap.get(l.id).maxY));
+        
         selectedLayersList.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
           const bounds = boundsMap.get(l.id);
@@ -738,6 +698,7 @@ const Index = () => {
         });
       } else if (type === 'centerV') {
         const avgY = selectedLayersList.reduce((sum, l) => sum + boundsMap.get(l.id).centerY, 0) / selectedLayersList.length;
+        
         selectedLayersList.forEach(l => {
           const layer = newLayers.find(nl => nl.id === l.id);
           const bounds = boundsMap.get(l.id);
@@ -745,11 +706,14 @@ const Index = () => {
           if (layer) layer.position.y += delta;
         });
       } else if (type === 'distributeH') {
+        // Sort by visual center X
         const sorted = [...selectedLayersList].sort((a, b) => boundsMap.get(a.id).centerX - boundsMap.get(b.id).centerX);
+        
         if (sorted.length > 1) {
           const leftMost = boundsMap.get(sorted[0].id).centerX;
           const rightMost = boundsMap.get(sorted[sorted.length - 1].id).centerX;
           const gap = (rightMost - leftMost) / (sorted.length - 1);
+          
           sorted.forEach((l, i) => {
             const layer = newLayers.find(nl => nl.id === l.id);
             const bounds = boundsMap.get(l.id);
@@ -759,11 +723,14 @@ const Index = () => {
           });
         }
       } else if (type === 'distributeV') {
+        // Sort by visual center Y
         const sorted = [...selectedLayersList].sort((a, b) => boundsMap.get(a.id).centerY - boundsMap.get(b.id).centerY);
+        
         if (sorted.length > 1) {
           const topMost = boundsMap.get(sorted[0].id).centerY;
           const bottomMost = boundsMap.get(sorted[sorted.length - 1].id).centerY;
           const gap = (bottomMost - topMost) / (sorted.length - 1);
+          
           sorted.forEach((l, i) => {
             const layer = newLayers.find(nl => nl.id === l.id);
             const bounds = boundsMap.get(l.id);
@@ -787,11 +754,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-foreground mb-2">Notion Cover Studio v3</h1>
+        <h1 className="text-4xl font-bold text-foreground mb-2">Notion Cover Studio</h1>
         <p className="text-muted-foreground mb-6">Design beautiful Notion cover images with ease.  Upload and manipulate up to five images.</p>
 
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
 
+        {/* --- MODIFIED CANVAS/LAYER AREA --- */}
         <div className="w-full flex justify-center pb-6">
           <Card className="p-6 shadow-sm w-full relative">
             <div
@@ -802,6 +770,7 @@ const Index = () => {
                 maxWidth: "100%",
               }}
             >
+              {/* Alignment Menu for multi-select */}
               {selectedLayerIds.length > 1 && (
                 <AlignmentMenu onAlign={handleAlign} />
               )}
@@ -812,15 +781,13 @@ const Index = () => {
                 canvasWidth={CANVAS_WIDTH}
                 canvasHeight={CANVAS_HEIGHT}
                 selectedLayerIds={selectedLayerIds}
-                // Deprecated single layer drag in favor of onDragMove
                 onPositionChange={(newPosition) => {
-                   if (selectedLayerIds.length === 1) {
-                     updateActiveLayer({ position: newPosition });
-                   }
+                  if (selectedLayerIds.length === 1) {
+                    updateActiveLayer({ position: newPosition });
+                  } else {
+                    // Multi-layer drag not yet implemented
+                  }
                 }}
-                onDragStart={handleDragStart}
-                onDragMove={handleDragMove}
-                onDragEnd={handleDragEnd}
                 transformMode={transformMode}
                 onTransformModeExit={() => setTransformMode(false)}
                 onTransformModeEnter={() => setTransformMode(true)}
@@ -840,6 +807,7 @@ const Index = () => {
             />
           </Card>
         </div>
+        {/* --- END MODIFIED AREA --- */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <CanvasControls
