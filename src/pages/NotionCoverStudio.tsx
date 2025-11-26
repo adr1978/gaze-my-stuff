@@ -754,7 +754,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-foreground mb-2">Notion Cover Studio</h1>
+        <h1 className="text-4xl font-bold text-foreground mb-2">Notion Cover Studio v2</h1>
         <p className="text-muted-foreground mb-6">Design beautiful Notion cover images with ease.  Upload and manipulate up to five images.</p>
 
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
