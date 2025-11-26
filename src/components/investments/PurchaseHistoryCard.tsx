@@ -26,9 +26,10 @@ import { SharePurchase } from "./types";
 
 interface PurchaseHistoryCardProps {
   accountName: string;
-  purchases: SharePurchase[];
+  purchases: (SharePurchase & { accountName?: string })[];
   onEditPurchase: (purchase: SharePurchase) => void;
   onAddPurchase: () => void;
+  aggregateMode?: boolean;
 }
 
 /**
@@ -44,43 +45,58 @@ export function PurchaseHistoryCard({
   purchases,
   onEditPurchase,
   onAddPurchase,
+  aggregateMode = false,
 }: PurchaseHistoryCardProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Purchase History</CardTitle>
-        <CardDescription>All share purchases for {accountName}</CardDescription>
+        <CardDescription>
+          {aggregateMode ? "All share purchases across accounts" : `All share purchases for ${accountName}`}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* List of purchases */}
         <div className="space-y-2">
-          {purchases.map((purchase) => (
+          {purchases.map((purchase, idx) => (
             <div
-              key={purchase.date}
-              onClick={() => onEditPurchase(purchase)}
-              className="flex justify-between items-center p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors group"
+              key={`${purchase.date}-${idx}`}
+              onClick={() => !aggregateMode && onEditPurchase(purchase)}
+              className={`flex justify-between items-center p-3 bg-muted/30 rounded-lg ${!aggregateMode ? 'cursor-pointer hover:bg-muted/50' : ''} transition-colors group`}
             >
-              {/* Date formatted as "November 12th, 2025" using date-fns */}
-              <span className="text-sm font-medium">
-                {format(new Date(purchase.date), 'MMMM do, yyyy')}
-              </span>
+              <div className="flex flex-col gap-1">
+                {/* Date formatted as "November 12th, 2025" using date-fns */}
+                <span className="text-sm font-medium">
+                  {format(new Date(purchase.date), 'MMMM do, yyyy')}
+                </span>
+                {/* Account name in aggregate mode */}
+                {aggregateMode && purchase.accountName && (
+                  <span className="text-xs text-muted-foreground">
+                    {purchase.accountName}
+                  </span>
+                )}
+              </div>
               
               {/* Share amount and edit icon */}
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">
                   {formatShares(purchase.shares)} shares
                 </span>
-                <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                {!aggregateMode && (
+                  <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Add Purchase button with plus icon */}
-        <Button onClick={onAddPurchase}>
-          <Plus className="h-4 w-4" />
-          Add Purchase
-        </Button>
+        {/* Add Purchase button with plus icon - only in single account mode */}
+        {!aggregateMode && (
+          <Button onClick={onAddPurchase}>
+            <Plus className="h-4 w-4" />
+            Add Purchase
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

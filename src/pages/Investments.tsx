@@ -34,6 +34,8 @@ import { PurchaseHistoryCard } from "@/components/investments/PurchaseHistoryCar
 import { AddPurchaseDialog } from "@/components/investments/AddPurchaseDialog";
 import { FundAccount, SharePurchase, ChartInterval } from "@/components/investments/types";
 import { aggregateDataByInterval, loadHistoricalDataFromCSV } from "@/components/investments/utils";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 
 /**
@@ -54,6 +56,10 @@ export default function Investments() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<SharePurchase | null>(null);
   const [chartInterval, setChartInterval] = useState<ChartInterval>('Month');
+  
+  // Aggregation mode state
+  const [aggregateMode, setAggregateMode] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState<string>("");
 
   // Load accounts metadata from JSON file on mount
   useEffect(() => {
@@ -132,6 +138,34 @@ export default function Investments() {
     }
   }, [accountsData]);
 
+  // Handle aggregation toggle
+  const handleAggregateToggle = (checked: boolean) => {
+    setAggregateMode(checked);
+    
+    if (checked) {
+      // Switch to aggregate mode - select first owner
+      const owners = [...new Set(accountsData.map(acc => acc.owner))];
+      if (owners.length > 0) {
+        setSelectedOwner(owners[0]);
+        setSelectedAccount(""); // Clear account selection
+      }
+    } else {
+      // Switch back to account mode - select first account
+      if (accountsData.length > 0) {
+        setSelectedAccount(accountsData[0].accountName);
+        setSelectedOwner(""); // Clear owner selection
+      }
+    }
+  };
+
+  // Get unique owners for dropdown
+  const owners = [...new Set(accountsData.map(acc => acc.owner))];
+
+  // Get accounts for selected owner (in aggregate mode)
+  const ownerAccounts = aggregateMode 
+    ? accountsData.filter(acc => acc.owner === selectedOwner)
+    : [];
+
   // Get current account data and derived values
   const currentAccount = accountsData.find(acc => acc.accountName === selectedAccount);
   
@@ -147,19 +181,77 @@ export default function Investments() {
     );
   }
 
-  const currentPrice = currentAccount.historicalData.length > 0
-    ? currentAccount.historicalData[currentAccount.historicalData.length - 1].closePrice
-    : 0;
-  const totalValue = currentAccount.totalShares * currentPrice;
+  // Calculate values based on mode
+  let currentPrice = 0;
+  let totalValue = 0;
+  let chartData: any[] = [];
+  let totalAccounts = 0;
 
-  // Aggregate historical data based on selected interval
-  const chartData = currentAccount.historicalData.length > 0
-    ? aggregateDataByInterval(
-        currentAccount.historicalData,
-        currentAccount.purchases,
-        chartInterval
-      )
-    : [];
+  if (aggregateMode) {
+    // Aggregate mode: calculate totals across all owner's accounts
+    totalAccounts = ownerAccounts.length;
+    totalValue = ownerAccounts.reduce((sum, acc) => {
+      const price = acc.historicalData.length > 0
+        ? acc.historicalData[acc.historicalData.length - 1].closePrice
+        : 0;
+      return sum + (acc.totalShares * price);
+    }, 0);
+
+    // Build multi-line chart data
+    if (ownerAccounts.length > 0 && ownerAccounts.every(acc => acc.historicalData.length > 0)) {
+      // Get all unique dates from all accounts
+      const allDates = new Set<string>();
+      ownerAccounts.forEach(acc => {
+        acc.historicalData.forEach(d => allDates.add(d.date));
+      });
+
+      const sortedDates = Array.from(allDates).sort();
+      
+      chartData = sortedDates.map(date => {
+        const dataPoint: any = { date };
+        
+        ownerAccounts.forEach(acc => {
+          const historicalPoint = acc.historicalData.find(d => d.date === date);
+          if (historicalPoint) {
+            // Calculate value for this account at this date
+            const sharesAtDate = acc.purchases
+              .filter(p => p.date <= date)
+              .reduce((sum, p) => sum + p.shares, 0);
+            dataPoint[acc.accountName] = sharesAtDate * historicalPoint.closePrice;
+          }
+        });
+        
+        return dataPoint;
+      });
+
+      // Apply interval aggregation
+      if (chartData.length > 0) {
+        // For simplicity, we'll sample the data based on interval
+        const intervalMap: { [key in ChartInterval]: number } = {
+          'Week': 7,
+          'Month': 30,
+          'Year': 365,
+        };
+        const step = Math.max(1, Math.floor(chartData.length / (chartData.length / intervalMap[chartInterval])));
+        chartData = chartData.filter((_, idx) => idx % step === 0);
+      }
+    }
+  } else if (currentAccount) {
+    // Single account mode
+    currentPrice = currentAccount.historicalData.length > 0
+      ? currentAccount.historicalData[currentAccount.historicalData.length - 1].closePrice
+      : 0;
+    totalValue = currentAccount.totalShares * currentPrice;
+
+    // Aggregate historical data based on selected interval
+    chartData = currentAccount.historicalData.length > 0
+      ? aggregateDataByInterval(
+          currentAccount.historicalData,
+          currentAccount.purchases,
+          chartInterval
+        )
+      : [];
+  }
 
   /**
    * Open the Add/Edit Purchase modal
@@ -242,53 +334,85 @@ export default function Investments() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Page header with reduced spacing */}
-        <h1 className="text-4xl font-bold text-foreground mb-2">Investments</h1>
-        <p className="text-muted-foreground mb-6">
-          Track mutual fund and stock holdings across family investment accounts
-        </p>
+        {/* Page header with toggle */}
+        <div className="relative mb-6">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Investments</h1>
+          <p className="text-muted-foreground mb-6">
+            Track mutual fund and stock holdings across family investment accounts
+          </p>
+          
+          {/* Aggregate toggle - top right */}
+          <div className="absolute right-0 top-0 flex items-center gap-3 px-4 py-2 rounded-md border border-border bg-background">
+            <Label
+              htmlFor="aggregate-accounts"
+              className="text-sm text-muted-foreground cursor-pointer"
+            >
+              Aggregate Accounts
+            </Label>
+            <Switch
+              id="aggregate-accounts"
+              checked={aggregateMode}
+              onCheckedChange={handleAggregateToggle}
+            />
+          </div>
+        </div>
 
         <div className="grid gap-6">
           {/* Account Selection Card with summary metrics */}
           <AccountSelectionCard
             accounts={accountsData}
+            owners={owners}
             selectedAccountId={selectedAccount}
+            selectedOwner={selectedOwner}
             onAccountChange={setSelectedAccount}
+            onOwnerChange={setSelectedOwner}
             currentAccount={currentAccount}
             currentPrice={currentPrice}
             totalValue={totalValue}
+            aggregateMode={aggregateMode}
+            totalAccounts={totalAccounts}
           />
 
           {/* Interactive Chart with interval toggles */}
           <ChartingCard
-            fundName={currentAccount.fundName}
+            fundName={aggregateMode ? `${selectedOwner}'s Portfolio` : currentAccount?.fundName || ""}
             chartData={chartData}
             interval={chartInterval}
             onIntervalChange={setChartInterval}
             hasError={hasError}
+            aggregateMode={aggregateMode}
+            accounts={ownerAccounts}
           />
 
           {/* Purchase History Card with edit functionality */}
           <PurchaseHistoryCard
-            accountName={currentAccount.accountName}
-            purchases={currentAccount.purchases}
+            accountName={currentAccount?.accountName || ""}
+            purchases={aggregateMode 
+              ? ownerAccounts.flatMap(acc => 
+                  acc.purchases.map(p => ({ ...p, accountName: acc.accountName }))
+                )
+              : currentAccount?.purchases || []
+            }
             onEditPurchase={handleOpenModal}
             onAddPurchase={() => handleOpenModal()}
+            aggregateMode={aggregateMode}
           />
 
           {/* Add/Edit Purchase Modal */}
-          <AddPurchaseDialog
-            isOpen={isModalOpen}
-            onOpenChange={setIsModalOpen}
-            editingPurchase={editingPurchase}
-            accountName={currentAccount.accountName}
-            newShares={newShares}
-            onSharesChange={setNewShares}
-            purchaseDate={purchaseDate}
-            onDateChange={setPurchaseDate}
-            onSave={handleSavePurchase}
-            onCancel={() => setIsModalOpen(false)}
-          />
+          {!aggregateMode && currentAccount && (
+            <AddPurchaseDialog
+              isOpen={isModalOpen}
+              onOpenChange={setIsModalOpen}
+              editingPurchase={editingPurchase}
+              accountName={currentAccount.accountName}
+              newShares={newShares}
+              onSharesChange={setNewShares}
+              purchaseDate={purchaseDate}
+              onDateChange={setPurchaseDate}
+              onSave={handleSavePurchase}
+              onCancel={() => setIsModalOpen(false)}
+            />
+          )}
         </div>
 
       </div>
