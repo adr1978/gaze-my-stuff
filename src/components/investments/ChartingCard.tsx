@@ -29,6 +29,8 @@ interface ChartingCardProps {
   interval: ChartInterval;
   onIntervalChange: (interval: ChartInterval) => void;
   hasError?: boolean;
+  aggregateMode?: boolean;
+  accounts?: any[];
 }
 
 /**
@@ -97,12 +99,24 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+// Chart colors for multiple lines
+const CHART_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(142, 76%, 36%)',    // green
+  'hsl(221, 83%, 53%)',    // blue
+  'hsl(262, 83%, 58%)',    // purple
+  'hsl(346, 87%, 43%)',    // red
+  'hsl(43, 96%, 56%)',     // yellow
+];
+
 export function ChartingCard({
   fundName,
   chartData,
   interval,
   onIntervalChange,
   hasError = false,
+  aggregateMode = false,
+  accounts = [],
 }: ChartingCardProps) {
   return (
     <Card>
@@ -152,20 +166,41 @@ export function ChartingCard({
                 tickFormatter={(value) => `£${value.toLocaleString('en-GB', { maximumFractionDigits: 0 })}`}
               />
               <Tooltip content={<CustomTooltip />} />
-              {/* Main value line with purchase markers */}
-              <Line
-                type="monotone"
-                dataKey="totalValue"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={<CustomDot />}
-                activeDot={{
-                  r: 6,
-                  fill: "hsl(var(--background))",
-                  stroke: "hsl(var(--primary))",
-                  strokeWidth: 2
-                }}
-              />
+              {/* Render lines based on mode */}
+              {aggregateMode ? (
+                // Multiple lines for aggregate mode
+                accounts.map((account, idx) => (
+                  <Line
+                    key={account.accountName}
+                    type="monotone"
+                    dataKey={account.accountName}
+                    stroke={CHART_COLORS[idx % CHART_COLORS.length]}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{
+                      r: 6,
+                      fill: "hsl(var(--background))",
+                      stroke: CHART_COLORS[idx % CHART_COLORS.length],
+                      strokeWidth: 2
+                    }}
+                  />
+                ))
+              ) : (
+                // Single line for account mode
+                <Line
+                  type="monotone"
+                  dataKey="totalValue"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={<CustomDot />}
+                  activeDot={{
+                    r: 6,
+                    fill: "hsl(var(--background))",
+                    stroke: "hsl(var(--primary))",
+                    strokeWidth: 2
+                  }}
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
 

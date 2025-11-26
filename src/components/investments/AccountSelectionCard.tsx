@@ -26,11 +26,16 @@ import { FundAccount } from "./types";
 
 interface AccountSelectionCardProps {
   accounts: FundAccount[];
+  owners: string[];
   selectedAccountId: string;
+  selectedOwner: string;
   onAccountChange: (accountName: string) => void;
-  currentAccount: FundAccount;
+  onOwnerChange: (owner: string) => void;
+  currentAccount?: FundAccount;
   currentPrice: number;
   totalValue: number;
+  aggregateMode: boolean;
+  totalAccounts: number;
 }
 
 /**
@@ -51,96 +56,149 @@ function formatNumber(value: number): string {
 
 export function AccountSelectionCard({
   accounts,
+  owners,
   selectedAccountId,
+  selectedOwner,
   onAccountChange,
+  onOwnerChange,
   currentAccount,
   currentPrice,
   totalValue,
+  aggregateMode,
+  totalAccounts,
 }: AccountSelectionCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-start justify-between space-y-0">
         <div>
-          <CardTitle>Account Selection</CardTitle>
-          <CardDescription>Choose an investment account to view</CardDescription>
+          <CardTitle>{aggregateMode ? "Owner Selection" : "Account Selection"}</CardTitle>
+          <CardDescription>
+            {aggregateMode ? "Choose an owner to view aggregated portfolio" : "Choose an investment account to view"}
+          </CardDescription>
         </div>
-        {/* Account dropdown moved to top-right */}
-        <Select value={selectedAccountId} onValueChange={onAccountChange}>
-          <SelectTrigger className="w-auto min-w-[250px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {accounts.map((account) => (
-              <SelectItem key={account.accountName} value={account.accountName}>
-                {account.accountName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Dropdown moved to top-right */}
+        {aggregateMode ? (
+          <Select value={selectedOwner} onValueChange={onOwnerChange}>
+            <SelectTrigger className="w-auto min-w-[250px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {owners.map((owner) => (
+                <SelectItem key={owner} value={owner}>
+                  {owner}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Select value={selectedAccountId} onValueChange={onAccountChange}>
+            <SelectTrigger className="w-auto min-w-[250px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {accounts.map((account) => (
+                <SelectItem key={account.accountName} value={account.accountName}>
+                  {account.accountName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Row 1: Total Shares, Current Price, Total Value */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
-          {/* Institution */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <Building2 className="h-4 w-4" />
-              <span>Institution</span>
-            </div>
-            <p className="text-lg font-medium">{currentAccount.institution}</p>
-          </div>
+        {aggregateMode ? (
+          // Aggregate mode: show summary stats
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+              {/* Total Accounts */}
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <Building2 className="h-4 w-4" />
+                  <span>Total Accounts</span>
+                </div>
+                <p className="text-2xl font-semibold">{totalAccounts}</p>
+              </div>
 
-          {/* Owner */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <User className="h-4 w-4" />
-              <span>Owner</span>
+              {/* Portfolio Value */}
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <ChartNoAxesCombined className="h-4 w-4" />
+                  <span>Portfolio Value</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-semibold">{formatCurrency(totalValue)}</p>
+                  <TrendingUp className="h-5 w-5 text-success" />
+                </div>
+              </div>
             </div>
-            <p className="text-lg font-medium">{currentAccount.owner}</p>
-          </div>
+          </>
+        ) : (
+          // Single account mode: show detailed stats
+          <>
+            {/* Row 1: Institution, Owner, Type */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
+              {/* Institution */}
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <Building2 className="h-4 w-4" />
+                  <span>Institution</span>
+                </div>
+                <p className="text-lg font-medium">{currentAccount?.institution}</p>
+              </div>
 
-          {/* Type */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <FileText className="h-4 w-4" />
-              <span>Type</span>
-            </div>
-            <p className="text-lg font-medium">{currentAccount.type}</p>
-          </div>
-        </div>
-        
-        {/* Row 2: Institution, Owner, Type */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Total Shares with chart-pie icon */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <ChartPie className="h-4 w-4" />
-              <span>Total Shares</span>
-            </div>
-            <p className="text-2xl font-semibold">{formatNumber(currentAccount.totalShares)}</p>
-          </div>
+              {/* Owner */}
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <User className="h-4 w-4" />
+                  <span>Owner</span>
+                </div>
+                <p className="text-lg font-medium">{currentAccount?.owner}</p>
+              </div>
 
-          {/* Current Price with circle-pound-sterling icon */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <CirclePoundSterling className="h-4 w-4" />
-              <span>Current Price</span>
+              {/* Type */}
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <FileText className="h-4 w-4" />
+                  <span>Type</span>
+                </div>
+                <p className="text-lg font-medium">{currentAccount?.type}</p>
+              </div>
             </div>
-            <p className="text-2xl font-semibold">{formatCurrency(currentPrice)}</p>
-          </div>
+            
+            {/* Row 2: Total Shares, Current Price, Total Value */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Total Shares with chart-pie icon */}
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <ChartPie className="h-4 w-4" />
+                  <span>Total Shares</span>
+                </div>
+                <p className="text-2xl font-semibold">{formatNumber(currentAccount?.totalShares || 0)}</p>
+              </div>
 
-          {/* Total Value with chart-no-axes-combined icon and trending indicator */}
-          <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-              <ChartNoAxesCombined className="h-4 w-4" />
-              <span>Total Value</span>
+              {/* Current Price with circle-pound-sterling icon */}
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <CirclePoundSterling className="h-4 w-4" />
+                  <span>Current Price</span>
+                </div>
+                <p className="text-2xl font-semibold">{formatCurrency(currentPrice)}</p>
+              </div>
+
+              {/* Total Value with chart-no-axes-combined icon and trending indicator */}
+              <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <ChartNoAxesCombined className="h-4 w-4" />
+                  <span>Total Value</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-semibold">{formatCurrency(totalValue)}</p>
+                  <TrendingUp className="h-5 w-5 text-success" />
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <p className="text-2xl font-semibold">{formatCurrency(totalValue)}</p>
-              <TrendingUp className="h-5 w-5 text-success" />
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
