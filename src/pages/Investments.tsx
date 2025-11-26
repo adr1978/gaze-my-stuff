@@ -342,7 +342,7 @@ export default function Investments() {
           </p>
           
           {/* Aggregate toggle - top right */}
-          <div className="absolute right-0 top-0 flex items-center gap-3 px-4 py-2 rounded-md border border-border bg-background">
+          <div className="absolute right-0 bottom-0 flex items-center gap-3 px-4 py-2 rounded-md border border-border bg-background">
             <Label
               htmlFor="aggregate-accounts"
               className="text-sm text-muted-foreground cursor-pointer"
