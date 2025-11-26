@@ -24,7 +24,7 @@ export function AlignmentMenu({ onAlign }: AlignmentMenuProps) {
         onClick={() => onAlign('left')}
         title="Align Left"
       >
-        <align-start-vertical className="h-4 w-4" />
+        <AlignStartVertical className="h-4 w-4" />
       </Button>
       <Button
         variant="ghost"
@@ -72,7 +72,7 @@ export function AlignmentMenu({ onAlign }: AlignmentMenuProps) {
         onClick={() => onAlign('bottom')}
         title="Align Bottom"
       >
-        <AlignStartVertical className="h-4 w-4" />
+        <AlignEndHorizontal className="h-4 w-4" />
       </Button>
       
       <div className="w-px bg-border mx-1" />
