@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { 
   AlignStartHorizontal, 
-  AlignStartVertical, 
+  AlignEndHorizontal, 
   AlignHorizontalJustifyCenter,
   AlignStartVertical, 
   AlignEndVertical, 
