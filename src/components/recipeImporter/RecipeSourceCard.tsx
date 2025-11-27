@@ -68,7 +68,7 @@ export function RecipeSourceCard({
             </ToggleGroupItem>
             <ToggleGroupItem value="manual">
               <FilePlus className="h-4 w-4 mr-1.5" />
-              Manual
+              Manual Entry
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
