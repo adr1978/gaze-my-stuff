@@ -13,6 +13,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from ..scripts.schemas import RecipeSchema as RecipeUpload
 
 # Import the whisk handler script
 import sys
@@ -27,29 +28,7 @@ logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
 
 
-# --- Pydantic Request Schema ---
-
-class RecipeUpload(BaseModel):
-    """
-    Schema for recipe upload request body.
-    This matches the frontend JSON format.
-    """
-    title: str = Field(..., description="Recipe title")
-    description: Optional[str] = Field(None, description="Recipe description")
-    servings: Optional[int] = Field(None, description="Number of servings")
-    prep_time: Optional[int] = Field(None, description="Prep time in minutes")
-    cook_time: Optional[int] = Field(None, description="Cook time in minutes")
-    ingredients: List[str] = Field(..., description="List of ingredients")
-    instructions: List[str] = Field(..., description="List of instruction steps")
-    notes: Optional[str] = Field(None, description="Additional notes or cook's tips")
-    source: Optional[str] = Field(None, description="Recipe source attribution")
-    category: Optional[str] = Field(None, description="Recipe category")
-    imageUrl: Optional[str] = Field(None, description="Recipe image URL")
-    url: Optional[str] = Field(None, description="Original source URL")
-
-
 # --- API Endpoint ---
-
 @router.post("/upload-whisk")
 async def upload_whisk(recipe: RecipeUpload):
     """
@@ -68,44 +47,29 @@ async def upload_whisk(recipe: RecipeUpload):
     Returns:
         JSON response with upload status and Whisk API response
     """
-    logger.info(f"API call: POST /api/recipe/upload-whisk for recipe: {recipe.title}")
+    logger.info(f"API call: POST /upload-whisk for: {recipe.title}")
     
     try:
-        # Convert Pydantic model to dict for processing
         recipe_data = recipe.model_dump()
         
-        logger.info("Starting Whisk upload workflow...")
-        logger.info(f"Recipe: {recipe_data.get('title')}")
-        logger.info(f"Servings: {recipe_data.get('servings')}")
-        logger.info(f"Ingredients count: {len(recipe_data.get('ingredients', []))}")
-        logger.info(f"Instructions count: {len(recipe_data.get('instructions', []))}")
+        # We assume recipe_data matches what whisk_handler needs (RecipeSchema)
+        # Note: whisk_create expects 'name' but schema has 'title'.
+        # We map it here to be safe.
+        whisk_data = recipe_data.copy()
+        whisk_data['name'] = recipe_data['title'] 
         
-        # Process upload workflow (auth → transform → upload)
-        status_code, response_data = upload_recipe_to_whisk(recipe_data)
+        status_code, response_data = upload_recipe_to_whisk(whisk_data)
         
-        # If upload failed, raise HTTP exception
         if status_code != 200:
-            logger.error(f"❌ Upload failed with status {status_code}")
-            logger.error(f"Error details: {response_data.get('error')}")
-            raise HTTPException(
-                status_code=status_code,
-                detail=response_data.get("error", {})
-            )
+            logger.error(f"Upload failed: {response_data}")
+            raise HTTPException(status_code=status_code, detail=response_data)
         
-        logger.info(f"✅ Successfully uploaded recipe '{recipe.title}' to Whisk")
-        logger.info(f"Workflow steps: {response_data.get('steps')}")
+        # Single success message
+        #logger.info(f"✅ Workflow complete for '{recipe.title}'")
         return response_data
         
     except HTTPException:
-        # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
-        # Catch any unexpected errors
-        logger.error(f"❌ Unexpected error during Whisk upload: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "Internal server error during recipe upload",
-                "body": {"details": str(e)}
-            }
-        )
+        logger.error(f"Unexpected error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
