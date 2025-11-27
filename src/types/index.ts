@@ -2,6 +2,11 @@ import { PatternType } from "@/components/notionCoverStudio/PatternControls";
 
 // --- RECIPE IMPORTER TYPES ---
 
+export interface RecipeItem {
+  text: string;
+  group: string | null;
+}
+
 // Defines the structure of recipe data returned by the Python/Gemini Backend
 export interface RecipeData {
   url: string;
@@ -9,8 +14,8 @@ export interface RecipeData {
   servings: number | null; 
   prep_time: number | null; 
   cook_time: number | null; 
-  ingredients: string[];
-  instructions: string[];
+  ingredients: RecipeItem[]; // Changed from string[]
+  instructions: RecipeItem[]; // Changed from string[]
   notes: string | null;
   imageUrl: string | null;
   description: string | null;

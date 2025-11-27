@@ -6,9 +6,8 @@ from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import List
-from ..scripts.schemas import RecipeSchema as RecipeData
-
-# --- NEW IMPORT ---
+from itertools import groupby
+from ..scripts.schemas import RecipeSchema as RecipeData, RecipeItem
 from ..scripts.ingredient_cleaner import clean_ingredient
 
 # Import Google GenAI SDK components
@@ -47,22 +46,35 @@ async def get_gemini_client():
 
 # --- Helper Functions ---
 
-def process_instructions(instructions: List[str]) -> List[str]:
+def process_instructions(instructions: List[RecipeItem]) -> List[RecipeItem]:
     """
-    Joins fragmented lines and re-splits them into proper sentences.
+    Joins fragmented lines and re-splits them into proper sentences,
+    preserving groups.
     """
     if not instructions:
         return []
     
-    full_text = " ".join(instructions)
+    processed_list = []
     
-    # Simple regex to collapse whitespace for instructions logic
-    full_text = re.sub(r'\s+', ' ', full_text).strip()
-    
-    # Split by sentence endings
-    sentences = re.split(r'(?<=[.!?])\s+', full_text)
-    
-    return [s.strip() for s in sentences if s.strip()]
+    # We process by group to ensure we don't merge steps across different sections.
+    # Note: We iterate directly to preserve the original recipe order.
+    for group_name, items in groupby(instructions, key=lambda x: x.group):
+        # Extract text for this group
+        group_texts = [item.text for item in items]
+        full_text = " ".join(group_texts)
+        
+        # Simple regex to collapse whitespace
+        full_text = re.sub(r'\s+', ' ', full_text).strip()
+        
+        # Split by sentence endings (period, exclamation, question mark)
+        sentences = re.split(r'(?<=[.!?])\s+', full_text)
+        
+        for s in sentences:
+            if s.strip():
+                # Create new RecipeItem for the processed sentence
+                processed_list.append(RecipeItem(text=s.strip(), group=group_name))
+                
+    return processed_list
 
 # --- API Endpoint ---
 
@@ -114,6 +126,12 @@ async def analyse_recipe(
         "- Return ONLY valid JSON matching the schema.\n"
         "- Convert all timings to integer minutes.\n"
         "- Split instructions into individual steps.\n"
+        "- GROUPING: Detect ingredient/instruction groups (e.g. 'For the Icing').\n"
+        "  - If a group exists, set the 'group' field to the group name (e.g. 'For the icing').\n"
+        "  - If the group name is a single word (e.g. 'Icing'), prefix it with 'For the ' (e.g. 'For the icing').\n"
+        "  - Lowercase the group name (e.g. 'For the icing').\n"
+        "  - For the main section, set 'group' to null.\n"
+        "- INSTRUCTIONS: Include 'Cook's Tips' or similar notes as instructions with group='Cook's tip'.\n"
         "- If a field is missing, return null.\n"
         "- For images: prioritize high-res URLs from JSON-LD or meta tags.\n"
         "- CATEGORY: Automatically associate the recipe to ONE of the following categories: "
@@ -146,13 +164,16 @@ async def analyse_recipe(
         
         # Clean Ingredients using shared logic (strips brands, fixes units)
         if recipe_data.ingredients:
-            recipe_data.ingredients = [
-                clean_ingredient(ing) 
-                for ing in recipe_data.ingredients 
-                if ing
-            ]
+            # We recreate the list to keep the objects but clean the text
+            cleaned_ingredients = []
+            for item in recipe_data.ingredients:
+                cleaned_text = clean_ingredient(item.text)
+                if cleaned_text:
+                    item.text = cleaned_text
+                    cleaned_ingredients.append(item)
+            recipe_data.ingredients = cleaned_ingredients
 
-        # Re-format Instructions
+        # Re-format Instructions (keeping groups intact)
         if recipe_data.instructions:
             recipe_data.instructions = process_instructions(recipe_data.instructions)
 

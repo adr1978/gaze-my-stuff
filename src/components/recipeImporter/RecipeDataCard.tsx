@@ -1,34 +1,27 @@
 /**
  * RecipeDataCard Component
- * 
- * Displays extracted recipe information in a structured card format.
- * Features:
- * - Recipe title, description, and thumbnail image
- * - Key properties (servings, prep time, cooking time, source, category)
- * - Ingredients list positioned to right of image
- * - Numbered instructions list
- * - Edit, View JSON, and Send to Whisk action buttons
- * 
- * Props:
- * - recipeData: Complete recipe information to display
- * - formatTime: Helper function to format time durations
- * - onOpenEditModal: Callback to open edit modal
- * - onOpenJsonModal: Callback to open JSON viewer
- * - onSendToBackend: Callback to send recipe data to backend
+ * * UPDATES:
+ * - Instruction numbers now have a fixed width and center alignment.
+ * - This prevents the instruction text from shifting position when numbering jumps from single (9) to double digits (10).
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, Users, Edit, Braces, Send, ExternalLink, ImageIcon, Tag, Link2 } from "lucide-react";
+import { Clock, Users, Edit, Braces, Send, ExternalLink, ImageIcon, Tag, Link2, Carrot, ListOrdered } from "lucide-react";
 
-interface RecipeData {
+export interface RecipeItem {
+  text: string;
+  group: string | null;
+}
+
+export interface RecipeData {
   url: string;
   title: string; 
   servings: number | null; 
   prep_time: number | null; 
   cook_time: number | null; 
-  ingredients: string[];
-  instructions: string[];
+  ingredients: RecipeItem[];
+  instructions: RecipeItem[];
   notes: string | null;
   imageUrl: string | null;
   description: string | null;
@@ -43,6 +36,74 @@ interface RecipeDataCardProps {
   onOpenJsonModal: () => void;
   onSendToBackend: () => void;
 }
+
+const GroupedList = ({ items, type }: { items: RecipeItem[], type: 'ingredients' | 'instructions' }) => {
+  const groups: Record<string, RecipeItem[]> = {};
+  const mainItems: RecipeItem[] = [];
+
+  items.forEach(item => {
+    if (item.group) {
+      if (!groups[item.group]) groups[item.group] = [];
+      groups[item.group].push(item);
+    } else {
+      mainItems.push(item);
+    }
+  });
+
+  return (
+    <div className="space-y-4">
+      {mainItems.length > 0 && (
+        <ul className="space-y-1">
+          {mainItems.map((item, i) => (
+            <ListItem key={i} item={item} index={i} type={type} />
+          ))}
+        </ul>
+      )}
+
+      {Object.entries(groups).map(([groupName, groupItems]) => (
+        <div key={groupName}>
+          <h5 className="font-medium text-sm text-primary/80 mb-2 mt-3">
+            {groupName}
+          </h5>
+          <ul className="space-y-1">
+            {groupItems.map((item, i) => (
+               <ListItem key={i} item={item} index={i} type={type} />
+            ))}
+          </ul>
+        </div>
+      ))}
+      
+      {items.length === 0 && (
+        <p className="text-sm text-muted-foreground italic opacity-70">
+          No {type} provided
+        </p>
+      )}
+    </div>
+  );
+};
+
+const ListItem = ({ item, index, type }: { item: RecipeItem, index: number, type: 'ingredients' | 'instructions' }) => {
+  if (type === 'ingredients') {
+    return (
+      <li className="flex gap-2 items-start">
+        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/40 flex-shrink-0 ml-3" />
+        <span className="text-sm text-muted-foreground">{item.text}</span>
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex gap-3 items-start group">
+      {/* Fixed width (w-6) + justify-center ensures text alignment stability 
+        regardless of digit count (e.g. 1 vs 10).
+      */}
+      <span className="inline-flex items-center justify-center w-6 text-xs font-bold text-muted-foreground/60 mt-0.5 bg-muted-foreground/5 py-0.5 rounded border border-primary/10 flex-shrink-0 ml-3">
+        {index + 1}
+      </span>
+      <p className="text-sm text-muted-foreground">{item.text}</p>
+    </li>
+  );
+};
 
 export function RecipeDataCard({
   recipeData,
@@ -59,17 +120,13 @@ export function RecipeDataCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          {/* Recipe title */}
           <h3 className="text-xl font-semibold">{recipeData.title || "Untitled Recipe"}</h3>
-          
-          {/* Recipe description - displayed directly under title with no spacing */}
           {recipeData.description && (
             <p className="text-muted-foreground text-sm">{recipeData.description}</p>
           )}
         </div>
-        {/* 3-column layout: Image | Servings/Times | Source/Category */}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Column 1: Recipe thumbnail image */}
           <div className="flex-shrink-0">
             {recipeData.imageUrl ? (
               <img 
@@ -77,7 +134,6 @@ export function RecipeDataCard({
                 alt={recipeData.title || "Recipe"} 
                 className="w-full h-48 object-cover rounded-md border border-border"
                 onError={(e) => {
-                  // Fallback to placeholder SVG if image fails to load
                   e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='18' x='3' y='3' rx='2' ry='2'/%3E%3Ccircle cx='9' cy='9' r='2'/%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'/%3E%3C/svg%3E";
                 }}
               />
@@ -88,7 +144,6 @@ export function RecipeDataCard({
             )}
           </div>
 
-          {/* Column 2: Servings, Prep Time, Cooking Time - always render */}
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
@@ -117,7 +172,6 @@ export function RecipeDataCard({
             </div>
           </div>
 
-          {/* Column 3: Recipe Source and Category - now from recipeData */}
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center gap-2">
               <Link2 className="h-4 w-4 text-primary" />              
@@ -150,44 +204,24 @@ export function RecipeDataCard({
           </div>
         </div>
 
-        {/* Ingredients and Instructions side-by-side with 40%/60% split */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 py-4">
-          {/* Ingredients: 40% (2 of 5 columns) */}
           <div className="md:col-span-2">
-            <h4 className="font-semibold mb-2">Ingredients</h4>
-            <ul className="space-y-1 text-sm text-muted-foreground">
-              {recipeData.ingredients.length > 0 ? (
-                recipeData.ingredients.map((ing, i) => (
-                  <li key={i} className="flex gap-2 items-start">
-                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/40 flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">{ing}</span>
-                  </li>
-                ))
-              ) : (
-                <li className="italic opacity-70">No ingredients listed</li>
-              )}
-            </ul>
+            <div className="flex items-center gap-2 mb-3">
+              <Carrot className="h-4 w-4 text-foreground" />
+              <h4 className="font-semibold">Ingredients</h4>
+            </div>
+            <GroupedList items={recipeData.ingredients} type="ingredients" />
           </div>
 
-          {/* Instructions: 60% (3 of 5 columns) */}
           <div className="md:col-span-3">
-            <h4 className="font-semibold mb-2">Instructions</h4>
-            {recipeData.instructions.length > 0 ? (
-              recipeData.instructions.map((instruction, index) => (
-                  <div key={index} className="flex gap-3 items-start group">
-                    <span className="font-mono text-xs font-bold text-primary/60 mt-0.5 bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10">
-                      {index + 1}
-                    </span>
-                    <p className="text-sm text-muted-foreground">{instruction}</p>
-                  </div>
-                ))
-            ) : (
-              <p className="text-sm text-muted-foreground italic">No instructions provided</p>
-            )}
+            <div className="flex items-center gap-2 mb-3">
+              <ListOrdered className="h-4 w-4 text-foreground" />
+              <h4 className="font-semibold">Instructions</h4>
+            </div>
+            <GroupedList items={recipeData.instructions} type="instructions" />
           </div>
         </div>
 
-        {/* Action buttons - Edit and View JSON on left, Send to Whisk on right */}
         <div className="flex justify-between items-center pt-4 border-t border-border">
           <div className="flex gap-2">
             <Button onClick={onOpenEditModal} variant="outline" className="rounded-md">

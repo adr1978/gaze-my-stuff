@@ -1,3 +1,11 @@
+/**
+ * EditRecipeModal Component
+ * * UPDATES:
+ * - Decoupled text input state from parent 'editedRecipe' state to prevent cursor jumping.
+ * - Text fields now only initialize on modal open, fixing the "live cleanup" issue.
+ * - Parsing runs on change to update the model, but does not overwrite the user's text input.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +16,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Save, ChevronDown, Eraser } from "lucide-react";
 
+// --- Types ---
+
+export interface RecipeItem {
+  text: string;
+  group: string | null;
+}
+
 interface RecipeData {
   title: string | null;
   url: string | null;
@@ -15,8 +30,8 @@ interface RecipeData {
   servings: number | null;
   prep_time: number | null;
   cook_time: number | null;
-  ingredients: string[];
-  instructions: string[];
+  ingredients: RecipeItem[];
+  instructions: RecipeItem[];
   notes: string | null;
   description: string | null;
   source: string | null;
@@ -33,6 +48,58 @@ interface EditRecipeModalProps {
   onSave: () => void;
 }
 
+// --- Helper Functions ---
+
+const toText = (items: RecipeItem[]): string => {
+  let text = "";
+  
+  // 1. Process items with NO group first
+  const mainItems = items.filter(i => !i.group);
+  if (mainItems.length > 0) {
+    text += mainItems.map(i => i.text).join('\n');
+  }
+
+  // 2. Process grouped items
+  const groupedItems = items.filter(i => i.group);
+  const groups: Record<string, RecipeItem[]> = {};
+  
+  groupedItems.forEach(i => {
+    if (i.group) {
+        if (!groups[i.group]) groups[i.group] = [];
+        groups[i.group].push(i);
+    }
+  });
+
+  Object.entries(groups).forEach(([groupName, groupList]) => {
+      if (text) text += "\n\n";
+      text += `${groupName}:\n` + groupList.map(i => i.text).join('\n');
+  });
+
+  return text;
+};
+
+const fromText = (text: string): RecipeItem[] => {
+  const lines = text.split('\n');
+  const items: RecipeItem[] = [];
+  let currentGroup: string | null = null;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    // Treat lines ending in ':' as headers
+    if (trimmed.endsWith(':') && trimmed.length > 1) {
+      currentGroup = trimmed.slice(0, -1);
+    } else {
+      items.push({ text: trimmed, group: currentGroup });
+    }
+  });
+
+  return items;
+};
+
+// --- Main Component ---
+
 export function EditRecipeModal({
   isOpen,
   onOpenChange,
@@ -42,51 +109,68 @@ export function EditRecipeModal({
   categories,
   onSave,
 }: EditRecipeModalProps) {
-  // Ref for scroll area
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
-  // Check scroll position
+  // Local state for text areas
+  // We use local state to prevent the "live cleanup" loop
+  const [ingText, setIngText] = useState("");
+  const [instText, setInstText] = useState("");
+
+  // Sync recipe data to local text state ONLY when modal opens or recipe identity changes.
+  // We DO NOT listen to [editedRecipe] changes broadly, as that causes the cursor jumping bug.
+  useEffect(() => {
+    if (isOpen && editedRecipe) {
+      setIngText(toText(editedRecipe.ingredients));
+      setInstText(toText(editedRecipe.instructions));
+    }
+  }, [isOpen, editedRecipe?.url]); // Use URL or ID to detect a "new" recipe load
+
+  // Handle Text Changes
+  // We update local text (for UI) AND parsed data (for parent state)
+  // But we never overwrite local text with the parsed result while typing.
+  const handleIngChange = (val: string) => {
+    setIngText(val);
+    if (editedRecipe) {
+      setEditedRecipe({ ...editedRecipe, ingredients: fromText(val) });
+    }
+  };
+
+  const handleInstChange = (val: string) => {
+    setInstText(val);
+    if (editedRecipe) {
+      setEditedRecipe({ ...editedRecipe, instructions: fromText(val) });
+    }
+  };
+
+  // Scroll Indicator Logic
   useEffect(() => {
     const checkScroll = () => {
-      // Target the viewport element provided by Shadcn/Radix ScrollArea
       const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
-      
       if (viewport) {
         const { scrollTop, scrollHeight, clientHeight } = viewport;
-        // Show if content is scrollable AND we are not at the bottom (within 5px buffer)
         const isScrollable = scrollHeight > clientHeight;
         const isAtBottom = scrollHeight - scrollTop - clientHeight < 5;
-        
         setShowScrollIndicator(isScrollable && !isAtBottom);
       }
     };
-
-    // Initial check with slight delay for layout render
     const timer = setTimeout(checkScroll, 100); 
-
     const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
     viewport?.addEventListener('scroll', checkScroll);
-    
     return () => {
       viewport?.removeEventListener('scroll', checkScroll);
       clearTimeout(timer);
     };
   }, [editedRecipe, isOpen]);
 
-  // Scroll to bottom handler
   const scrollToBottom = () => {
     const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
-    if (viewport) {
-      viewport.scrollTo({
-        top: viewport.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
+    viewport?.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
   };
 
-  // Clear all fields handler (Instant action, no confirm)
   const handleClearAll = () => {
+    setIngText("");
+    setInstText("");
     setEditedRecipe({
       title: "",
       url: "",
@@ -106,7 +190,6 @@ export function EditRecipeModal({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
-        {/* Header */}
         <div className="p-6 pb-3">
           <DialogHeader>
             <DialogTitle>{isNewRecipe ? "New Recipe" : "Edit Recipe"}</DialogTitle>
@@ -116,7 +199,6 @@ export function EditRecipeModal({
           </DialogHeader>
         </div>
 
-        {/* Scrollable Content */}
         <div className="relative flex-1 overflow-hidden">
           <ScrollArea className="h-[50vh] px-4" ref={scrollAreaRef}>
             {editedRecipe && (
@@ -236,33 +318,35 @@ export function EditRecipeModal({
                   </div>
                 </div>
 
-                {/* Ingredients */}
+                {/* Ingredients Editor */}
                 <div className="space-y-2">
-                  <Label htmlFor="edit-ingredients">Ingredients (one per line)</Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="edit-ingredients">Ingredients</Label>
+                    <span className="text-xs text-muted-foreground">End line with colon for header (e.g. "For the Icing:")</span>
+                  </div>
                   <Textarea
                     id="edit-ingredients"
-                    className="bg-background"
+                    className="bg-background text-sm"
                     rows={8}
-                    value={editedRecipe.ingredients.join('\n')}
-                    onChange={(e) => setEditedRecipe({ 
-                      ...editedRecipe, 
-                      ingredients: e.target.value.split('\n')
-                    })}
+                    value={ingText}
+                    onChange={(e) => handleIngChange(e.target.value)}
+                    placeholder={`2 Eggs\n\nFor the Sauce:\n1 cup Milk`}
                   />
                 </div>
 
-                {/* Instructions */}
+                {/* Instructions Editor */}
                 <div className="space-y-2">
-                  <Label htmlFor="edit-instructions">Instructions</Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="edit-instructions">Instructions</Label>
+                    <span className="text-xs text-muted-foreground">End line with colon for header (e.g. "Cook's Tip:")</span>
+                  </div>
                   <Textarea
                     id="edit-instructions"
-                    className="bg-background"
+                    className="bg-background text-sm"
                     rows={10}
-                    value={editedRecipe.instructions.join('\n')}
-                    onChange={(e) => setEditedRecipe({ 
-                      ...editedRecipe, 
-                      instructions: e.target.value.split('\n')
-                    })}
+                    value={instText}
+                    onChange={(e) => handleInstChange(e.target.value)}
+                    placeholder={`Mix ingredients.\n\nCook's Tip:\nDon't overmix.`}
                   />
                 </div>
               </div>
@@ -270,18 +354,13 @@ export function EditRecipeModal({
           </ScrollArea>
         </div>
 
-        {/* Footer with Actions */}
-        {/* relative: Needed for positioning the floating arrow */}
         <div className="border-t border-border p-6 pt-4 relative flex justify-between items-center">
-          
-          {/* Floating Scroll Indicator - Centered on top border */}
           {showScrollIndicator && (
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={scrollToBottom}
-                // bg-background: Ensures the button covers the border line behind it
                 className="rounded-full h-8 w-8 bg-background shadow-md border-border hover:bg-accent hover:text-accent-foreground transition-all duration-300 animate-in fade-in zoom-in-95"
               >
                 <ChevronDown className="h-4 w-4" />
@@ -289,7 +368,6 @@ export function EditRecipeModal({
             </div>
           )}
 
-          {/* Left: Clear All - Styled like Cancel */}
           <Button 
             variant="outline" 
             onClick={handleClearAll} 
@@ -300,7 +378,6 @@ export function EditRecipeModal({
             Clear All
           </Button>
 
-          {/* Right: Actions */}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

@@ -1,18 +1,8 @@
 /**
  * JsonViewerModal Component
- * 
- * Displays recipe data as formatted, syntax-highlighted JSON.
- * Features:
- * - Fullscreen toggle for better viewing of large JSON
- * - Syntax highlighting using react-syntax-highlighter
- * - Horizontal scrolling for long lines
- * - Fixed header/footer with scrollable code content
- * 
- * Props:
- * - isOpen: Controls modal visibility
- * - onOpenChange: Callback when modal should close
- * - recipeData: Recipe data to display
- * - metadata: Additional metadata (source, category)
+ * * Displays recipe data as formatted, syntax-highlighted JSON.
+ * * UPDATES:
+ * - Updated RecipeData interface to match the new grouped structure (RecipeItem[]).
  */
 
 import { useState, useEffect } from "react";
@@ -27,15 +17,21 @@ import { useTheme } from "next-themes";
 // Register JSON language support for syntax highlighting
 SyntaxHighlighter.registerLanguage('json', json);
 
+// Types
+export interface RecipeItem {
+  text: string;
+  group: string | null;
+}
+
 interface RecipeData {
-  url: string;
-  title: string; 
+  url: string | null;
+  title: string | null; 
   description: string | null;
   servings: number | null; 
   prep_time: number | null; 
   cook_time: number | null; 
-  ingredients: string[];
-  instructions: string[];
+  ingredients: RecipeItem[]; // Changed from string[]
+  instructions: RecipeItem[]; // Changed from string[]
   notes: string | null;
   imageUrl: string | null;
   source: string | null;
@@ -58,7 +54,6 @@ export function JsonViewerModal({
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Reset fullscreen state when modal opens
-  // This ensures modal always starts in non-fullscreen state
   useEffect(() => {
     if (isOpen) {
       setIsFullScreen(false);

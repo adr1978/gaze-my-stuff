@@ -13,8 +13,6 @@ from .whisk_collections import (
 
 # Setup clean logger
 logger = logging.getLogger("whisk_importer")
-# We assume the handler is set up by the main entry point or previous scripts, 
-# but we ensure it exists just in case.
 if not logger.handlers:
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter('INFO:     [Whisk] %(message)s'))
@@ -31,23 +29,37 @@ def create_recipe_in_whisk(access_token: str, recipe_data: dict) -> dict:
     # --- INGREDIENTS LOGIC ---
     ingredients_list = []
     for ing in recipe_data.get('ingredients', []):
-        # Case 1: Simple string (Schema/AI format)
-        if isinstance(ing, str):
-            ingredients_list.append({"text": ing})
-        # Case 2: Dict (Legacy/Scraper format)
-        elif isinstance(ing, dict):
+        # Case 1: Dict (New Schema format)
+        if isinstance(ing, dict):
             ing_dict = {"text": ing.get('text', '')}
+            # Only add group if it exists
             if ing.get('group'):
                 ing_dict["group"] = ing['group']
             ingredients_list.append(ing_dict)
+        # Case 2: Simple string (Legacy fallback)
+        elif isinstance(ing, str):
+            ingredients_list.append({"text": ing})
     
     # --- INSTRUCTIONS LOGIC ---
     instructions_list = []
     for instruction in recipe_data.get('instructions', []):
-        if instruction:
+        # Case 1: Dict (New Schema format)
+        if isinstance(instruction, dict):
+            step = {
+                "text": instruction.get('text', ''), 
+                "customLabels": []
+            }
+            # Only add group if it exists
+            if instruction.get('group'):
+                step["group"] = instruction.get('group')
+            
+            instructions_list.append(step)
+            
+        # Case 2: Simple string (Legacy fallback)
+        elif isinstance(instruction, str) and instruction:
             instructions_list.append({"text": instruction, "customLabels": []})
     
-    # Handle Cook's Tips
+    # Handle Cook's Tips (Legacy support - new parsers put this in instructions)
     if recipe_data.get('cooks_tip'):
         tips = recipe_data.get('cooks_tip')
         if isinstance(tips, str):
@@ -62,8 +74,7 @@ def create_recipe_in_whisk(access_token: str, recipe_data: dict) -> dict:
     if recipe_data.get('cook_time'): durations['cookTime'] = int(recipe_data['cook_time'])
     if recipe_data.get('total_time'): durations['totalTime'] = int(recipe_data['total_time'])
     
-    # --- IMAGES (FIXED) ---
-    # Check 'imageUrl' (Schema standard) AND 'image_url' (Legacy fallback)
+    # --- IMAGES ---
     img_url = recipe_data.get('imageUrl') or recipe_data.get('image_url')
     images = [{"url": img_url}] if img_url else []
     
@@ -75,7 +86,6 @@ def create_recipe_in_whisk(access_token: str, recipe_data: dict) -> dict:
     
     # --- SOURCE ---
     source = None
-    # Check 'url' (Schema standard) AND 'source_url' (Legacy fallback)
     src_url = recipe_data.get('url') or recipe_data.get('source_url')
     
     if src_url:

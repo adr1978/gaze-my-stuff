@@ -1,5 +1,12 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Union
+
+class RecipeItem(BaseModel):
+    """
+    Model for a single ingredient or instruction step with optional grouping.
+    """
+    text: str = Field(..., description="The content text.")
+    group: Optional[str] = Field(None, description="Optional group name (e.g. 'For the Icing').")
 
 class RecipeSchema(BaseModel):
     """
@@ -12,8 +19,13 @@ class RecipeSchema(BaseModel):
     servings: Optional[int] = Field(None, description="The number of servings (e.g., 6).")
     prep_time: Optional[int] = Field(None, description="The preparation time in minutes.")
     cook_time: Optional[int] = Field(None, description="The cooking time in minutes.")
-    ingredients: List[str] = Field(..., description="A list of ingredients, with quantities.")
-    instructions: List[str] = Field(..., description="A list of numbered instruction steps.")
+    
+    # UPDATED: Now accepts List[RecipeItem] to support groups
+    ingredients: List[RecipeItem] = Field(..., description="A list of ingredients with optional grouping.")
+    
+    # UPDATED: Now accepts List[RecipeItem] to support groups
+    instructions: List[RecipeItem] = Field(..., description="A list of instructions with optional grouping.")
+    
     notes: Optional[str] = Field(None, description="Any additional notes or tips.")
     source: Optional[str] = Field(None, description="Which site / chef the recipe should be attributed to")
     

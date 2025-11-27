@@ -1,75 +1,142 @@
 """
-Whisk Recipe Upload Endpoint
+Waitrose Recipe Processing Handler
 
-Handles POST requests to upload recipe data to Samsung Food (Whisk).
-Accepts recipe data from frontend, transforms it, and uploads to Whisk.
+Handles parsing of Waitrose recipe URLs and extraction of recipe data.
+Returns structured JSON to frontend (does NOT upload to Whisk).
 
-Endpoint: POST /api/recipe/upload-whisk
-Request body: Recipe data in frontend JSON format
-Response: Success/failure status with Whisk API response
+This module:
+1. Validates the Waitrose URL
+2. Scrapes the recipe page
+3. Returns structured JSON to frontend
+
+Upload to Whisk is handled separately by the upload endpoint.
 """
 
 import logging
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Optional
-from ..scripts.schemas import RecipeSchema as RecipeUpload
+from urllib.parse import urlparse
+from .waitrose_scraper import scrape_waitrose_recipe
 
-# Import the whisk handler script
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from scripts.whisk_handler import upload_recipe_to_whisk
-
-# Configure logging
-logger = logging.getLogger("uvicorn.error")
-
-# Create FastAPI router
-router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
-# --- API Endpoint ---
-@router.post("/upload-whisk")
-async def upload_whisk(recipe: RecipeUpload):
+def process_waitrose_recipe(url: str):
     """
-    Upload a recipe to Samsung Food (Whisk).
+    Parse a Waitrose recipe URL and return structured JSON.
     
-    This endpoint:
-    1. Receives recipe data from frontend
-    2. Authenticates with Whisk API
-    3. Transforms data to Whisk format
-    4. Uploads the recipe
-    5. Returns success/failure status
+    This function only handles parsing/extraction - it does NOT upload to Whisk.
+    The frontend will receive the parsed data and can then upload via the 
+    separate upload endpoint.
     
     Args:
-        recipe: RecipeUpload containing all recipe data
+        url: Waitrose recipe URL
         
     Returns:
-        JSON response with upload status and Whisk API response
+        Tuple of (status_code, response_dict)
     """
-    logger.info(f"API call: POST /upload-whisk for: {recipe.title}")
     
+    # Validate URL is provided
+    if not url:
+        logger.error("No URL provided")
+        return 400, {
+            "success": False,
+            "data": None,
+            "error": {"message": "URL is required", "body": {}}
+        }
+    
+    # Validate URL domain is waitrose.com
     try:
-        recipe_data = recipe.model_dump()
-        
-        # We assume recipe_data matches what whisk_handler needs (RecipeSchema)
-        # Note: whisk_create expects 'name' but schema has 'title'.
-        # We map it here to be safe.
-        whisk_data = recipe_data.copy()
-        whisk_data['name'] = recipe_data['title'] 
-        
-        status_code, response_data = upload_recipe_to_whisk(whisk_data)
-        
-        if status_code != 200:
-            logger.error(f"Upload failed: {response_data}")
-            raise HTTPException(status_code=status_code, detail=response_data)
-        
-        # Single success message
-        #logger.info(f"✅ Workflow complete for '{recipe.title}'")
-        return response_data
-        
-    except HTTPException:
-        raise
+        parsed_url = urlparse(url)
+        if not parsed_url.netloc.endswith('waitrose.com'):
+            logger.error(f"Invalid domain: {parsed_url.netloc}")
+            return 400, {
+                "success": False,
+                "data": None,
+                "error": {
+                    "message": "Invalid URL domain",
+                    "body": {"details": f"Only waitrose.com URLs are supported. Received: {parsed_url.netloc}"}
+                }
+            }
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"URL parsing failed: {str(e)}")
+        return 400, {
+            "success": False,
+            "data": None,
+            "error": {"message": "Invalid URL format", "body": {"details": str(e)}}
+        }
+    
+    # Scrape the Waitrose recipe page
+    try:
+        logger.info(f"Scraping Waitrose recipe from: {url}")
+        scraped_data = scrape_waitrose_recipe(url)
+        logger.info(f"✅ Successfully scraped: {scraped_data['name']}")
+        
+        # Transform scraped data to frontend format
+        # Waitrose scraper returns data in Whisk format, transform to frontend format
+        frontend_data = transform_to_frontend_format(scraped_data)
+        
+        return 200, {
+            "success": True,
+            "data": frontend_data,
+            "error": None
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Scraping failed: {str(e)}")
+        return 500, {
+            "success": False,
+            "data": None,
+            "error": {"message": "Scraping error", "body": {"details": str(e)}}
+        }
+
+
+def transform_to_frontend_format(scraped_data: dict) -> dict:
+    """
+    Transform Waitrose scraped data to frontend JSON format.
+    The scraped data now already has 'text' and 'group' in ingredients/instructions.
+    """
+    
+    logger.info(f"Transforming scraped data for: {scraped_data.get('name')}")
+    
+    # Ingredients: Check if they are already dicts (new scraper) or strings (fallback)
+    # The new scraper returns list of dicts: {'text': '...', 'group': '...'}
+    # The Schema expects: [{'text': '...', 'group': '...'}]
+    # We just pass them through, but ensure keys are correct.
+    
+    formatted_ingredients = []
+    for ing in scraped_data.get("ingredients", []):
+        if isinstance(ing, dict):
+            formatted_ingredients.append({
+                "text": ing.get("text", ""),
+                "group": ing.get("group") 
+            })
+        else:
+            # Fallback for strings
+            formatted_ingredients.append({"text": str(ing), "group": None})
+
+    formatted_instructions = []
+    for instr in scraped_data.get("instructions", []):
+        if isinstance(instr, dict):
+             formatted_instructions.append({
+                "text": instr.get("text", ""),
+                "group": instr.get("group") 
+            })
+        else:
+            formatted_instructions.append({"text": str(instr), "group": None})
+    
+    frontend_data = {
+        "title": scraped_data.get("name", ""),
+        "description": scraped_data.get("description", ""),
+        "servings": scraped_data.get("servings"),
+        "prep_time": scraped_data.get("prep_time"),
+        "cook_time": scraped_data.get("cook_time"),
+        "ingredients": formatted_ingredients,   # Now structured
+        "instructions": formatted_instructions, # Now structured
+        "notes": None, # Cook's tips are now in instructions
+        "source": "Waitrose",
+        "category": None,
+        "imageUrl": scraped_data.get("image_url"),
+        "url": scraped_data.get("source_url"),
+    }
+    
+    logger.info("✅ Data transformation complete")
+    return frontend_data
