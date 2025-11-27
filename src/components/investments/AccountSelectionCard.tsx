@@ -38,10 +38,20 @@ interface AccountSelectionCardProps {
 
 /**
  * Format a number as GBP currency with comma separators
+ * Used for Total Value (standard 2 decimal places)
  * Example: 119383.79 → £119,383.79
  */
 function formatCurrency(value: number): string {
   return `£${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/**
+ * Format share price with higher precision
+ * Used for Current Price (up to 4 decimal places to show full CSV figure)
+ * Example: 3.634 → £3.634
+ */
+function formatSharePrice(value: number): string {
+  return `£${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 }
 
 /**
@@ -190,7 +200,8 @@ export function AccountSelectionCard({
                   <CirclePoundSterling className="h-4 w-4" />
                   <span>Current Price</span>
                 </div>
-                <p className="text-2xl font-semibold">{formatCurrency(currentPrice)}</p>
+                {/* Use formatSharePrice here to show full precision */}
+                <p className="text-2xl font-semibold">{formatSharePrice(currentPrice)}</p>
               </div>
 
               {/* Total Value with chart-no-axes-combined icon and trending indicator */}
