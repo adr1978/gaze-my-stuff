@@ -20,6 +20,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 from datetime import datetime
+from .ingredient_cleaner import clean_ingredient
 
 # Brand terms to strip from ingredients
 TERMS_TO_REMOVE = [
@@ -92,32 +93,14 @@ def parse_ingredients_from_html(soup):
         # Check if this is an ingredients list
         elif current.name == 'ul':
             for li in current.find_all('li', recursive=False):
-                # Get text with spaces preserved between elements
-                ingredient = li.get_text(separator=' ', strip=True)
+                # Get raw text
+                raw_text = li.get_text(separator=' ', strip=True)
                 
-                # Remove brand terms using flexible regex matching
-                for brand in TERMS_TO_REMOVE:
-                    brand_pattern = re.escape(brand)
-                    brand_pattern = brand_pattern.replace(r"\'", r"['\u2019\u0027]")
-                    brand_pattern = brand_pattern.replace(r"'", r"['\u2019\u0027]")
-                    brand_pattern = brand_pattern.replace(r'\ ', r'\s+')
-                    brand_pattern = brand_pattern + r'\s*'
-                    ingredient = re.sub(brand_pattern, '', ingredient, flags=re.IGNORECASE)
+                # --- USE SHARED CLEANER ---
+                cleaned_text = clean_ingredient(raw_text)
                 
-                # Ensure space after measurement units
-                ingredient = re.sub(
-                    r'(\d+(?:\.\d+|¼|½|¾)?)(kg|g|ml|l|tbsp|tsp|pack|tub|bulb/s|clove/s|can/s|cans)', 
-                    r'\1 \2 ', 
-                    ingredient
-                )
-                
-                # Clean up multiple spaces to single space
-                ingredient = re.sub(r'\s+', ' ', ingredient)
-                ingredient = ingredient.strip()
-                
-                if ingredient:
-                    ing_dict = {"text": ingredient}
-                    # Only add group if it's not empty
+                if cleaned_text:
+                    ing_dict = {"text": cleaned_text}
                     if current_group:
                         ing_dict["group"] = current_group
                     ingredients.append(ing_dict)

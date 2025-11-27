@@ -19,7 +19,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Code, ImageIcon, ExternalLink, Send } from "lucide-react";
+import { Clock, Users, Edit, Braces, Send, ExternalLink, ImageIcon, Tag, Link2 } from "lucide-react";
 
 interface RecipeData {
   url: string;
@@ -91,10 +91,12 @@ export function RecipeDataCard({
           {/* Column 2: Servings, Prep Time, Cooking Time - always render */}
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
               <span className="font-medium text-foreground">Servings:</span>
               <span className="text-muted-foreground">{recipeData.servings || "–"}</span>
             </div>
             <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
               <span className="font-medium text-foreground">Prep Time:</span>
               <span className="text-muted-foreground">
                 {recipeData.prep_time 
@@ -104,6 +106,7 @@ export function RecipeDataCard({
               </span>
             </div>
             <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
               <span className="font-medium text-foreground">Cooking Time:</span>
               <span className="text-muted-foreground">
                 {recipeData.cook_time 
@@ -117,6 +120,7 @@ export function RecipeDataCard({
           {/* Column 3: Recipe Source and Category - now from recipeData */}
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex items-center gap-2">
+              <Link2 className="h-4 w-4 text-primary" />              
               <span className="font-medium text-foreground">Source:</span>
               {recipeData.source ? (
                 recipeData.url ? (
@@ -137,6 +141,7 @@ export function RecipeDataCard({
               )}
             </div>
             <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-primary" />              
               <span className="font-medium text-foreground">Category:</span>
               <span className="text-muted-foreground">
                 {recipeData.category || "–"}
@@ -146,30 +151,36 @@ export function RecipeDataCard({
         </div>
 
         {/* Ingredients and Instructions side-by-side with 40%/60% split */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 py-4">
           {/* Ingredients: 40% (2 of 5 columns) */}
           <div className="md:col-span-2">
             <h4 className="font-semibold mb-2">Ingredients</h4>
-            {recipeData.ingredients.length > 0 ? (
-              <ul className="list-disc list-inside space-y-1">
-                {recipeData.ingredients.map((ingredient, index) => (
-                  <li key={index} className="text-sm text-muted-foreground">{ingredient}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">No ingredients listed</p>
-            )}
+            <ul className="space-y-1 text-sm text-muted-foreground">
+              {recipeData.ingredients.length > 0 ? (
+                recipeData.ingredients.map((ing, i) => (
+                  <li key={i} className="flex gap-2 items-start">
+                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/40 flex-shrink-0" />
+                    <span className="text-sm text-muted-foreground">{ing}</span>
+                  </li>
+                ))
+              ) : (
+                <li className="italic opacity-70">No ingredients listed</li>
+              )}
+            </ul>
           </div>
 
           {/* Instructions: 60% (3 of 5 columns) */}
           <div className="md:col-span-3">
             <h4 className="font-semibold mb-2">Instructions</h4>
             {recipeData.instructions.length > 0 ? (
-              <ol className="list-decimal list-inside space-y-2">
-                {recipeData.instructions.map((instruction, index) => (
-                  <li key={index} className="text-sm text-muted-foreground">{instruction}</li>
-                ))}
-              </ol>
+              recipeData.instructions.map((instruction, index) => (
+                  <div key={index} className="flex gap-3 items-start group">
+                    <span className="font-mono text-xs font-bold text-primary/60 mt-0.5 bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10">
+                      {index + 1}
+                    </span>
+                    <p className="text-sm text-muted-foreground">{instruction}</p>
+                  </div>
+                ))
             ) : (
               <p className="text-sm text-muted-foreground italic">No instructions provided</p>
             )}
@@ -177,14 +188,14 @@ export function RecipeDataCard({
         </div>
 
         {/* Action buttons - Edit and View JSON on left, Send to Whisk on right */}
-        <div className="flex justify-between items-center pt-6">
+        <div className="flex justify-between items-center pt-4 border-t border-border">
           <div className="flex gap-2">
             <Button onClick={onOpenEditModal} variant="outline" className="rounded-md">
               <Edit className="h-4 w-4" />
               Edit Recipe
             </Button>
             <Button onClick={onOpenJsonModal} variant="outline" className="rounded-md">
-              <Code className="h-4 w-4" />
+              <Braces className="h-4 w-4" />
               View JSON
             </Button>
           </div>

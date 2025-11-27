@@ -1,25 +1,21 @@
 /**
  * RecipeAnalyser Page Component
- * 
- * Main page for importing and analysing recipes from URLs.
+ * * Main page for importing and analysing recipes from URLs.
  * Supports multiple extraction methods (AI, Waitrose parser, manual entry).
- * 
- * Key Features:
+ * * Key Features:
  * - URL-based recipe extraction using AI or specialised parsers
  * - Manual recipe entry option
  * - Visual display of extracted recipe data
  * - Edit and JSON view capabilities
  * - Metadata collection (source, category)
  * - Backend submission workflow
- * 
- * State Management:
+ * * State Management:
  * - url: Recipe URL input
  * - recipeData: Extracted recipe information
  * - metadata: Source and category information
  * - extractionMethod: Selected extraction method (ai/waitrose/manual)
  * - Modal states for edit and JSON viewer
- * 
- * Data Flow:
+ * * Data Flow:
  * 1. User enters URL and selects extraction method
  * 2. analyseRecipe() calls Supabase edge function or opens manual modal
  * 3. Recipe data displayed in RecipeDataCard
@@ -149,11 +145,17 @@ export default function RecipeAnalyser() {
 
   /**
    * Load saved recipes from localStorage on mount
+   * Note: This will now typically only contain the one active recipe
    */
   useEffect(() => {
     const savedRecipes = localStorage.getItem('savedRecipes');
     if (savedRecipes) {
-      console.log('Loaded recipes from localStorage:', JSON.parse(savedRecipes));
+      const parsed = JSON.parse(savedRecipes);
+      // If there is a saved recipe, load the most recent one into view
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setRecipeData(parsed[parsed.length - 1]);
+        console.log('Restored active recipe from session storage');
+      }
     }
   }, []);
 
@@ -170,6 +172,9 @@ export default function RecipeAnalyser() {
     }
 
     setIsAnalysing(true);
+    // Clear previous data from UI immediately
+    setRecipeData(null); 
+
     try {
       // Manual entry is handled by useEffect watching extractionMethod
       if (extractionMethod === "manual") {
@@ -245,10 +250,10 @@ export default function RecipeAnalyser() {
 
         setRecipeData(decodedData);
         
-        // Save to localStorage
-        const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
-        savedRecipes.push({ ...decodedData, analysedAt: new Date().toISOString() });
-        localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+        // Save to localStorage - OVERWRITE previous data (clear history)
+        // We only store the single active recipe now
+        const currentRecipe = [{ ...decodedData, analysedAt: new Date().toISOString() }];
+        localStorage.setItem('savedRecipes', JSON.stringify(currentRecipe));
         
         showToast.success(
           "Success",
@@ -409,11 +414,17 @@ export default function RecipeAnalyser() {
     const instructionsText = editedRecipe.instructions.join('\n');
     const parsedInstructions = splitInstructionsIntoSentences(instructionsText);
 
-    setRecipeData({
+    const updatedRecipeData = {
       ...editedRecipe,
       ingredients: parsedIngredients,
       instructions: parsedInstructions,
-    });
+    };
+
+    setRecipeData(updatedRecipeData);
+
+    // Overwrite localStorage with this new edited version (clearing any old history)
+    const currentRecipe = [{ ...updatedRecipeData, analysedAt: new Date().toISOString() }];
+    localStorage.setItem('savedRecipes', JSON.stringify(currentRecipe));
 
     setIsEditModalOpen(false);
     setIsNewRecipeModal(false);

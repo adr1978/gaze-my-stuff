@@ -8,18 +8,18 @@ from pydantic import BaseModel, Field
 from typing import List
 from ..scripts.schemas import RecipeSchema as RecipeData
 
+# --- NEW IMPORT ---
+from ..scripts.ingredient_cleaner import clean_ingredient
+
 # Import Google GenAI SDK components
 from google import genai
 from google.genai import types 
 
 # --- Configuration & Logging Setup ---
-
-# 1. Suppress noisy third-party logs
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("google.genai").setLevel(logging.WARNING)
 
-# 2. Configure our app logger
 logger = logging.getLogger("recipe_importer")
 if not logger.handlers:
     handler = logging.StreamHandler()
@@ -28,18 +28,13 @@ if not logger.handlers:
 logger.setLevel(logging.INFO)
 logger.propagate = False
 
-# IMPORTANT: API Key is read from environment variable
 GEMINI_API_KEY = os.getenv("GOOGLE_GEMINI_API_KEY")
 
-# --- FastAPI Router Setup ---
 router = APIRouter()
 
-# --- Pydantic Schemas ---
 class RecipeUrl(BaseModel):
-    """Schema for the incoming request body."""
     url: str = Field(..., description="The URL of the recipe page to analyse.")
 
-# --- Dependency Injection ---
 async def get_gemini_client():
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="Gemini API Key missing.")
@@ -50,36 +45,23 @@ async def get_gemini_client():
         logger.error(f"Gemini Client Setup Failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to initialize AI Client.")
 
-# --- Helper Functions for Text Cleaning ---
-
-def clean_whitespace(text: str) -> str:
-    """Collapses newlines, tabs, and multiple spaces into a single space."""
-    if not text:
-        return ""
-    # Replace newlines and tabs with space
-    text = re.sub(r'[\n\r\t]+', ' ', text)
-    # Collapse multiple spaces into one
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
+# --- Helper Functions ---
 
 def process_instructions(instructions: List[str]) -> List[str]:
     """
     Joins fragmented lines and re-splits them into proper sentences.
-    Example: ["Line", "2 trays."] -> ["Line 2 trays."]
     """
     if not instructions:
         return []
     
-    # 1. Join everything into one text block to handle fragmented lines from HTML
     full_text = " ".join(instructions)
     
-    # 2. Clean whitespace (removes the newlines that caused the fragmentation)
-    full_text = clean_whitespace(full_text)
+    # Simple regex to collapse whitespace for instructions logic
+    full_text = re.sub(r'\s+', ' ', full_text).strip()
     
-    # 3. Split by sentence endings (. ! ?) followed by whitespace
+    # Split by sentence endings
     sentences = re.split(r'(?<=[.!?])\s+', full_text)
     
-    # 4. Filter empty strings and return
     return [s.strip() for s in sentences if s.strip()]
 
 # --- API Endpoint ---
@@ -91,9 +73,8 @@ async def analyse_recipe(
 ):
     logger.info(f"Analyzing URL: {recipe_url.url}")
     
-    # --- STEP 1: SCRAPE (Using httpx with SPECIFIC headers) ---
+    # --- STEP 1: SCRAPE ---
     try:
-        # We use the EXACT User-Agent from your working waitrose_scraper.py
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
@@ -114,10 +95,8 @@ async def analyse_recipe(
     try:
         soup = BeautifulSoup(raw_html, 'html.parser')
         
-        # Remove noise
         for tag in soup(["style", "svg", "noscript", "iframe", "header", "footer", "nav"]):
             tag.decompose()
-        # Keep JSON-LD, remove other scripts
         for script in soup.find_all("script"):
             if script.get("type") != "application/ld+json":
                 script.decompose()
@@ -128,8 +107,6 @@ async def analyse_recipe(
         raise HTTPException(status_code=500, detail="Error processing HTML content.")
 
     # --- STEP 3: AI EXTRACTION ---
-    
-    # UPDATED: Category rule is now explicit in the main RULES list
     system_prompt = (
         "You are a professional recipe extraction engine. "
         "Analyze the HTML content (including JSON-LD) to extract recipe data.\n"
@@ -162,21 +139,20 @@ async def analyse_recipe(
         if not response.text:
             raise ValueError("Empty response from AI model.")
         
-        # Validate JSON Structure
         recipe_data = RecipeData.model_validate_json(response.text)
         recipe_data.url = recipe_url.url
 
         # --- STEP 4: POST-PROCESSING (Text Cleanup) ---
         
-        # Clean Ingredients (remove extra spaces)
+        # Clean Ingredients using shared logic (strips brands, fixes units)
         if recipe_data.ingredients:
             recipe_data.ingredients = [
-                clean_whitespace(ing) 
+                clean_ingredient(ing) 
                 for ing in recipe_data.ingredients 
                 if ing
             ]
 
-        # Re-format Instructions (single line per sentence)
+        # Re-format Instructions
         if recipe_data.instructions:
             recipe_data.instructions = process_instructions(recipe_data.instructions)
 

@@ -1,27 +1,3 @@
-/**
- * EditRecipeModal Component
- * 
- * Modal dialog for editing recipe data or creating new recipes manually.
- * Features:
- * - All recipe fields editable (title, image, times, servings, etc.)
- * - Ingredients textarea (one per line)
- * - Instructions textarea (auto-split into sentences on save)
- * - Recipe source and category fields (synced with metadata)
- * - Fixed footer with Cancel/Save buttons
- * - Scrollable content area with scroll indicator
- * 
- * Props:
- * - isOpen: Controls modal visibility
- * - onOpenChange: Callback when modal state changes
- * - editedRecipe: Current recipe data being edited
- * - setEditedRecipe: Function to update recipe data
- * - isNewRecipe: Whether this is a new recipe (vs editing existing)
- * - categories: List of available categories
- * - metadata: Recipe metadata (source, category)
- * - setMetadata: Function to update metadata
- * - onSave: Callback when save button is clicked
- */
-
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -30,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, ChevronDown } from "lucide-react";
+import { Save, ChevronDown, Eraser } from "lucide-react";
 
 interface RecipeData {
   title: string | null;
@@ -66,57 +42,87 @@ export function EditRecipeModal({
   categories,
   onSave,
 }: EditRecipeModalProps) {
-  // Ref for scroll area to detect scroll position
+  // Ref for scroll area
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
-  // Check if content is scrollable and user hasn't scrolled to bottom
+  // Check scroll position
   useEffect(() => {
     const checkScroll = () => {
-      const element = scrollAreaRef.current;
-      if (element) {
-        const { scrollTop, scrollHeight, clientHeight } = element;
-        // Show indicator if there's more content below
-        setShowScrollIndicator(scrollHeight > clientHeight && scrollTop < scrollHeight - clientHeight - 20);
+      // Target the viewport element provided by Shadcn/Radix ScrollArea
+      const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+      
+      if (viewport) {
+        const { scrollTop, scrollHeight, clientHeight } = viewport;
+        // Show if content is scrollable AND we are not at the bottom (within 5px buffer)
+        const isScrollable = scrollHeight > clientHeight;
+        const isAtBottom = scrollHeight - scrollTop - clientHeight < 5;
+        
+        setShowScrollIndicator(isScrollable && !isAtBottom);
       }
     };
 
-    checkScroll();
-    const element = scrollAreaRef.current;
-    element?.addEventListener('scroll', checkScroll);
+    // Initial check with slight delay for layout render
+    const timer = setTimeout(checkScroll, 100); 
+
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+    viewport?.addEventListener('scroll', checkScroll);
     
-    return () => element?.removeEventListener('scroll', checkScroll);
+    return () => {
+      viewport?.removeEventListener('scroll', checkScroll);
+      clearTimeout(timer);
+    };
   }, [editedRecipe, isOpen]);
 
-  // Scroll to bottom of content area
+  // Scroll to bottom handler
   const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+    if (viewport) {
+      viewport.scrollTo({
+        top: viewport.scrollHeight,
         behavior: 'smooth'
       });
     }
   };
 
+  // Clear all fields handler (Instant action, no confirm)
+  const handleClearAll = () => {
+    setEditedRecipe({
+      title: "",
+      url: "",
+      imageUrl: "",
+      servings: null,
+      prep_time: null,
+      cook_time: null,
+      ingredients: [],
+      instructions: [],
+      notes: "",
+      description: "",
+      source: "",
+      category: "",
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
-        {/* Fixed header with reduced spacing */}
+        {/* Header */}
         <div className="p-6 pb-3">
           <DialogHeader>
             <DialogTitle>{isNewRecipe ? "New Recipe" : "Edit Recipe"}</DialogTitle>
             <DialogDescription>
-              {isNewRecipe ? "Enter the recipe details manually" : "Make changes to the recipe data. Each line in Ingredients and Instructions will be treated as a separate item."}
+              {isNewRecipe ? "Enter the recipe details manually" : "Make changes to the recipe data."}
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        {/* Scrollable content area with increased padding to prevent focus ring clipping */}
+        {/* Scrollable Content */}
         <div className="relative flex-1 overflow-hidden">
           <ScrollArea className="h-[50vh] px-4" ref={scrollAreaRef}>
             {editedRecipe && (
               <div className="space-y-4 pb-6 mx-2">
-                {/* Title field */}
+                
+                {/* Title */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-title">Title</Label>
                   <Input
@@ -127,27 +133,26 @@ export function EditRecipeModal({
                   />
                 </div>
 
-                {/* Description field - displayed under title */}
+                {/* Description */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-description">Description</Label>
                   <Textarea
                     id="edit-description"
                     className="bg-background"
                     rows={3}
-                    placeholder="Brief description of the recipe"
                     value={editedRecipe.description || ""}
                     onChange={(e) => setEditedRecipe({ ...editedRecipe, description: e.target.value })}
                   />
                 </div>
 
-                {/* Recipe Source and Category - now part of recipe data */}
+                {/* Source & Category */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-source">Recipe Source</Label>
                     <Input
                       id="edit-source"
                       className="bg-background"
-                      placeholder="e.g., Waitrose, BBC Good Food"
+                      placeholder="e.g., Waitrose"
                       value={editedRecipe.source || ""}
                       onChange={(e) => setEditedRecipe({ ...editedRecipe, source: e.target.value })}
                     />
@@ -173,19 +178,31 @@ export function EditRecipeModal({
                   </div>
                 </div>
 
-                {/* Image URL field */}
-                <div className="space-y-2">
-                  <Label htmlFor="edit-image-url">Image URL</Label>
-                  <Input
-                    id="edit-image-url"
-                    className="bg-background"
-                    placeholder="https://example.com/image.jpg"
-                    value={editedRecipe.imageUrl || ""}
-                    onChange={(e) => setEditedRecipe({ ...editedRecipe, imageUrl: e.target.value })}
-                  />
+                {/* Recipe URL & Image URL */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-url">Recipe URL</Label>
+                    <Input
+                      id="edit-url"
+                      className="bg-background"
+                      placeholder="https://example.com/recipe"
+                      value={editedRecipe.url || ""}
+                      onChange={(e) => setEditedRecipe({ ...editedRecipe, url: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-image-url">Image URL</Label>
+                    <Input
+                      id="edit-image-url"
+                      className="bg-background"
+                      placeholder="https://example.com/image.jpg"
+                      value={editedRecipe.imageUrl || ""}
+                      onChange={(e) => setEditedRecipe({ ...editedRecipe, imageUrl: e.target.value })}
+                    />
+                  </div>
                 </div>
 
-                {/* Servings, Prep Time, Cook Time in a row */}
+                {/* Times & Servings */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-servings">Servings</Label>
@@ -198,7 +215,7 @@ export function EditRecipeModal({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-preptime">Prep Time (minutes)</Label>
+                    <Label htmlFor="edit-preptime">Prep Time (mins)</Label>
                     <Input
                       id="edit-preptime"
                       type="number"
@@ -208,7 +225,7 @@ export function EditRecipeModal({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-cooktime">Cook Time (minutes)</Label>
+                    <Label htmlFor="edit-cooktime">Cook Time (mins)</Label>
                     <Input
                       id="edit-cooktime"
                       type="number"
@@ -219,7 +236,7 @@ export function EditRecipeModal({
                   </div>
                 </div>
 
-                {/* Ingredients textarea */}
+                {/* Ingredients */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-ingredients">Ingredients (one per line)</Label>
                   <Textarea
@@ -231,13 +248,12 @@ export function EditRecipeModal({
                       ...editedRecipe, 
                       ingredients: e.target.value.split('\n')
                     })}
-                    placeholder="Enter each ingredient on a new line"
                   />
                 </div>
 
-                {/* Instructions textarea */}
+                {/* Instructions */}
                 <div className="space-y-2">
-                  <Label htmlFor="edit-instructions">Instructions (sentences will be split automatically)</Label>
+                  <Label htmlFor="edit-instructions">Instructions</Label>
                   <Textarea
                     id="edit-instructions"
                     className="bg-background"
@@ -247,35 +263,49 @@ export function EditRecipeModal({
                       ...editedRecipe, 
                       instructions: e.target.value.split('\n')
                     })}
-                    placeholder="Enter instructions - sentences will be split automatically on save"
                   />
                 </div>
               </div>
             )}
           </ScrollArea>
+        </div>
 
-          {/* Scroll indicator - shows when more content below */}
+        {/* Footer with Actions */}
+        {/* relative: Needed for positioning the floating arrow */}
+        <div className="border-t border-border p-6 pt-4 relative flex justify-between items-center">
+          
+          {/* Floating Scroll Indicator - Centered on top border */}
           {showScrollIndicator && (
-            <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-2">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
+                size="icon"
                 onClick={scrollToBottom}
-                className="rounded-full bg-background/80 backdrop-blur-sm shadow-md hover:bg-background"
+                // bg-background: Ensures the button covers the border line behind it
+                className="rounded-full h-8 w-8 bg-background shadow-md border-border hover:bg-accent hover:text-accent-foreground transition-all duration-300 animate-in fade-in zoom-in-95"
               >
-                <ChevronDown className="h-4 w-4 animate-bounce" />
+                <ChevronDown className="h-4 w-4" />
               </Button>
             </div>
           )}
-        </div>
 
-        {/* Fixed footer with action buttons */}
-        <div className="border-t border-border p-6 pt-4">
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-md">
+          {/* Left: Clear All - Styled like Cancel */}
+          <Button 
+            variant="outline" 
+            onClick={handleClearAll} 
+            className="text-muted-foreground hover:text-foreground"
+            title="Clear all fields"
+          >
+            <Eraser className="h-4 w-4 mr-2" />
+            Clear All
+          </Button>
+
+          {/* Right: Actions */}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={onSave} className="rounded-md">
+            <Button onClick={onSave}>
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
