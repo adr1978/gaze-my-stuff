@@ -33,7 +33,8 @@ TERMS_TO_REMOVE = [
     "Essential",
     "Deep South",
     "Kallo",
-    "Clearspring"
+    "Clearspring",
+    "Président"
 ]
 
 def clean_ingredient(text: str) -> str:
