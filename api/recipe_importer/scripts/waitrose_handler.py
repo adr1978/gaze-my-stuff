@@ -129,7 +129,6 @@ def transform_to_frontend_format(scraped_data: dict) -> dict:
         "cook_time": scraped_data.get("cook_time"),
         "ingredients": ingredients,
         "instructions": scraped_data.get("instructions", []),
-        "notes": scraped_data.get("cooks_tip"),
         "source": "Waitrose",
         "category": None,  # Will be set by frontend based on user selection
         "imageUrl": scraped_data.get("image_url"),

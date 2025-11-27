@@ -32,7 +32,6 @@ interface RecipeData {
   cook_time: number | null;
   ingredients: RecipeItem[];
   instructions: RecipeItem[];
-  notes: string | null;
   description: string | null;
   source: string | null;
   category: string | null;
@@ -180,7 +179,6 @@ export function EditRecipeModal({
       cook_time: null,
       ingredients: [],
       instructions: [],
-      notes: "",
       description: "",
       source: "",
       category: "",

@@ -19,14 +19,8 @@ class RecipeSchema(BaseModel):
     servings: Optional[int] = Field(None, description="The number of servings (e.g., 6).")
     prep_time: Optional[int] = Field(None, description="The preparation time in minutes.")
     cook_time: Optional[int] = Field(None, description="The cooking time in minutes.")
-    
-    # UPDATED: Now accepts List[RecipeItem] to support groups
     ingredients: List[RecipeItem] = Field(..., description="A list of ingredients with optional grouping.")
-    
-    # UPDATED: Now accepts List[RecipeItem] to support groups
     instructions: List[RecipeItem] = Field(..., description="A list of instructions with optional grouping.")
-    
-    notes: Optional[str] = Field(None, description="Any additional notes or tips.")
     source: Optional[str] = Field(None, description="Which site / chef the recipe should be attributed to")
     
     category: Optional[str] = Field(

@@ -33,7 +33,6 @@ export interface RecipeData {
   cook_time: number | null;
   ingredients: RecipeItem[];   // Changed from string[]
   instructions: RecipeItem[];  // Changed from string[]
-  notes: string | null;
   description: string | null;
   source: string | null;
   category: string | null;
@@ -94,7 +93,6 @@ export default function RecipeAnalyser() {
         cook_time: null,
         ingredients: [],
         instructions: [],
-        notes: "",
         description: "",
         source: "",
         category: "",
@@ -224,7 +222,6 @@ export default function RecipeAnalyser() {
           servings: data.servings || null,
           prep_time: data.prep_time,
           cook_time: data.cook_time,
-          notes: data.notes || null,
           source: data.source,
           category: data.category,
           // Process ingredients and instructions using the safe mapper

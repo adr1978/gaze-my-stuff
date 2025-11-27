@@ -22,7 +22,6 @@ export interface RecipeData {
   cook_time: number | null; 
   ingredients: RecipeItem[];
   instructions: RecipeItem[];
-  notes: string | null;
   imageUrl: string | null;
   description: string | null;
   source: string | null;

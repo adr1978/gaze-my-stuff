@@ -131,7 +131,6 @@ def transform_to_frontend_format(scraped_data: dict) -> dict:
         "cook_time": scraped_data.get("cook_time"),
         "ingredients": formatted_ingredients,   # Now structured
         "instructions": formatted_instructions, # Now structured
-        "notes": None, # Cook's tips are now in instructions
         "source": "Waitrose",
         "category": None,
         "imageUrl": scraped_data.get("image_url"),

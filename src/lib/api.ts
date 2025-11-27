@@ -172,7 +172,6 @@ export const gocardlessApi = {
           institution_id: req.institution_id,
           link: req.link,
           redirect: req.redirect,
-          notes: metadata.notes || null,
           accounts: metadata.accounts || [],
         };
       });
