@@ -1,17 +1,15 @@
 /**
  * ChartingCard Component
- * 
- * Displays interactive chart showing investment value over time.
+ * * Displays interactive chart showing investment value over time.
  * Features interval toggles (Week, Month, Year) for data aggregation.
- * 
- * Features:
+ * * Features:
  * - Line chart with purchase markers (dots appear when purchases occurred)
  * - Custom tooltip showing date, value, shares, price, and purchases
  * - Toggle group aligned with chart right edge
  * - Animated sliding indicator in toggle group
  * - Responsive chart height
- * 
- * Props:
+ * - Dynamic legend in aggregate mode showing institution colors
+ * * Props:
  * - fundName: Name of the fund being charted
  * - chartData: Aggregated data points for the chart
  * - interval: Currently selected chart interval
@@ -21,7 +19,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ChartInterval, SharePurchase } from "./types";
+import { ChartInterval, SharePurchase, FundAccount } from "./types";
 
 interface ChartingCardProps {
   fundName: string;
@@ -30,13 +28,14 @@ interface ChartingCardProps {
   onIntervalChange: (interval: ChartInterval) => void;
   hasError?: boolean;
   aggregateMode?: boolean;
-  accounts?: any[];
+  accounts?: FundAccount[];
 }
 
 /**
  * Format a number as GBP currency
  */
 function formatCurrency(value: number): string {
+  if (value === undefined || value === null) return "£0.00";
   return `£${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
@@ -61,44 +60,6 @@ const CustomDot = (props: any) => {
   return null;
 };
 
-/**
- * Custom Tooltip for chart hover
- * Shows date, total value, shares held, price, and any purchases in that period
- */
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    const formattedDate = new Date(data.date).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-
-    return (
-      <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-        <p className="text-sm font-medium text-foreground mb-2">{formattedDate}</p>
-        <p className="text-sm text-primary font-semibold mb-1">
-          Total Value: {formatCurrency(data.totalValue)}
-        </p>
-        <p className="text-xs text-muted-foreground mb-1">
-          {data.totalShares.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} shares @ {formatCurrency(data.closePrice)}
-        </p>
-        {data.purchases && data.purchases.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-border">
-            <p className="text-xs font-medium text-foreground mb-1">Purchases in this period:</p>
-            {data.purchases.map((p: SharePurchase, idx: number) => (
-              <p key={idx} className="text-xs text-muted-foreground">
-                {new Date(p.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: {p.shares.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} shares
-              </p>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-  return null;
-};
-
 // Chart colors for multiple lines
 const CHART_COLORS = [
   'hsl(var(--primary))',
@@ -108,6 +69,91 @@ const CHART_COLORS = [
   'hsl(346, 87%, 43%)',    // red
   'hsl(43, 96%, 56%)',     // yellow
 ];
+
+/**
+ * Custom Tooltip for chart hover
+ * Updated to handle both single account and aggregated views
+ */
+const CustomTooltip = ({ active, payload, label, aggregateMode, accounts }: any) => {
+  if (active && payload && payload.length) {
+    const formattedDate = new Date(label).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    if (aggregateMode) {
+      // Aggregate Mode Tooltip
+      // Calculate total value across all displayed accounts for this timestamp
+      const totalPortfolioValue = payload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0);
+
+      return (
+        <div className="bg-card border border-border rounded-lg p-3 shadow-lg min-w-[250px]">
+          {/* Date Header */}
+          <p className="text-sm font-medium text-foreground mb-2">{formattedDate}</p>
+          
+          {/* List of Accounts */}
+          <div className="space-y-1 mb-2">
+            {payload.map((entry: any, index: number) => {
+              // Find the account to get the institution name
+              const account = accounts?.find((acc: FundAccount) => acc.accountName === entry.name);
+              const institution = account?.institution || "Account";
+              
+              return (
+                <div key={index} className="flex justify-between items-center text-xs">
+                  <span style={{ color: entry.color }} className="font-medium mr-2">
+                    {institution} value:
+                  </span>
+                  <span style={{ color: entry.color }} className="font-medium">
+                    {formatCurrency(entry.value)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Separator */}
+          <div className="border-t border-border my-2"></div>
+
+          {/* Portfolio Summary */}
+          <div className="flex justify-between items-center pt-1 text-sm font-bold text-foreground">
+            <span>
+              Portfolio value:
+            </span>
+            <span>
+              {formatCurrency(totalPortfolioValue)}
+            </span>
+          </div>
+        </div>
+      );
+    } else {
+      // Single Account Mode Tooltip (original logic)
+      const data = payload[0].payload;
+      return (
+        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-medium text-foreground mb-2">{formattedDate}</p>
+          <p className="text-sm text-primary font-semibold mb-1">
+            Total Value: {formatCurrency(data.totalValue)}
+          </p>
+          <p className="text-xs text-muted-foreground mb-1">
+            {data.totalShares.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} shares @ {formatCurrency(data.closePrice)}
+          </p>
+          {data.purchases && data.purchases.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-border">
+              <p className="text-xs font-medium text-foreground mb-1">Purchases in this period:</p>
+              {data.purchases.map((p: SharePurchase, idx: number) => (
+                <p key={idx} className="text-xs text-muted-foreground">
+                  {new Date(p.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: {p.shares.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} shares
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+  }
+  return null;
+};
 
 export function ChartingCard({
   fundName,
@@ -165,7 +211,14 @@ export function ChartingCard({
                 tick={{ fontSize: 12 }}
                 tickFormatter={(value) => `£${value.toLocaleString('en-GB', { maximumFractionDigits: 0 })}`}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip 
+                content={
+                  <CustomTooltip 
+                    aggregateMode={aggregateMode} 
+                    accounts={accounts} 
+                  />
+                } 
+              />
               {/* Render lines based on mode */}
               {aggregateMode ? (
                 // Multiple lines for aggregate mode
@@ -218,6 +271,23 @@ export function ChartingCard({
             </div>
           )}
         </div>
+
+        {/* Legend for Aggregate Mode */}
+        {aggregateMode && accounts && accounts.length > 0 && (
+          <div className="flex flex-wrap gap-x-6 gap-y-2 mt-2 justify-center">
+            {accounts.map((account, idx) => (
+              <div key={account.accountName} className="flex items-center gap-2">
+                <div 
+                  className="w-2 h-2 rounded-full shadow-sm" 
+                  style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
+                />
+                <span className="text-xs text-muted-foreground font-normal">
+                  {account.institution} {account.type}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

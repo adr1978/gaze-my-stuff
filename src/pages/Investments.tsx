@@ -1,41 +1,42 @@
 /**
  * Investments Page Component
- * 
- * This page provides comprehensive investment portfolio tracking functionality.
+ * * This page provides comprehensive investment portfolio tracking functionality.
  * Users can view and manage multiple investment accounts, track share purchases,
  * and visualise portfolio value over time with interactive charts.
- * 
- * Key Features:
+ * * Key Features:
  * - Multi-account support with dropdown selector
  * - Interactive chart with Week/Month/Year interval toggles
  * - Purchase history with edit capability
  * - Data persistence using localStorage
  * - Real-time value calculations based on share holdings and prices
- * 
- * Data Flow:
+ * * Data Flow:
  * 1. Load account data from localStorage (or use mock data as fallback)
  * 2. User selects account → updates displayed metrics and chart
  * 3. User can add/edit purchases → updates localStorage and re-renders
  * 4. Chart aggregates daily price data based on selected interval
  * 5. Hover interactions show detailed information at specific time points
- * 
- * Component Structure:
+ * * Component Structure:
  * - AccountSelectionCard: Account dropdown and summary metrics
  * - ChartingCard: Interactive chart with interval toggles
  * - PurchaseHistoryCard: List of purchases with edit capability
  * - AddPurchaseDialog: Modal for adding/editing purchases
  */ 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { showToast } from "@/lib/toast-helper";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { investmentsApi, FundAccount } from "@/lib/api";
+
 import { AccountSelectionCard } from "@/components/investments/AccountSelectionCard";
 import { ChartingCard } from "@/components/investments/ChartingCard";
 import { PurchaseHistoryCard } from "@/components/investments/PurchaseHistoryCard";
 import { AddPurchaseDialog } from "@/components/investments/AddPurchaseDialog";
-import { FundAccount, SharePurchase, ChartInterval } from "@/components/investments/types";
+import { SharePurchase, ChartInterval } from "@/components/investments/types";
 import { aggregateDataByInterval, loadHistoricalDataFromCSV } from "@/components/investments/utils";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button"; 
+import { RefreshCw } from "lucide-react";
 
 
 /**
@@ -44,10 +45,49 @@ import { Label } from "@/components/ui/label";
  * Loads account metadata from JSON and historical prices from CSV files
  */
 export default function Investments() {
-  // State for accounts data and loading status
+  const queryClient = useQueryClient();
+
+  // --- React Query: Fetch Accounts ---
+  const { 
+    data: apiAccounts = [], 
+    isLoading, 
+    isError, 
+    refetch 
+  } = useQuery<FundAccount[]>({
+    queryKey: ["investmentAccounts"],
+    queryFn: investmentsApi.getAccounts,
+  });
+
+  // --- React Query: Mutation for Saving Purchase ---
+  const savePurchaseMutation = useMutation({
+    mutationFn: investmentsApi.savePurchase,
+    onSuccess: (data) => {
+      // Invalidate query to trigger refetch of accounts
+      queryClient.invalidateQueries({ queryKey: ["investmentAccounts"] });
+      
+      const action = editingPurchase ? "updated" : "added";
+      showToast.success(
+        `Shares ${action}`,
+        `${action === "added" ? "Added" : "Updated"} ${newShares} shares for ${data.account.accountName}`
+      );
+      
+      // Close modal and reset form
+      setNewShares("");
+      setEditingPurchase(null);
+      setIsModalOpen(false);
+    },
+    onError: (error) => {
+      console.error('Error saving purchase:', error);
+      showToast.error("Save Failed", "Could not save purchase to the server");
+    }
+  });
+
+  // State for accounts data (merged with historical)
   const [accountsData, setAccountsData] = useState<FundAccount[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  
+  // Track which data sources we have attempted to load to prevent infinite loops
+  const loadedDataSources = useRef<Set<string>>(new Set());
   
   // State for UI interactions
   const [selectedAccount, setSelectedAccount] = useState<string>("");
@@ -61,82 +101,89 @@ export default function Investments() {
   const [aggregateMode, setAggregateMode] = useState(false);
   const [selectedOwner, setSelectedOwner] = useState<string>("");
 
-  // Load accounts metadata from JSON file on mount
+  // Update local state when API data changes
   useEffect(() => {
-    const loadAccountsMetadata = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/investments_tracker/data/investment_accounts.json');
-        
-        if (!response.ok) {
-          throw new Error('Failed to load investment accounts');
-        }
-        
-        const accounts = await response.json();
-        
-        // Initialize accounts with empty historical data (will be loaded separately)
-        const accountsWithEmptyData = accounts.map((account: any) => ({
-          ...account,
-          historicalData: []
-        }));
-        
-        setAccountsData(accountsWithEmptyData);
-        
-        // Set first account as selected
-        if (accountsWithEmptyData.length > 0) {
-          setSelectedAccount(accountsWithEmptyData[0].accountName);
-        }
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error loading investment accounts:', error);
-        showToast.error("Failed to Load", "Could not load investment accounts");
-        setIsLoading(false);
+    if (apiAccounts.length > 0) {
+      // Initialize with empty historical data if not present, or preserve existing if matched
+      const accountsWithPlaceholder = apiAccounts.map(acc => {
+        // Check if we already have historical data for this account in our local state
+        const existing = accountsData.find(a => a.accountName === acc.accountName);
+        return {
+          ...acc,
+          historicalData: existing?.historicalData || []
+        };
+      });
+      setAccountsData(accountsWithPlaceholder);
+      
+      // Set default selection if none
+      if (!selectedAccount && accountsWithPlaceholder.length > 0) {
+        setSelectedAccount(accountsWithPlaceholder[0].accountName);
       }
-    };
-    
-    loadAccountsMetadata();
-  }, []);
+    }
+  }, [apiAccounts]);
 
-  // Load historical data when selected account changes
+  // Load historical data based on selection (Account or Aggregate Owner)
   useEffect(() => {
-    if (!selectedAccount || accountsData.length === 0) return;
+    if (accountsData.length === 0) return;
+
+    // Identify which accounts need data loading
+    // We only load if we haven't loaded it yet (checking loadedDataSources ref)
+    let targets: FundAccount[] = [];
+
+    if (aggregateMode) {
+      // In aggregate mode, find accounts for owner that haven't been loaded yet
+      targets = accountsData.filter(
+        acc => acc.owner === selectedOwner && 
+               acc.historicalData.length === 0 &&
+               !loadedDataSources.current.has(acc.accountName)
+      );
+    } else {
+      // In single mode, load selected account if not loaded yet
+      const current = accountsData.find(acc => acc.accountName === selectedAccount);
+      if (current && current.historicalData.length === 0 && !loadedDataSources.current.has(current.accountName)) {
+        targets = [current];
+      }
+    }
+
+    if (targets.length === 0) return;
     
-    const currentAccount = accountsData.find(acc => acc.accountName === selectedAccount);
-    if (!currentAccount) return;
-    
-    // Skip if data already loaded for this data source
-    if (currentAccount.historicalData.length > 0) return;
-    
+    // Mark these as attempted immediately to prevent re-entry
+    targets.forEach(t => loadedDataSources.current.add(t.accountName));
+
     const loadHistoricalData = async () => {
       try {
         setHasError(false);
-        const data = await loadHistoricalDataFromCSV(currentAccount.dataSource);
         
-        // Update the account with loaded historical data
+        // Fetch data for all target accounts in parallel
+        const results = await Promise.all(
+          targets.map(async (acc) => {
+            try {
+              const data = await loadHistoricalDataFromCSV(acc.dataSource);
+              return { accountName: acc.accountName, data };
+            } catch (err) {
+              console.error(`Failed to load data for ${acc.accountName}`, err);
+              return { accountName: acc.accountName, data: [] }; // Return empty on fail
+            }
+          })
+        );
+        
+        // Update the accounts with loaded historical data
         setAccountsData(prevAccounts =>
-          prevAccounts.map(acc =>
-            acc.accountName === selectedAccount
-              ? { ...acc, historicalData: data }
-              : acc
-          )
+          prevAccounts.map(acc => {
+            const result = results.find(r => r?.accountName === acc.accountName);
+            // If we have a result, update the account. Otherwise, keep as is.
+            return result ? { ...acc, historicalData: result.data } : acc;
+          })
         );
       } catch (error) {
-        console.error('Error loading historical data:', error);
+        console.error('Error loading historical data batch:', error);
         setHasError(true);
         showToast.error("Data Error", "Failed to load historical price data");
       }
     };
     
     loadHistoricalData();
-  }, [selectedAccount, accountsData]);
-
-  // Save to localStorage whenever accountsData changes
-  useEffect(() => {
-    if (accountsData.length > 0) {
-      localStorage.setItem('investmentAccounts', JSON.stringify(accountsData));
-    }
-  }, [accountsData]);
+  }, [selectedAccount, selectedOwner, aggregateMode, accountsData]);
 
   // Handle aggregation toggle
   const handleAggregateToggle = (checked: boolean) => {
@@ -170,7 +217,7 @@ export default function Investments() {
   const currentAccount = accountsData.find(acc => acc.accountName === selectedAccount);
   
   // Show loading state
-  if (isLoading || !currentAccount) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-8">
         <div className="max-w-7xl mx-auto">
@@ -181,15 +228,42 @@ export default function Investments() {
     );
   }
 
+  // Show empty/error state if no accounts loaded
+  if (isError || (apiAccounts.length === 0 && !isLoading)) {
+    return (
+      <div className="min-h-screen bg-background p-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Investments</h1>
+          <div className="flex flex-col items-center justify-center p-12 border rounded-lg bg-card text-card-foreground">
+            <p className="text-lg font-medium mb-4">No investment accounts found</p>
+            <p className="text-muted-foreground mb-6 text-center max-w-md">
+              Could not load account data. Please ensure the API is running and the data file exists.
+            </p>
+            <Button onClick={() => refetch()} variant="outline">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Retry Connection
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Calculate values based on mode
   let currentPrice = 0;
   let totalValue = 0;
+  let totalShares = 0;
   let chartData: any[] = [];
   let totalAccounts = 0;
 
   if (aggregateMode) {
     // Aggregate mode: calculate totals across all owner's accounts
     totalAccounts = ownerAccounts.length;
+    
+    // Calculate total shares
+    totalShares = ownerAccounts.reduce((sum, acc) => sum + acc.totalShares, 0);
+
+    // Calculate total value
     totalValue = ownerAccounts.reduce((sum, acc) => {
       const price = acc.historicalData.length > 0
         ? acc.historicalData[acc.historicalData.length - 1].closePrice
@@ -242,6 +316,7 @@ export default function Investments() {
       ? currentAccount.historicalData[currentAccount.historicalData.length - 1].closePrice
       : 0;
     totalValue = currentAccount.totalShares * currentPrice;
+    totalShares = currentAccount.totalShares;
 
     // Aggregate historical data based on selected interval
     chartData = currentAccount.historicalData.length > 0
@@ -272,10 +347,11 @@ export default function Investments() {
 
   /**
    * Save or update a purchase record
-   * Updates accountsData state which triggers localStorage save via useEffect
-   * Uses UK English messaging throughout
+   * Calls the API mutation to persist changes
    */
   const handleSavePurchase = () => {
+    if (!currentAccount) return; 
+
     // Validation: shares amount
     if (!newShares || parseFloat(newShares) <= 0) {
       showToast.error("Invalid Amount", "Please enter a valid number of shares");
@@ -291,44 +367,13 @@ export default function Investments() {
     const formattedDate = purchaseDate.toISOString().split('T')[0];
     const sharesAmount = parseFloat(newShares);
 
-    // Update accounts data with new or edited purchase
-    setAccountsData(prevAccounts => 
-      prevAccounts.map(account => {
-        if (account.accountName !== selectedAccount) return account;
-
-        if (editingPurchase) {
-          // Update existing purchase
-          const updatedPurchases = account.purchases.map(p =>
-            p.date === editingPurchase.date
-              ? { ...p, date: formattedDate, shares: sharesAmount }
-              : p
-          );
-          const totalShares = updatedPurchases.reduce((sum, p) => sum + p.shares, 0);
-          return { ...account, purchases: updatedPurchases, totalShares };
-        } else {
-          // Add new purchase
-          const newPurchase: SharePurchase = {
-            date: formattedDate,
-            shares: sharesAmount,
-          };
-          const updatedPurchases = [...account.purchases, newPurchase];
-          const totalShares = updatedPurchases.reduce((sum, p) => sum + p.shares, 0);
-          return { ...account, purchases: updatedPurchases, totalShares };
-        }
-      })
-    );
-
-    // Show success toast with UK English
-    const action = editingPurchase ? "updated" : "added";
-    showToast.success(
-      `Shares ${action}`,
-      `${action === "added" ? "Added" : "Updated"} ${newShares} shares ${action === "added" ? "to" : "for"} ${currentAccount.accountName}`
-    );
-
-    // Reset form state
-    setNewShares("");
-    setEditingPurchase(null);
-    setIsModalOpen(false);
+    // Call Mutation
+    savePurchaseMutation.mutate({
+      accountName: currentAccount.accountName,
+      date: formattedDate,
+      shares: sharesAmount,
+      originalDate: editingPurchase ? editingPurchase.date : undefined
+    });
   };
 
   return (
@@ -371,6 +416,7 @@ export default function Investments() {
             totalValue={totalValue}
             aggregateMode={aggregateMode}
             totalAccounts={totalAccounts}
+            totalShares={totalShares}
           />
 
           {/* Interactive Chart with interval toggles */}
@@ -390,8 +436,9 @@ export default function Investments() {
             purchases={aggregateMode 
               ? ownerAccounts.flatMap(acc => 
                   acc.purchases.map(p => ({ ...p, accountName: acc.accountName }))
-                )
-              : currentAccount?.purchases || []
+                ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              : (currentAccount?.purchases || []).map(p => ({ ...p, accountName: currentAccount?.accountName }))
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             }
             onEditPurchase={handleOpenModal}
             onAddPurchase={() => handleOpenModal()}

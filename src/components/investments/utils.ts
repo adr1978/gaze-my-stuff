@@ -1,7 +1,6 @@
 /**
  * Investment Utilities
- * 
- * Helper functions for investment calculations, data aggregation, and formatting.
+ * * Helper functions for investment calculations, data aggregation, and formatting.
  * Used across investment components to ensure consistent calculations.
  */
 
@@ -34,15 +33,11 @@ export function getTotalSharesUpToDate(purchases: SharePurchase[], targetDate: s
  * Aggregate daily historical data into larger time intervals
  * Groups data by Week (ending Friday), Month (last day), or Year (last day)
  * Calculates total investment value and identifies purchases within each period
- * 
- * @param data - Array of daily price data
- * @param purchases - Array of all purchases to track
- * @param interval - Time interval to aggregate by
- * @returns Aggregated data array with totalValue, totalShares, and purchases for each period
  */
 export function aggregateDataByInterval(data: any[], purchases: SharePurchase[], interval: ChartInterval) {
+  if (!data || data.length === 0) return [];
+
   if (interval === 'Week') {
-    // Week interval: Group by week, use Friday as the representative day
     const weeklyData: any[] = [];
     let currentWeek: any[] = [];
     let currentWeekStart: Date | null = null;
@@ -50,13 +45,10 @@ export function aggregateDataByInterval(data: any[], purchases: SharePurchase[],
     data.forEach((day, index) => {
       const dayDate = new Date(day.date);
       const weekStart = new Date(dayDate);
-      // Set to Sunday (start of week)
-      weekStart.setDate(dayDate.getDate() - dayDate.getDay());
+      weekStart.setDate(dayDate.getDate() - dayDate.getDay()); // Set to Sunday
 
-      // Check if we're starting a new week
       if (!currentWeekStart || weekStart.getTime() !== currentWeekStart.getTime()) {
         if (currentWeek.length > 0) {
-          // Find Friday in the current week, or use last available day
           const friday = currentWeek.find(d => new Date(d.date).getDay() === 5) || currentWeek[currentWeek.length - 1];
           const totalShares = getTotalSharesUpToDate(purchases, friday.date);
           const purchasesInWeek = purchases.filter(p =>
@@ -76,7 +68,6 @@ export function aggregateDataByInterval(data: any[], purchases: SharePurchase[],
         currentWeek.push(day);
       }
 
-      // Handle last week
       if (index === data.length - 1 && currentWeek.length > 0) {
         const friday = currentWeek.find(d => new Date(d.date).getDay() === 5) || currentWeek[currentWeek.length - 1];
         const totalShares = getTotalSharesUpToDate(purchases, friday.date);
@@ -92,10 +83,8 @@ export function aggregateDataByInterval(data: any[], purchases: SharePurchase[],
         });
       }
     });
-
     return weeklyData;
   } else if (interval === 'Month') {
-    // Month interval: Group by month, use last day of month
     const monthlyData: { [key: string]: any[] } = {};
 
     data.forEach(day => {
@@ -106,10 +95,7 @@ export function aggregateDataByInterval(data: any[], purchases: SharePurchase[],
       monthlyData[monthKey].push(day);
     });
 
-    // Sort months chronologically to ensure all months appear in order
-    const sortedMonthKeys = Object.keys(monthlyData).sort();
-    
-    return sortedMonthKeys.map(monthKey => {
+    return Object.keys(monthlyData).sort().map(monthKey => {
       const monthDays = monthlyData[monthKey];
       const lastDay = monthDays[monthDays.length - 1];
       const totalShares = getTotalSharesUpToDate(purchases, lastDay.date);
@@ -125,7 +111,6 @@ export function aggregateDataByInterval(data: any[], purchases: SharePurchase[],
       };
     });
   } else {
-    // Year interval: Group by year, use last day of year
     const yearlyData: { [key: string]: any[] } = {};
 
     data.forEach(day => {
@@ -156,41 +141,82 @@ export function aggregateDataByInterval(data: any[], purchases: SharePurchase[],
 /**
  * Load Historical Price Data from CSV
  * Fetches price data from CSV files in the API data directory
- * 
- * @param dataSource - Name of the data source (e.g., "hsbc_all_world_prices")
+ * * @param dataSource - Name of the data source (e.g., "hsbc_all_world_prices")
  * @returns Promise resolving to array of historical data points with date and closePrice
- * 
- * CSV Format: Date,Price (e.g., "02/01/2024,2.699")
- * Dates are parsed from DD/MM/YYYY format and converted to YYYY-MM-DD ISO format
- * 
- * @throws Error if CSV file cannot be loaded or parsed
  */
 export async function loadHistoricalDataFromCSV(dataSource: string) {
   try {
-    // Fetch CSV file from API data directory
-    const response = await fetch(`/api/investments_tracker/data/${dataSource}.csv`);
+    // REVERTED TO ORIGINAL PATH:
+    const url = `/api/investments_tracker/data/${dataSource}.csv`;
+    console.log(`Fetching CSV from: ${url}`);
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`Failed to load CSV: ${response.status} ${response.statusText}`);
     }
     
     const csvText = await response.text();
-    const lines = csvText.trim().split('\n');
+    
+    // Check if server returned HTML (error page) instead of CSV
+    if (csvText.trim().startsWith("<!DOCTYPE html") || csvText.trim().startsWith("<html")) {
+        throw new Error("Server returned HTML instead of CSV. Verify the file path and API mount.");
+    }
+
+    console.log(`CSV Raw Length: ${csvText.length} characters`);
+    
+    // Split by newline, handling both \n and \r\n
+    const lines = csvText.trim().split(/\r?\n/);
+    console.log(`CSV Line Count: ${lines.length}`);
     
     // Skip header row and parse data
-    const data = lines.slice(1).map(line => {
-      const [dateStr, priceStr] = line.split(',');
+    const data = lines.slice(1).map((line, idx) => {
+      if (!line.trim()) return null;
+
+      const parts = line.split(',');
+      if (parts.length < 2) {
+        if (line.length > 5) console.warn(`Skipping malformed line ${idx + 2}: ${line}`);
+        return null;
+      }
       
-      // Parse DD/MM/YYYY format to YYYY-MM-DD
-      const [day, month, year] = dateStr.trim().split('/');
-      const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      const dateStr = parts[0].trim();
+      const priceStr = parts[1].trim();
       
+      let isoDate = '';
+      
+      // Try DD/MM/YYYY format (e.g. 02/01/2024)
+      if (dateStr.includes('/')) {
+         const dateParts = dateStr.split('/');
+         if (dateParts.length === 3) {
+             const [day, month, year] = dateParts;
+             if (day && month && year) {
+                 isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+             }
+         }
+      } 
+      // Try YYYY-MM-DD format
+      else if (dateStr.includes('-')) {
+          isoDate = dateStr;
+      }
+      
+      if (!isoDate) {
+        console.warn(`Could not parse date on line ${idx + 2}: ${dateStr}`);
+        return null;
+      }
+      
+      const price = parseFloat(priceStr);
+      if (isNaN(price)) {
+        console.warn(`Invalid price on line ${idx + 2}: ${priceStr}`);
+        return null;
+      }
+
       return {
         date: isoDate,
-        closePrice: parseFloat(priceStr.trim())
+        closePrice: price
       };
-    });
+    }).filter((item): item is { date: string; closePrice: number } => item !== null);
     
+    console.log(`Parsed Data Count: ${data.length} rows`);
     return data;
   } catch (error) {
     console.error('Error loading historical data from CSV:', error);

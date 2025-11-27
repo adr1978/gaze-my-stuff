@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePickerPopover } from "./DatePickerPopover";
 import { SharePurchase } from "./types";
+import { SquarePen } from 'lucide-react';
 
 interface AddPurchaseDialogProps {
   isOpen: boolean;
@@ -101,6 +102,7 @@ export function AddPurchaseDialog({
             Cancel
           </Button>
           <Button onClick={onSave}>
+            <SquarePen className="h-4 w-4" />
             {editingPurchase ? 'Update' : 'Add'} Purchase
           </Button>
         </div>

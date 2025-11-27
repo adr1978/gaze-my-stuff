@@ -57,7 +57,41 @@ class ApiClient {
 
 export const api = new ApiClient(API_BASE_URL);
 
-// Recipe API types
+// --- Investments API Types & Functions ---
+
+export interface SharePurchase {
+  date: string; // ISO format: YYYY-MM-DD
+  shares: number;
+}
+
+export interface FundAccount {
+  accountName: string;
+  owner: string;
+  institution: string;
+  type: string;
+  fundName: string;
+  fundID: string;
+  dataSource: string;
+  totalShares: number;
+  purchases: SharePurchase[];
+  historicalData: { date: string; closePrice: number }[];
+}
+
+export const investmentsApi = {
+  getAccounts: async (): Promise<FundAccount[]> => {
+    return api.get("/api/investments/accounts");
+  },
+  savePurchase: async (payload: {
+    accountName: string;
+    date: string;
+    shares: number;
+    originalDate?: string;
+  }): Promise<{ status: string; account: FundAccount }> => {
+    return api.post("/api/investments/purchase", payload);
+  },
+};
+
+// --- Recipe API types ---
 interface RecipeData {
   url: string;
   title: string;
@@ -80,8 +114,8 @@ export const recipeApi = {
   },
 };
 
-// GoCardless API types
-export interface Account { // <-- THE FIX: Added export
+// --- GoCardless API types ---
+export interface Account { 
   account_id: string; 
   institution_name: string;
   last_four: string; 
@@ -97,7 +131,7 @@ export interface Account { // <-- THE FIX: Added export
   sync_status?: string;
 }
 
-export interface Requisition { // <-- THE FIX: Added export
+export interface Requisition { 
   id: string;
   reference: string;
   owner: string;
@@ -172,14 +206,13 @@ export const gocardlessApi = {
   },
 };
 
-// Add this new type to src/lib/api.ts
 export interface Institution {
   id: string;
   name: string;
   logo: string;
 }
 
-// Webhook API types
+// --- Webhook API types ---
 export interface Webhook {
   id: string;
   timestamp: string;

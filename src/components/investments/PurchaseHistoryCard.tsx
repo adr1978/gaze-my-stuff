@@ -1,17 +1,14 @@
 /**
  * PurchaseHistoryCard Component
- * 
- * Displays a list of all share purchases for the selected account.
+ * * Displays a list of all share purchases for the selected account.
  * Each purchase is clickable to open the edit modal.
  * Includes an "Add Purchase" button at the bottom.
- * 
- * Features:
+ * * Features:
  * - Formatted dates using "MMMM do, yyyy" format (e.g., "November 12th, 2025")
  * - Hover effects to show edit icon
  * - Formatted share amounts with 2 decimal places
  * - Add button with plus icon
- * 
- * Props:
+ * * Props:
  * - accountName: Name of the current account
  * - purchases: Array of purchase transactions
  * - onEditPurchase: Callback when a purchase is clicked for editing
@@ -66,15 +63,17 @@ export function PurchaseHistoryCard({
             >
               <div className="flex flex-col gap-1">
                 {/* Date formatted as "November 12th, 2025" using date-fns */}
-                <span className="text-sm font-medium">
-                  {format(new Date(purchase.date), 'MMMM do, yyyy')}
-                </span>
-                {/* Account name in aggregate mode */}
-                {aggregateMode && purchase.accountName && (
-                  <span className="text-xs text-muted-foreground">
-                    {purchase.accountName}
+                <div className="flex items-center gap-6">
+                  <span className="text-sm font-medium">
+                    {format(new Date(purchase.date), 'MMMM do, yyyy')}
                   </span>
-                )}
+                  {/* Account name only visible in aggregate mode */}
+                  {aggregateMode && purchase.accountName && (
+                    <span className="text-xs text-muted-foreground">
+                      {purchase.accountName}
+                    </span>
+                  )}
+                </div>
               </div>
               
               {/* Share amount and edit icon */}

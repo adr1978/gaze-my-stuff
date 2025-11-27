@@ -24,14 +24,12 @@ const queryClient = new QueryClient();
 
 /**
  * Main App Component
- * 
- * Sets up the application with necessary providers:
+ * * Sets up the application with necessary providers:
  * - QueryClientProvider: Manages server state and caching
  * - TooltipProvider: Enables tooltips throughout the app
  * - BrowserRouter: Handles client-side routing
  * - Layout: Provides consistent page structure with sidebar
- * 
- * Routes are organized by feature area (finance tools, utility tools, etc.)
+ * * Routes are organized by feature area (finance tools, utility tools, etc.)
  */
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -39,7 +37,12 @@ const App = () => (
       <TooltipProvider>
         {/* Toast notification component for user feedback */}
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <Layout>
             <Routes>
               {/* Main landing page */}

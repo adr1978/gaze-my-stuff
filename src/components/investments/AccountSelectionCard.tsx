@@ -1,16 +1,13 @@
 /**
  * AccountSelectionCard Component
- * 
- * Displays account selection dropdown with key metrics summary.
+ * * Displays account selection dropdown with key metrics summary.
  * Shows total shares, current price, and total portfolio value for the selected account.
- * 
- * Features:
+ * * Features:
  * - Account dropdown (shows account name only, not full-width)
  * - Three-column metric display with icons
  * - Icons: chart-pie (Total Shares), circle-pound-sterling (Current Price), chart-no-axes-combined (Total Value)
  * - Formatted currency and number displays
- * 
- * Props:
+ * * Props:
  * - accounts: Array of all available fund accounts
  * - selectedAccountId: Currently selected account ID
  * - onAccountChange: Callback when account selection changes
@@ -36,6 +33,7 @@ interface AccountSelectionCardProps {
   totalValue: number;
   aggregateMode: boolean;
   totalAccounts: number;
+  totalShares?: number;
 }
 
 /**
@@ -66,6 +64,7 @@ export function AccountSelectionCard({
   totalValue,
   aggregateMode,
   totalAccounts,
+  totalShares = 0,
 }: AccountSelectionCardProps) {
   return (
     <Card>
@@ -109,7 +108,7 @@ export function AccountSelectionCard({
         {aggregateMode ? (
           // Aggregate mode: show summary stats
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
               {/* Total Accounts */}
               <div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
@@ -117,6 +116,15 @@ export function AccountSelectionCard({
                   <span>Total Accounts</span>
                 </div>
                 <p className="text-2xl font-semibold">{totalAccounts}</p>
+              </div>
+
+               {/* Total Shares */}
+               <div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <ChartPie className="h-4 w-4" />
+                  <span>Total Shares</span>
+                </div>
+                <p className="text-2xl font-semibold">{formatNumber(totalShares)}</p>
               </div>
 
               {/* Portfolio Value */}
