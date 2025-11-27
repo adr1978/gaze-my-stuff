@@ -47,7 +47,7 @@ investments_data_path = os.path.join(base_dir, "investments_tracker", "data")
 if os.path.exists(investments_data_path):
     # Mount at the exact path the frontend expects
     app.mount("/api/investments_tracker/data", StaticFiles(directory=investments_data_path), name="investments_tracker_data")
-    print(f"DEBUG: Mounted static files at /api/investments_tracker/data", file=sys.stderr)
+    #print(f"DEBUG: Mounted static files at /api/investments_tracker/data", file=sys.stderr)
 else:
     print(f"WARNING: Investments data directory not found at {investments_data_path}", file=sys.stderr)
 
