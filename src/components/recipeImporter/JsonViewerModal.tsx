@@ -34,7 +34,7 @@ interface RecipeData {
   instructions: RecipeItem[]; // Changed from string[]
   imageUrl: string | null;
   source: string | null;
-  category: string | null;
+  category: string | string[] | null;
 }
 
 interface JsonViewerModalProps {

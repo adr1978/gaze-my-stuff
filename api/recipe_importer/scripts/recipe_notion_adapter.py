@@ -205,7 +205,9 @@ def save_recipe_to_notion(recipe_data, whisk_id):
 
     # Optional Fields
     if recipe_data.get('category'):
-        properties["Collection"] = {"multi_select": [{"name": recipe_data['category']}]}
+        # Handle both single category (string) and multiple categories (array)
+        categories = recipe_data['category'] if isinstance(recipe_data['category'], list) else [recipe_data['category']]
+        properties["Collection"] = {"multi_select": [{"name": cat} for cat in categories]}
     
     if recipe_data.get('source'):
         properties["Source Title"] = {"rich_text": [{"text": {"content": recipe_data['source']}}]}

@@ -14,7 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, ChevronDown, Eraser } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Save, ChevronDown, Eraser, Check } from "lucide-react";
 
 // --- Types ---
 
@@ -34,7 +36,7 @@ interface RecipeData {
   instructions: RecipeItem[];
   description: string | null;
   source: string | null;
-  category: string | null;
+  category: string | string[] | null;
 }
 
 interface EditRecipeModalProps {
@@ -239,22 +241,66 @@ export function EditRecipeModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-category">Category</Label>
-                    <Select
-                      value={editedRecipe.category || ""}
-                      onValueChange={(value) => setEditedRecipe({ ...editedRecipe, category: value })}
-                    >
-                      <SelectTrigger id="edit-category" className="bg-background">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="edit-category">Categories</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="edit-category"
+                          variant="outline"
+                          className="w-full justify-start bg-background font-normal"
+                        >
+                          {(() => {
+                            const selectedCategories = Array.isArray(editedRecipe.category) 
+                              ? editedRecipe.category 
+                              : editedRecipe.category 
+                                ? [editedRecipe.category] 
+                                : [];
+                            return selectedCategories.length > 0 
+                              ? selectedCategories.join(", ") 
+                              : "Select categories";
+                          })()}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-3" align="start">
+                        <div className="space-y-2">
+                          {categories.map((category) => {
+                            const selectedCategories = Array.isArray(editedRecipe.category) 
+                              ? editedRecipe.category 
+                              : editedRecipe.category 
+                                ? [editedRecipe.category] 
+                                : [];
+                            const isChecked = selectedCategories.includes(category);
+                            
+                            return (
+                              <div key={category} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`category-${category}`}
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    let newCategories: string[];
+                                    if (checked) {
+                                      newCategories = [...selectedCategories, category];
+                                    } else {
+                                      newCategories = selectedCategories.filter(c => c !== category);
+                                    }
+                                    setEditedRecipe({ 
+                                      ...editedRecipe, 
+                                      category: newCategories.length > 0 ? newCategories : null 
+                                    });
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`category-${category}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                  {category}
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
 

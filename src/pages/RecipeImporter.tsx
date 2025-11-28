@@ -35,7 +35,7 @@ export interface RecipeData {
   instructions: RecipeItem[];  // Changed from string[]
   description: string | null;
   source: string | null;
-  category: string | null;
+  category: string | string[] | null;
 }
 
 // Predefined recipe categories for classification

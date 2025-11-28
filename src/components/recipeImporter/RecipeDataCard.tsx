@@ -25,7 +25,7 @@ export interface RecipeData {
   imageUrl: string | null;
   description: string | null;
   source: string | null;
-  category: string | null;
+  category: string | string[] | null;
 }
 
 interface RecipeDataCardProps {
@@ -197,7 +197,9 @@ export function RecipeDataCard({
               <Tag className="h-4 w-4 text-primary" />              
               <span className="font-medium text-foreground">Category:</span>
               <span className="text-muted-foreground">
-                {recipeData.category || "–"}
+                {Array.isArray(recipeData.category) 
+                  ? recipeData.category.join(", ") 
+                  : recipeData.category || "–"}
               </span>
             </div>
           </div>
