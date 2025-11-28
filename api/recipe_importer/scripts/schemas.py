@@ -23,10 +23,10 @@ class RecipeSchema(BaseModel):
     instructions: List[RecipeItem] = Field(..., description="A list of instructions with optional grouping.")
     source: Optional[str] = Field(None, description="Which site / chef the recipe should be attributed to")
     
-    category: Optional[str] = Field(
+    category: Optional[Union[str, List[str]]] = Field(
         None, 
         description=(
-            "The most relevant category. Should be one of: "
+            "The most relevant category or categories. Should be one or more of: "
             "Bread, Christmas, Drinks, Easter, Fish, Halloween, Ice Cream, "
             "Light Bites, Meat (Poultry), Meat (Red), Puddings, Sandwiches, "
             "Side Dishes, Vegetarian"
