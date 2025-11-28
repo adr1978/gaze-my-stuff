@@ -3,10 +3,25 @@ Centralized Notion API Configuration
 Used by all Notion sync scripts across the project.
 """
 import os
+import logging
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Configure logging for this module
+logger = logging.getLogger(__name__)
+
+# --- FIX: Explicitly find .env file in parent directory ---
+# Current file: api/notion_handlers/notion_config.py
+# .env location: project_root/.env (3 levels up)
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+    # logger.info(f"Loaded .env from: {env_path}") # Uncomment to debug path
+else:
+    # Fallback to standard load (current dir)
+    load_dotenv()
+    logger.warning(f"Could not find .env at {env_path}, checking current directory...")
 
 # Notion API Credentials (from .env)
 NOTION_API_KEY = os.getenv("NOTION_API_KEY")
@@ -27,5 +42,3 @@ DATA_SOURCES = {
 
 # API Configuration
 NOTION_VERSION = "2025-09-03"
-
-

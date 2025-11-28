@@ -56,13 +56,21 @@ async def upload_whisk(recipe: RecipeUpload):
             raise HTTPException(status_code=status_code, detail=response_data)
         
         # 3. Extract Whisk ID
-        # Defensive check: Ensure response_data is a dict
         whisk_id = "unknown"
         if isinstance(response_data, dict):
-            whisk_id = response_data.get("recipe", {}).get("id", "unknown")
+            # OLD (Causes Error):
+            # whisk_id = response_data.get("recipe", {}).get("id", "unknown")
+            
+            # NEW (Fix):
+            # First try the direct key provided by your handler
+            whisk_id = response_data.get("whisk_id")
+            
+            # Fallback for safety if structure changes
+            if not whisk_id:
+                 whisk_id = response_data.get("recipe", {}).get("id", "unknown")
         else:
-            logger.warning(f"⚠️ Whisk response was not a dictionary (Type: {type(response_data)}). Content: {str(response_data)[:100]}...")
-        
+            logger.warning(f"⚠️ Whisk response was not a dictionary (Type: {type(response_data)})...")        
+
         # 4. Save to Notion (Conditional)
         if WHISK_SAVE_TO_NOTION:
             logger.info("[Whisk] Step 3: Saving to Notion...")

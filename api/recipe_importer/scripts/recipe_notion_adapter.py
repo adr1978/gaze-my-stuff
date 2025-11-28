@@ -121,7 +121,7 @@ def _build_grouped_list(items, list_type, default_group_title, empty_message):
             {
                 "object": "block",
                 "type": list_type,
-                {list_type}: {
+                list_type: {
                     "rich_text": [{"type": "text", "text": {"content": item_text}}]
                 }
             }
@@ -170,7 +170,7 @@ def _create_toggle_block(title, items, list_type):
                 {
                     "object": "block",
                     "type": list_type,
-                    {list_type}: {
+                    list_type: {
                         "rich_text": [{"type": "text", "text": {"content": item_text}}]
                     }
                 }

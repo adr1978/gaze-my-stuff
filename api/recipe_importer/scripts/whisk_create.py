@@ -29,37 +29,29 @@ def create_recipe_in_whisk(access_token: str, recipe_data: dict) -> dict:
     # --- INGREDIENTS LOGIC ---
     ingredients_list = []
     for ing in recipe_data.get('ingredients', []):
-        # Case 1: Dict (New Schema format)
         if isinstance(ing, dict):
             ing_dict = {"text": ing.get('text', '')}
-            # Only add group if it exists
             if ing.get('group'):
                 ing_dict["group"] = ing['group']
             ingredients_list.append(ing_dict)
-        # Case 2: Simple string (Legacy fallback)
         elif isinstance(ing, str):
             ingredients_list.append({"text": ing})
     
     # --- INSTRUCTIONS LOGIC ---
     instructions_list = []
     for instruction in recipe_data.get('instructions', []):
-        # Case 1: Dict (New Schema format)
         if isinstance(instruction, dict):
             step = {
                 "text": instruction.get('text', ''), 
                 "customLabels": []
             }
-            # Only add group if it exists
             if instruction.get('group'):
                 step["group"] = instruction.get('group')
-            
             instructions_list.append(step)
-            
-        # Case 2: Simple string (Legacy fallback)
         elif isinstance(instruction, str) and instruction:
             instructions_list.append({"text": instruction, "customLabels": []})
     
-    # Handle Cook's Tips (Legacy support - new parsers put this in instructions)
+    # Handle Cook's Tips
     if recipe_data.get('cooks_tip'):
         tips = recipe_data.get('cooks_tip')
         if isinstance(tips, str):
@@ -157,4 +149,10 @@ def create_recipe_in_whisk(access_token: str, recipe_data: dict) -> dict:
         e.error_info = error_info
         raise e
     
-    return response.json()
+    # --- CAPTURE ID & LOG ---
+    response_data = response.json()
+    whisk_id = response_data.get("recipe", {}).get("id", "unknown")
+    
+    logger.info(f"  -> Recipe saved (ID: {whisk_id})")
+    
+    return response_data
