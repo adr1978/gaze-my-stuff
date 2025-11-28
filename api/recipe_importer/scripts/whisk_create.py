@@ -15,7 +15,7 @@ from .whisk_collections import (
 logger = logging.getLogger("whisk_importer")
 if not logger.handlers:
     handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter('INFO:     [Whisk] %(message)s'))
+    handler.setFormatter(logging.Formatter('INFO:     [Recipe Importer] %(message)s'))
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 logger.propagate = False

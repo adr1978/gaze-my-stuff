@@ -195,7 +195,7 @@ def save_recipe_to_notion(recipe_data, whisk_id):
     properties = {
         "Recipe Id": {"rich_text": [{"text": {"content": str(whisk_id)}}]},
         "Name": {"title": [{"text": {"content": recipe_data.get('title', 'Untitled')}}]},
-        "Date Added (Unix)": {"rich_text": [{"text": {"content": str(int(time.time()))}}]},
+        "Date Added (Unix)": {"rich_text": [{"text": {"content": str(int(time.time() * 1000))}}]}, # *1000 as default is seconds in python but Notion uses miliseconds
         "Servings": {"number": int(recipe_data.get('servings') or 0)},
         "Total Time": {"number": _calculate_total_time(recipe_data)},
         "Prep Time": {"number": int(recipe_data.get('prep_time') or 0)},

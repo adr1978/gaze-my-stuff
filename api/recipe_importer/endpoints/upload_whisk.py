@@ -73,11 +73,11 @@ async def upload_whisk(recipe: RecipeUpload):
 
         # 4. Save to Notion (Conditional)
         if WHISK_SAVE_TO_NOTION:
-            logger.info("[Whisk] Step 3: Saving to Notion...")
+            logger.info("[Recipe Importer] Step 3: Saving to Notion...")
             try:
                 if whisk_id != "unknown":
                     save_recipe_to_notion(recipe_data, whisk_id)
-                    logger.info("[Whisk]   -> ✅ Notion save complete!")
+                    logger.info("[Recipe Importer]   -> ✅ Notion save complete!")
                 else:
                     logger.warning("  -> Skipping Notion save: Could not retrieve Whisk ID from response")
             except Exception as e:

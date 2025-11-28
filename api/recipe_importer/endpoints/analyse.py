@@ -129,14 +129,19 @@ async def analyse_recipe(
         "- GROUPING: Detect ingredient/instruction groups (e.g. 'For the Icing').\n"
         "  - If a group exists, set the 'group' field to the group name (e.g. 'For the icing').\n"
         "  - If the group name is a single word (e.g. 'Icing'), prefix it with 'For the ' (e.g. 'For the icing').\n"
-        "  - Lowercase the group name (e.g. 'For the icing').\n"
+        "  - Ensure the group name starts with a capital letter (e.g. 'For the icing').  Everything else is lowercase\n"
         "  - For the main section, set 'group' to null.\n"
         "- INSTRUCTIONS: Include 'Cook's Tips' or similar notes as instructions with group='Cook's tip'.\n"
         "- If a field is missing, return null.\n"
-        "- For images: prioritize high-res URLs from JSON-LD or meta tags.\n"
-        "- CATEGORY: Automatically associate the recipe to ONE of the following categories: "
-        "Bread, Christmas, Drinks, Easter, Fish, Halloween, Ice Cream, Light Bites, "
-        "Meat (Poultry), Meat (Red), Puddings, Sandwiches, Side Dishes, Vegetarian."
+        "- For IMAGES: \n"
+        "  - Check 'srcset' attributes in the HTML for the highest resolution version. \n"
+        "  - Always PRESERVE all query parameters (e.g. '?uuid=...&wid=...') exactly as found. \n"
+        "  - Do not truncate URLs at '&' symbols.\n",
+        "  - Preserve all query string parameters for Scene7 based image URLs including any characters after and including the $ sign \n"
+        "  - An example URL is https://waitrose-prod.scene7.com/is/image/waitroseprod/hazelnut-chocolate-layer-cake?uuid=34b60a96-daee-43ee-a61e-8b1cf6637b61&$Waitrose-Default-Image-Preset$&wid=2400&fit=constrain%2C0 \n"
+        "- CATEGORY: Automatically associate the recipe to ONE of the following categories: \n"
+        "Bread, Christmas, Drinks, Easter, Fish, Halloween, Ice Cream, Light Bites,\n"
+        "Meat (Poultry), Meat (Red), Puddings, Sandwiches, Side Dishes, Vegetarian.\n"
     )
 
     try:

@@ -17,7 +17,7 @@ def upload_recipe_to_whisk(recipe_data: dict):
     """
     try:
         # STEP 1: AUTHENTICATION
-        logger.info("Step 1: Authenticating with Samsung Food...")
+        logger.info("Step 1: Authenticating with Whisk...")
         token_data = get_access_token()
         
         if not token_data or not token_data.get('access_token'):
@@ -29,7 +29,7 @@ def upload_recipe_to_whisk(recipe_data: dict):
         logger.info(f"  -> ✅ Auth successful (Source: {auth_source})")
         
         # STEP 2: UPLOAD
-        logger.info("Step 2: Uploading recipe data...")
+        logger.info("Step 2: Uploading recipe data to Whisk...")
         whisk_response = create_recipe_in_whisk(access_token, recipe_data)
         
         # Success
