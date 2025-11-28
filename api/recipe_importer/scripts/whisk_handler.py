@@ -1,141 +1,49 @@
 """
-Waitrose Recipe Processing Handler
-
-Handles parsing of Waitrose recipe URLs and extraction of recipe data.
-Returns structured JSON to frontend (does NOT upload to Whisk).
-
-This module:
-1. Validates the Waitrose URL
-2. Scrapes the recipe page
-3. Returns structured JSON to frontend
-
-Upload to Whisk is handled separately by the upload endpoint.
+Whisk Handler Script
+Orchestrates the authentication and upload process.
 """
-
 import logging
-from urllib.parse import urlparse
-from .waitrose_scraper import scrape_waitrose_recipe
+import os
+import json
+from .whisk_auth import get_access_token
+from .whisk_create import create_recipe_in_whisk
 
-logger = logging.getLogger(__name__)
+# Use the shared logger
+logger = logging.getLogger("whisk_importer")
 
-
-def process_waitrose_recipe(url: str):
+def upload_recipe_to_whisk(recipe_data: dict):
     """
-    Parse a Waitrose recipe URL and return structured JSON.
-    
-    This function only handles parsing/extraction - it does NOT upload to Whisk.
-    The frontend will receive the parsed data and can then upload via the 
-    separate upload endpoint.
-    
-    Args:
-        url: Waitrose recipe URL
-        
-    Returns:
-        Tuple of (status_code, response_dict)
+    Main entry point for uploading a recipe.
     """
-    
-    # Validate URL is provided
-    if not url:
-        logger.error("No URL provided")
-        return 400, {
-            "success": False,
-            "data": None,
-            "error": {"message": "URL is required", "body": {}}
-        }
-    
-    # Validate URL domain is waitrose.com
     try:
-        parsed_url = urlparse(url)
-        if not parsed_url.netloc.endswith('waitrose.com'):
-            logger.error(f"Invalid domain: {parsed_url.netloc}")
-            return 400, {
-                "success": False,
-                "data": None,
-                "error": {
-                    "message": "Invalid URL domain",
-                    "body": {"details": f"Only waitrose.com URLs are supported. Received: {parsed_url.netloc}"}
-                }
-            }
-    except Exception as e:
-        logger.error(f"URL parsing failed: {str(e)}")
-        return 400, {
-            "success": False,
-            "data": None,
-            "error": {"message": "Invalid URL format", "body": {"details": str(e)}}
-        }
-    
-    # Scrape the Waitrose recipe page
-    try:
-        logger.info(f"Scraping Waitrose recipe from: {url}")
-        scraped_data = scrape_waitrose_recipe(url)
-        logger.info(f"✅ Successfully scraped: {scraped_data['name']}")
+        # STEP 1: AUTHENTICATION
+        logger.info("Step 1: Authenticating with Samsung Food...")
+        token_data = get_access_token()
         
-        # Transform scraped data to frontend format
-        # Waitrose scraper returns data in Whisk format, transform to frontend format
-        frontend_data = transform_to_frontend_format(scraped_data)
+        if not token_data or not token_data.get('access_token'):
+            return 401, {"error": "Authentication failed"}
+            
+        access_token = token_data['access_token']
+        # Log the source (Stored vs New) as requested
+        auth_source = token_data.get('source', 'unknown')
+        logger.info(f"  -> ✅ Auth successful (Source: {auth_source})")
         
+        # STEP 2: UPLOAD
+        logger.info("Step 2: Uploading recipe data...")
+        whisk_response = create_recipe_in_whisk(access_token, recipe_data)
+        
+        # Success
+        logger.info("  -> ✅ Upload complete!")
         return 200, {
-            "success": True,
-            "data": frontend_data,
-            "error": None
+            "status": "success", 
+            "whisk_id": whisk_response.get('recipe', {}).get('id'),
+            "recipe": recipe_data.get('name')
         }
-        
+
     except Exception as e:
-        logger.error(f"❌ Scraping failed: {str(e)}")
-        return 500, {
-            "success": False,
-            "data": None,
-            "error": {"message": "Scraping error", "body": {"details": str(e)}}
-        }
-
-
-def transform_to_frontend_format(scraped_data: dict) -> dict:
-    """
-    Transform Waitrose scraped data to frontend JSON format.
-    The scraped data now already has 'text' and 'group' in ingredients/instructions.
-    """
-    
-    logger.info(f"Transforming scraped data for: {scraped_data.get('name')}")
-    
-    # Ingredients: Check if they are already dicts (new scraper) or strings (fallback)
-    # The new scraper returns list of dicts: {'text': '...', 'group': '...'}
-    # The Schema expects: [{'text': '...', 'group': '...'}]
-    # We just pass them through, but ensure keys are correct.
-    
-    formatted_ingredients = []
-    for ing in scraped_data.get("ingredients", []):
-        if isinstance(ing, dict):
-            formatted_ingredients.append({
-                "text": ing.get("text", ""),
-                "group": ing.get("group") 
-            })
-        else:
-            # Fallback for strings
-            formatted_ingredients.append({"text": str(ing), "group": None})
-
-    formatted_instructions = []
-    for instr in scraped_data.get("instructions", []):
-        if isinstance(instr, dict):
-             formatted_instructions.append({
-                "text": instr.get("text", ""),
-                "group": instr.get("group") 
-            })
-        else:
-            formatted_instructions.append({"text": str(instr), "group": None})
-    
-    frontend_data = {
-        "title": scraped_data.get("name", ""),
-        "description": scraped_data.get("description", ""),
-        "servings": scraped_data.get("servings"),
-        "prep_time": scraped_data.get("prep_time"),
-        "cook_time": scraped_data.get("cook_time"),
-        "ingredients": formatted_ingredients,   # Now structured
-        "instructions": formatted_instructions, # Now structured
-        "source": "Waitrose",
-        "category": None,
-        "imageUrl": scraped_data.get("image_url"),
-        "url": scraped_data.get("source_url"),
-    }
-    
-    logger.info("✅ Data transformation complete")
-    return frontend_data
+        # If it's a requests error with attached info
+        if hasattr(e, 'error_info'):
+            return 500, {"error": e.error_info}
+            
+        logger.error(f"Upload process failed: {str(e)}")
+        return 500, {"error": str(e)}
