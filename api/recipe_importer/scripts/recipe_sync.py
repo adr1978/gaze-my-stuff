@@ -214,7 +214,7 @@ def run_sync(full_sync=False, notion_event_page_id=None):
             # --- VALIDATION PHASE 1 ---
             is_valid, reason = validate_list_requirements(content, collections)
             if not is_valid:
-                logger.warning(f"⚠️ Skipping {whisk_id} ('{title}'): {reason}")
+                logger.warning(f"  -> Rejecting {whisk_id} ('{title}'): {reason}")
                 stats["rejected"] += 1
                 stats["rejection_details"].append({
                     "id": whisk_id,
@@ -236,7 +236,7 @@ def run_sync(full_sync=False, notion_event_page_id=None):
                 
                 # A: Image Update
                 if local_record.get('image_type') == 'external':
-                    logger.info(f"🔄 Scenario B: Updating image for {whisk_id}")
+                    logger.info(f"Scenario B (Image): Updating image for {whisk_id}")
                     images = content.get('images', [])
                     img_url = images[0].get('url') if images else None
                     
@@ -259,7 +259,7 @@ def run_sync(full_sync=False, notion_event_page_id=None):
                 
                 # Logic: If video exists in Whisk AND local record says false
                 if video_url and not local_record.get('recipe_video'):
-                    logger.info(f"🎥 Scenario Video: Adding video for {whisk_id}")
+                    logger.info(f"Scenario B (Video): Adding video for {whisk_id}")
                     if update_recipe_video_in_notion(notion_page_id, whisk_id, video_url):
                         updates_performed = True
                     else:
@@ -272,13 +272,13 @@ def run_sync(full_sync=False, notion_event_page_id=None):
 
             # --- NEW RECIPE ---
             else:
-                logger.info(f"✨ Scenario C: Creating new recipe {whisk_id}")
+                logger.info(f"Scenario C: Creating new recipe {whisk_id}")
                 
                 details = fetch_recipe_details(whisk_id)
                 
                 is_valid_inst, reason_inst = validate_instructions(details)
                 if not is_valid_inst:
-                    logger.warning(f"⚠️ Skipping Creation for {whisk_id}: {reason_inst}")
+                    logger.warning(f"  -> Skipping Creation for {whisk_id}: {reason_inst}")
                     stats["rejected"] += 1
                     stats["rejection_details"].append({
                         "id": whisk_id,
@@ -340,8 +340,8 @@ def run_sync(full_sync=False, notion_event_page_id=None):
     """
     logger.info(summary)
     
-    if stats['rejection_details']:
-        logger.info(f"⚠️ Rejection Details: {stats['rejection_details']}")
+    #if stats['rejection_details']:
+    #    logger.info(f"⚠️ Rejection Details: {stats['rejection_details']}")
 
     if notion_event_page_id:
         logger.info(f"Future Todo: Post summary to Notion Page {notion_event_page_id}")
