@@ -1,10 +1,3 @@
-/**
- * RecipeDataCard Component
- * * UPDATES:
- * - Instruction numbers now have a fixed width and center alignment.
- * - This prevents the instruction text from shifting position when numbering jumps from single (9) to double digits (10).
- */
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, Users, Edit, Braces, Send, ExternalLink, ImageIcon, Tag, Link2, Carrot, ListOrdered } from "lucide-react";
@@ -25,7 +18,8 @@ export interface RecipeData {
   imageUrl: string | null;
   description: string | null;
   source: string | null;
-  category: string | string[] | null;
+  // UPDATED: Category array
+  category: string[];
 }
 
 interface RecipeDataCardProps {
@@ -93,9 +87,6 @@ const ListItem = ({ item, index, type }: { item: RecipeItem, index: number, type
 
   return (
     <li className="flex gap-3 items-start group">
-      {/* Fixed width (w-6) + justify-center ensures text alignment stability 
-        regardless of digit count (e.g. 1 vs 10).
-      */}
       <span className="inline-flex items-center justify-center w-6 text-xs font-bold text-muted-foreground/60 mt-0.5 bg-muted-foreground/5 py-0.5 rounded border border-primary/10 flex-shrink-0 ml-3">
         {index + 1}
       </span>
@@ -193,13 +184,13 @@ export function RecipeDataCard({
                 <span className="text-muted-foreground">–</span>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-primary" />              
+            <div className="flex items-start gap-2">
+              <Tag className="h-4 w-4 text-primary mt-0.5" />             
               <span className="font-medium text-foreground">Category:</span>
               <span className="text-muted-foreground">
-                {Array.isArray(recipeData.category) 
+                {recipeData.category && recipeData.category.length > 0 
                   ? recipeData.category.join(", ") 
-                  : recipeData.category || "–"}
+                  : "–"}
               </span>
             </div>
           </div>

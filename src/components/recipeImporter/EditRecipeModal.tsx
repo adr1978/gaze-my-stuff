@@ -1,17 +1,8 @@
-/**
- * EditRecipeModal Component
- * * UPDATES:
- * - Decoupled text input state from parent 'editedRecipe' state to prevent cursor jumping.
- * - Text fields now only initialize on modal open, fixing the "live cleanup" issue.
- * - Parsing runs on change to update the model, but does not overwrite the user's text input.
- */
-
 import { useEffect, useRef, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -36,7 +27,8 @@ interface RecipeData {
   instructions: RecipeItem[];
   description: string | null;
   source: string | null;
-  category: string | string[] | null;
+  // UPDATED: Category array
+  category: string[];
 }
 
 interface EditRecipeModalProps {
@@ -53,29 +45,22 @@ interface EditRecipeModalProps {
 
 const toText = (items: RecipeItem[]): string => {
   let text = "";
-  
-  // 1. Process items with NO group first
   const mainItems = items.filter(i => !i.group);
   if (mainItems.length > 0) {
     text += mainItems.map(i => i.text).join('\n');
   }
-
-  // 2. Process grouped items
   const groupedItems = items.filter(i => i.group);
   const groups: Record<string, RecipeItem[]> = {};
-  
   groupedItems.forEach(i => {
     if (i.group) {
         if (!groups[i.group]) groups[i.group] = [];
         groups[i.group].push(i);
     }
   });
-
   Object.entries(groups).forEach(([groupName, groupList]) => {
       if (text) text += "\n\n";
       text += `${groupName}:\n` + groupList.map(i => i.text).join('\n');
   });
-
   return text;
 };
 
@@ -83,19 +68,15 @@ const fromText = (text: string): RecipeItem[] => {
   const lines = text.split('\n');
   const items: RecipeItem[] = [];
   let currentGroup: string | null = null;
-
   lines.forEach(line => {
     const trimmed = line.trim();
     if (!trimmed) return;
-
-    // Treat lines ending in ':' as headers
     if (trimmed.endsWith(':') && trimmed.length > 1) {
       currentGroup = trimmed.slice(0, -1);
     } else {
       items.push({ text: trimmed, group: currentGroup });
     }
   });
-
   return items;
 };
 
@@ -113,23 +94,16 @@ export function EditRecipeModal({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [showScrollIndicator, setShowScrollIndicator] = useState(false);
 
-  // Local state for text areas
-  // We use local state to prevent the "live cleanup" loop
   const [ingText, setIngText] = useState("");
   const [instText, setInstText] = useState("");
 
-  // Sync recipe data to local text state ONLY when modal opens or recipe identity changes.
-  // We DO NOT listen to [editedRecipe] changes broadly, as that causes the cursor jumping bug.
   useEffect(() => {
     if (isOpen && editedRecipe) {
       setIngText(toText(editedRecipe.ingredients));
       setInstText(toText(editedRecipe.instructions));
     }
-  }, [isOpen, editedRecipe?.url]); // Use URL or ID to detect a "new" recipe load
+  }, [isOpen, editedRecipe?.url]);
 
-  // Handle Text Changes
-  // We update local text (for UI) AND parsed data (for parent state)
-  // But we never overwrite local text with the parsed result while typing.
   const handleIngChange = (val: string) => {
     setIngText(val);
     if (editedRecipe) {
@@ -144,7 +118,19 @@ export function EditRecipeModal({
     }
   };
 
-  // Scroll Indicator Logic
+  // UPDATED: Handle multi-select checkboxes
+  const handleCategoryToggle = (category: string, checked: boolean) => {
+    if (!editedRecipe) return;
+    const currentCategories = editedRecipe.category || [];
+    let newCategories;
+    if (checked) {
+      newCategories = [...currentCategories, category];
+    } else {
+      newCategories = currentCategories.filter(c => c !== category);
+    }
+    setEditedRecipe({ ...editedRecipe, category: newCategories });
+  };
+
   useEffect(() => {
     const checkScroll = () => {
       const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
@@ -183,7 +169,7 @@ export function EditRecipeModal({
       instructions: [],
       description: "",
       source: "",
-      category: "",
+      category: [],
     });
   };
 
@@ -204,7 +190,6 @@ export function EditRecipeModal({
             {editedRecipe && (
               <div className="space-y-4 pb-6 mx-2">
                 
-                {/* Title */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-title">Title</Label>
                   <Input
@@ -215,7 +200,6 @@ export function EditRecipeModal({
                   />
                 </div>
 
-                {/* Description */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-description">Description</Label>
                   <Textarea
@@ -227,7 +211,6 @@ export function EditRecipeModal({
                   />
                 </div>
 
-                {/* Source & Category */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-source">Recipe Source</Label>
@@ -240,6 +223,7 @@ export function EditRecipeModal({
                     />
                   </div>
 
+                  {/* UPDATED: Multi-select Categories */}
                   <div className="space-y-2">
                     <Label htmlFor="edit-category">Categories</Label>
                     <Popover>
@@ -304,7 +288,6 @@ export function EditRecipeModal({
                   </div>
                 </div>
 
-                {/* Recipe URL & Image URL */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-url">Recipe URL</Label>
@@ -328,7 +311,6 @@ export function EditRecipeModal({
                   </div>
                 </div>
 
-                {/* Times & Servings */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-servings">Servings</Label>
@@ -362,7 +344,6 @@ export function EditRecipeModal({
                   </div>
                 </div>
 
-                {/* Ingredients Editor */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <Label htmlFor="edit-ingredients">Ingredients</Label>
@@ -378,7 +359,6 @@ export function EditRecipeModal({
                   />
                 </div>
 
-                {/* Instructions Editor */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <Label htmlFor="edit-instructions">Instructions</Label>

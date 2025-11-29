@@ -48,24 +48,18 @@ async def upload_whisk(recipe: RecipeUpload):
         whisk_data['name'] = recipe_data['title'] 
         
         # 2. Upload to Whisk
-        # (Logging for Step 1/2 is handled inside whisk_handler)
         status_code, response_data = upload_recipe_to_whisk(whisk_data)
         
         if status_code != 200:
             logger.error(f"Whisk Upload failed: {response_data}")
             raise HTTPException(status_code=status_code, detail=response_data)
         
-        # 3. Extract Whisk ID
+        # 3. Extract Whisk ID (Fixed Logic)
         whisk_id = "unknown"
         if isinstance(response_data, dict):
-            # OLD (Causes Error):
-            # whisk_id = response_data.get("recipe", {}).get("id", "unknown")
-            
-            # NEW (Fix):
             # First try the direct key provided by your handler
             whisk_id = response_data.get("whisk_id")
-            
-            # Fallback for safety if structure changes
+            # Fallback for safety
             if not whisk_id:
                  whisk_id = response_data.get("recipe", {}).get("id", "unknown")
         else:

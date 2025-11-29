@@ -33,10 +33,9 @@ def create_page_in_data_source(data_source_id, properties, children=None, icon=N
     Args:
         data_source_id: UUID of the data source (not database ID!)
         properties: Dict of Notion property values
-        children: Optional list of block objects (page content) - [NEW] Used for description/ingredients/steps
-        icon: Optional external icon URL (e.g., "452")
-              If None, no icon is set.
-        cover: Optional external cover image URL - [NEW] Used for recipe photos
+        children: Optional list of block objects (page content)
+        icon: Optional external icon URL string (e.g. "https://...") OR a Notion File Object (dict)
+        cover: Optional external cover image URL string OR a Notion File Object (dict)
         
     Returns:
         Notion API response dict
@@ -53,30 +52,39 @@ def create_page_in_data_source(data_source_id, properties, children=None, icon=N
             "properties": properties
         }
         
-        # [NEW] Add optional content blocks (children)
+        # Add optional content blocks (children)
         if children:
             create_params["children"] = children
 
-        # Add icon if provided (always external URL)
+        # Handle Icon
         if icon:
-            create_params["icon"] = {
-                "type": "external",
-                "external": {
-                    "url": icon
+            if isinstance(icon, dict):
+                # Pass file object directly (e.g. type: "file_upload" or "file")
+                create_params["icon"] = icon
+            else:
+                # Legacy behavior: Wrap string in external url object
+                create_params["icon"] = {
+                    "type": "external",
+                    "external": {
+                        "url": icon
+                    }
                 }
-            }
-            logger.info(f"Setting external icon: {icon}")
-        else:
-            logger.info("No icon provided")
+                logger.info(f"Setting external icon: {icon}")
             
-        # [NEW] Add cover image if provided (always external URL)
+        # Handle Cover
         if cover:
-            create_params["cover"] = {
-                "type": "external",
-                "external": {
-                    "url": cover
+            if isinstance(cover, dict):
+                # Pass file object directly (e.g. type: "file_upload" or "file")
+                create_params["cover"] = cover
+            else:
+                # Legacy behavior: Wrap string in external url object
+                create_params["cover"] = {
+                    "type": "external",
+                    "external": {
+                        "url": cover
+                    }
                 }
-            }
+                logger.info(f"Setting external cover: {cover}")
         
         # --- TEMPORARY DEBUG LOGGING ---
         logger.info(f"🔍 NOTION REQUEST BODY:\n{json.dumps(create_params, indent=2)}")
@@ -93,9 +101,9 @@ def create_page_in_data_source(data_source_id, properties, children=None, icon=N
         logger.error(f"Error creating Notion page: {e}")
         logger.error(f"Properties: {properties}")
         if icon:
-            logger.error(f"Icon that failed: {icon}")
+            logger.error(f"Icon context: {icon}")
         
-        # [NEW] Helpful debug logging for block structure errors
+        # Helpful debug logging for block structure errors
         if children and len(children) > 0:
             logger.error(f"Failed with children blocks. First block: {children[0]}")
             

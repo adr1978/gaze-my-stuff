@@ -58,12 +58,24 @@ def clean_ingredient(text: str) -> str:
         
         ingredient = re.sub(brand_pattern, '', ingredient, flags=re.IGNORECASE)
 
-    # Ensure space after measurement units (e.g., "100g" -> "100 g")
-    # Matches numbers (including decimals and fractions) followed immediately by a unit
+    # --- UPDATED UNIT FORMATTING LOGIC ---
+
+    # 1. Metric Units: Remove space (e.g., "100 g" -> "100g")
+    # Matches a number followed by optional space, then specific units
     ingredient = re.sub(
-        r'(\d+(?:\.\d+|¼|½|¾)?)(kg|g|ml|l|tbsp|tsp|pack|tub|bulb/s|clove/s|can/s|cans)', 
-        r'\1 \2 ', 
-        ingredient
+        r'(\d+(?:\.\d+|¼|½|¾)?)\s+(kg|g|ml|l)\b', 
+        r'\1\2', 
+        ingredient,
+        flags=re.IGNORECASE
+    )
+
+    # 2. Spoons/Items: Ensure space (e.g., "1tbsp" -> "1 tbsp")
+    # Matches number followed by *optional* space (or no space), then unit
+    ingredient = re.sub(
+        r'(\d+(?:\.\d+|¼|½|¾)?)\s*(tbsp|tsp|pack|tub|bulb/s|clove/s|can/s|cans)\b', 
+        r'\1 \2', 
+        ingredient,
+        flags=re.IGNORECASE
     )
 
     # Collapse multiple spaces into single space

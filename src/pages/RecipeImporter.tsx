@@ -31,11 +31,11 @@ export interface RecipeData {
   servings: number | null;
   prep_time: number | null;
   cook_time: number | null;
-  ingredients: RecipeItem[];   // Changed from string[]
-  instructions: RecipeItem[];  // Changed from string[]
+  ingredients: RecipeItem[];  
+  instructions: RecipeItem[];
   description: string | null;
   source: string | null;
-  category: string | string[] | null;
+  category: string[]
 }
 
 // Predefined recipe categories for classification
@@ -95,7 +95,7 @@ export default function RecipeAnalyser() {
         instructions: [],
         description: "",
         source: "",
-        category: "",
+        category: [],
       });
       setIsNewRecipeModal(true);
       setIsEditModalOpen(true);
@@ -194,9 +194,6 @@ export default function RecipeAnalyser() {
       }
 
       if (data) {
-        // --- DATA MAPPING FIX ---
-        // We must handle both object arrays (new backend) and string arrays (old fallback/direct api)
-        // and safely decode HTML entities on the 'text' property.
 
         const processItems = (items: any[]): RecipeItem[] => {
           if (!items) return [];
@@ -223,8 +220,9 @@ export default function RecipeAnalyser() {
           prep_time: data.prep_time,
           cook_time: data.cook_time,
           source: data.source,
-          category: data.category,
-          // Process ingredients and instructions using the safe mapper
+          category: data.category 
+            ? (Array.isArray(data.category) ? data.category : [data.category]) 
+            : [],
           ingredients: processItems(data.ingredients),
           instructions: processItems(data.instructions),
         };
@@ -253,14 +251,24 @@ export default function RecipeAnalyser() {
   const sendToBackend = async () => {
     if (!recipeData) return;
 
-    if (!recipeData.source || !recipeData.category) {
+    if (!recipeData.source || recipeData.category.length === 0) {
       showToast.warning("Missing Information", "Please add source and category.");
       return;
     }
 
     try {
       const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-      showToast.info("Uploading...", "Sending recipe to Samsung Food");
+      
+      // Defaults to true unless explicit VITE env var is 'false'
+      const saveToNotion = import.meta.env.VITE_WHISK_SAVE_TO_NOTION !== 'false';
+      
+      // Conditional Info Toast
+      showToast.info(
+        "Saving...", 
+        saveToNotion 
+          ? "Uploading to Whisk and backing up to Notion..." 
+          : "Uploading to Whisk..."
+      );
 
       const response = await fetch(`${API_BASE_URL}/api/recipe/upload-whisk`, {
         method: 'POST',
@@ -273,7 +281,13 @@ export default function RecipeAnalyser() {
         throw new Error(errorData.detail?.message || 'Upload failed');
       }
 
-      showToast.success("Upload Successful", `Recipe "${recipeData.title}" saved!`);
+      // Conditional Success Toast
+      showToast.success(
+        "Success!", 
+        saveToNotion 
+          ? "Recipe saved to Whisk and Notion!" 
+          : "Recipe saved to Whisk!"
+      );
     } catch (error) {
       console.error('❌ Error uploading:', error);
       showToast.error("Upload Failed", error instanceof Error ? error.message : "Upload error");
@@ -303,8 +317,6 @@ export default function RecipeAnalyser() {
 
   /**
    * Save edited recipe
-   * * UPDATED: No longer re-parses strings. 
-   * * The EditRecipeModal now correctly returns RecipeItem[] structure in `editedRecipe`.
    */
   const saveEditedRecipe = () => {
     if (!editedRecipe) return;

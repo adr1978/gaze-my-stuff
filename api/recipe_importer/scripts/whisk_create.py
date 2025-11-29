@@ -89,24 +89,27 @@ def create_recipe_in_whisk(access_token: str, recipe_data: dict) -> dict:
         except Exception:
             logger.warning("Failed to parse source URL")
 
-    # --- CATEGORY LOGIC ---
+    # --- CATEGORY LOGIC (UPDATED for Multi-Select) ---
     collection_ids = []
     
-    # 1. Try explicit Category first (can be string or array)
+    # 1. Try explicit Category first (Handle List or String)
     provided_category = recipe_data.get('category')
+    
     if provided_category:
-        # Handle both single category (string) and multiple categories (array)
+        # Normalize to list
         categories_to_process = provided_category if isinstance(provided_category, list) else [provided_category]
         
         for cat in categories_to_process:
-            direct_id = get_collection_id_from_category(cat)
-            if direct_id:
-                collection_ids.append(direct_id)
-                logger.info(f"  -> Category mapped: {cat}")
-            else:
-                logger.warning(f"Category '{cat}' not found in map.")
+            if cat:
+                direct_id = get_collection_id_from_category(cat)
+                if direct_id:
+                    if direct_id not in collection_ids:
+                        collection_ids.append(direct_id)
+                        logger.info(f"  -> Category mapped: {cat}")
+                else:
+                    logger.warning(f"Category '{cat}' not found in map.")
 
-    # 2. Fallback to Title Guessing
+    # 2. Fallback to Title Guessing (only if no explicit categories mapped)
     if not collection_ids and recipe_data.get('name'):
         collection_ids = get_collection_id_for_recipe(recipe_data['name'])
         if collection_ids:

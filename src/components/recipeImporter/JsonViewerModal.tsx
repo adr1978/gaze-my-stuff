@@ -1,8 +1,6 @@
 /**
  * JsonViewerModal Component
  * * Displays recipe data as formatted, syntax-highlighted JSON.
- * * UPDATES:
- * - Updated RecipeData interface to match the new grouped structure (RecipeItem[]).
  */
 
 import { useState, useEffect } from "react";
@@ -25,16 +23,16 @@ export interface RecipeItem {
 
 interface RecipeData {
   url: string | null;
-  title: string | null; 
+  title: string | null;
   description: string | null;
-  servings: number | null; 
-  prep_time: number | null; 
-  cook_time: number | null; 
-  ingredients: RecipeItem[]; // Changed from string[]
-  instructions: RecipeItem[]; // Changed from string[]
+  servings: number | null;
+  prep_time: number | null;
+  cook_time: number | null;
+  ingredients: RecipeItem[];
+  instructions: RecipeItem[];
   imageUrl: string | null;
   source: string | null;
-  category: string | string[] | null;
+  category: string[];
 }
 
 interface JsonViewerModalProps {
