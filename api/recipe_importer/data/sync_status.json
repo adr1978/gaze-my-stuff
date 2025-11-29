@@ -1,0 +1,56 @@
+{
+  "107019a31fdf4b170d09dfcbd3f88760852": {
+    "whisk_recipe_id": "107019a31fdf4b170d09dfcbd3f88760852",
+    "notion_page_id": "2baa38a2-0ce8-813e-bc9c-e68307d5b90c",
+    "image_type": "file_upload",
+    "recipe_video": false,
+    "instruction_photos": false,
+    "status": "new",
+    "last_synced": "2025-11-29 17:54:47"
+  },
+  "107019a3185f8ca7f1ea5f9ca202d897034": {
+    "whisk_recipe_id": "107019a3185f8ca7f1ea5f9ca202d897034",
+    "notion_page_id": "2baa38a2-0ce8-81b0-9491-c98f25946e0e",
+    "image_type": "file_upload",
+    "recipe_video": false,
+    "instruction_photos": false,
+    "status": "new",
+    "last_synced": "2025-11-29 17:54:59"
+  },
+  "101cef99eb66159ad5314e220eb3cf5306d038e3226": {
+    "whisk_recipe_id": "101cef99eb66159ad5314e220eb3cf5306d038e3226",
+    "notion_page_id": "2baa38a2-0ce8-813b-9758-e4b57c31ede6",
+    "image_type": "file_upload",
+    "recipe_video": false,
+    "instruction_photos": false,
+    "status": "new",
+    "last_synced": "2025-11-29 17:55:03"
+  },
+  "107019a08adfbe57b8fafce2892988cc6b7": {
+    "whisk_recipe_id": "107019a08adfbe57b8fafce2892988cc6b7",
+    "notion_page_id": "2baa38a2-0ce8-81b0-8b4a-ce32837f0706",
+    "image_type": "file_upload",
+    "recipe_video": false,
+    "instruction_photos": false,
+    "status": "new",
+    "last_synced": "2025-11-29 17:55:08"
+  },
+  "1070199feca36c976eab20f33abd3015800": {
+    "whisk_recipe_id": "1070199feca36c976eab20f33abd3015800",
+    "notion_page_id": "2baa38a2-0ce8-8196-885c-e19b7b5a8665",
+    "image_type": "file_upload",
+    "recipe_video": false,
+    "instruction_photos": false,
+    "status": "new",
+    "last_synced": "2025-11-29 17:55:13"
+  },
+  "107019ad1bc0b2c7c068051d16d13f07f0f": {
+    "whisk_recipe_id": "107019ad1bc0b2c7c068051d16d13f07f0f",
+    "notion_page_id": "2baa38a2-0ce8-8155-8ff8-cbe58da9589d",
+    "image_type": "file_upload",
+    "recipe_video": true,
+    "instruction_photos": false,
+    "status": "updated",
+    "last_synced": "2025-11-29 23:05:31"
+  }
+}

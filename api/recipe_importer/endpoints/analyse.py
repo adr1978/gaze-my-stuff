@@ -118,6 +118,7 @@ async def analyse_recipe(
         "- Convert all timings to integer minutes.\n"
         "- Split instructions into individual steps.\n"
         "- If a field is missing, return null.\n"
+        "- Clean the recipe title so only the first word is capitalised (unless the word is clearly meant to be capitalised) and there are no trailing spaces.\n"
         "- GROUPING: Detect ingredient/instruction groups (e.g. 'For the Icing').\n"
         "  - If a group exists, set the 'group' field to the group name (e.g. 'For the icing').\n"
         "  - If the group name is a single word (e.g. 'Icing'), prefix it with 'For the ' (e.g. 'For the icing').\n"

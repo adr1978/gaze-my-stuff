@@ -18,8 +18,8 @@ from webhook_monitor.endpoints import get_webhooks, receive_webhook
 from api_monitor.endpoints import monitor_stats, monitor_logs
 from recipe_importer.endpoints import analyse
 from banking_connections.endpoints import requisition_router, account_router
-# Import the new investments router
-from investments_tracker.endpoints import update_transactions
+from investments_tracker.endpoints import update_transactions # Import the new investments router
+from recipe_importer.endpoints import sync_recipes # Import new endpoint
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -71,6 +71,7 @@ app.include_router(monitor_logs.router, prefix="/api/api_monitor", tags=["api_mo
 
 # Register recipe endpoints
 app.include_router(analyse.router, prefix="/api/recipe", tags=["recipe"])
+app.include_router(sync_recipes.router, prefix="/api/recipe", tags=["Recipe Sync"])
 
 # Import and register new recipe endpoints
 from recipe_importer.endpoints import parse_waitrose, upload_whisk

@@ -6,17 +6,45 @@ Uses the 'external_url' mode to have Notion fetch and store the image.
 import logging
 import time
 import requests
+import unicodedata
+import re
 from .notion_config import NOTION_API_KEY, NOTION_VERSION
 
 logger = logging.getLogger(__name__)
 
-def upload_image_from_url(image_url: str) -> str:
+def sanitize_filename(text):
+    """
+    Sanitizes a string to be safe for filenames:
+    - Normalizes unicode (e.g. è -> e)
+    - Lowercases
+    - Replaces spaces with hyphens
+    - Removes non-alphanumeric characters (except hyphens/underscores)
+    """
+    if not text:
+        return "recipe-image"
+        
+    # Normalize unicode characters to ASCII approximations
+    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+    
+    # Lowercase and replace spaces
+    text = text.lower().replace(' ', '-')
+    
+    # Remove invalid chars (keep a-z, 0-9, -, _)
+    text = re.sub(r'[^a-z0-9\-_]', '', text)
+    
+    # Remove duplicate hyphens and leading/trailing hyphens
+    text = re.sub(r'-+', '-', text).strip('-')
+    
+    return text or "recipe-image"
+
+def upload_image_from_url(image_url: str, title: str = None) -> str:
     """
     Initiates a file upload in Notion from an external URL.
     Polls until the upload is complete and returns the File ID.
     
     Args:
         image_url (str): The public URL of the image to upload.
+        title (str): Optional title to use for the filename.
         
     Returns:
         str: The Notion File Upload ID, or None if failed.
@@ -27,23 +55,28 @@ def upload_image_from_url(image_url: str) -> str:
     # Endpoint for Notion File Uploads
     upload_endpoint = "https://api.notion.com/v1/file_uploads"
     
-    # Headers - Note: This endpoint is separate from the standard Client
+    # Headers
     headers = {
         "Authorization": f"Bearer {NOTION_API_KEY}",
         "Notion-Version": NOTION_VERSION,
         "Content-Type": "application/json"
     }
     
-    # 1. Prepare Payload
-    # We attempt to infer a filename/extension, defaulting to jpg if unknown
+    # 1. Determine Filename
+    # Extract extension from URL or default to jpg
     try:
-        filename = image_url.split("/")[-1].split("?")[0]
-        if not filename or "." not in filename:
-            filename = "recipe_image.jpg"
+        url_path = image_url.split("/")[-1].split("?")[0]
+        if "." in url_path:
+            ext = url_path.split(".")[-1].lower()
+        else:
+            ext = "jpg"
     except Exception:
-        filename = "recipe_image.jpg"
+        ext = "jpg"
+
+    # Clean title or default
+    safe_name = sanitize_filename(title)
+    final_filename = f"{safe_name}.{ext}"
         
-    ext = filename.split(".")[-1].lower()
     # Map common extensions to mime types
     mime_map = {
         "jpg": "image/jpeg", "jpeg": "image/jpeg", 
@@ -54,13 +87,13 @@ def upload_image_from_url(image_url: str) -> str:
     payload = {
         "mode": "external_url",
         "external_url": image_url,
-        "filename": filename,
+        "filename": final_filename,
         "content_type": content_type
     }
 
     try:
         # 2. Initiate Upload
-        logger.info(f"Initiating Notion upload for: {filename}")
+        logger.info(f"Initiating Notion upload: {final_filename}")
         response = requests.post(upload_endpoint, headers=headers, json=payload)
         response.raise_for_status()
         
@@ -73,7 +106,6 @@ def upload_image_from_url(image_url: str) -> str:
             return None
 
         # 3. Poll for Completion
-        # Notion fetches the external URL asynchronously. We must wait for 'uploaded'.
         max_retries = 15
         for attempt in range(max_retries):
             if status == "uploaded":
@@ -85,7 +117,7 @@ def upload_image_from_url(image_url: str) -> str:
                 logger.error(f"❌ Notion upload failed: {error_info}")
                 return None
             
-            # Wait with exponential backoff (1s, 1.5s, 2s...)
+            # Wait with exponential backoff
             sleep_time = 1 + (attempt * 0.5)
             logger.debug(f"Upload status '{status}'. Waiting {sleep_time}s...")
             time.sleep(sleep_time)

@@ -9,9 +9,11 @@ from datetime import datetime
 
 # Use generic handlers
 from notion_handlers.notion_config import DATA_SOURCES
-from notion_handlers.notion_loader import create_page_in_data_source
+from notion_handlers.notion_loader import create_page_in_data_source, update_page_properties, archive_page, append_block_children
 # Import the new image uploader
 from notion_handlers.notion_image_uploader import upload_image_from_url
+# Import Sync Tracker
+from .recipe_sync_tracker import add_or_update_record, remove_record
 
 logger = logging.getLogger("recipe_importer")
 
@@ -174,20 +176,26 @@ def _create_toggle_block(title, items, list_type):
 def save_recipe_to_notion(recipe_data, whisk_id):
     """
     Main entry point to save a recipe to Notion using Data Source ID.
-    UPDATED: Uploads image to Notion storage.
     """
     data_source_id = DATA_SOURCES.get("recipes")
     if not data_source_id:
         logger.error("Notion Recipe Data Source ID not configured.")
         return False
 
-    logger.info(f"  -> Preparing Notion payload for: {recipe_data.get('title')}")
+    recipe_title = recipe_data.get('title', 'Untitled')
+    logger.info(f"  -> Preparing Notion payload for: {recipe_title}")
+    
+    # --- Determine Date Added ---
+    date_added_iso = recipe_data.get('date_added_iso')
+    if not date_added_iso:
+        date_added_iso = datetime.now().isoformat()
 
     # --- 1. Map Properties ---
     properties = {
         "Recipe Id": {"rich_text": [{"text": {"content": str(whisk_id)}}]},
-        "Name": {"title": [{"text": {"content": recipe_data.get('title', 'Untitled')}}]},
+        "Name": {"title": [{"text": {"content": recipe_title}}]},
         "Date Added (Unix)": {"rich_text": [{"text": {"content": str(int(time.time() * 1000))}}]},
+        "Date Added": {"date": {"start": date_added_iso}},
         "Servings": {"number": int(recipe_data.get('servings') or 0)},
         "Total Time": {"number": _calculate_total_time(recipe_data)},
         "Prep Time": {"number": int(recipe_data.get('prep_time') or 0)},
@@ -215,22 +223,18 @@ def save_recipe_to_notion(recipe_data, whisk_id):
     # --- 3. Images (UPDATED) ---
     img_url = recipe_data.get('imageUrl')
     cover_payload = None
+    image_type_record = "none"
     
     if img_url:
         logger.info("  -> Uploading image to Notion storage...")
-        file_id = upload_image_from_url(img_url)
+        file_id = upload_image_from_url(img_url, title=recipe_title)
         
         if file_id:
-            # Construct File Upload Objects
             notion_file_obj = {
                 "type": "file_upload",
                 "file_upload": {"id": file_id}
             }
-            
-            # Set Cover
             cover_payload = notion_file_obj
-            
-            # Set Photos Property
             properties["Photos"] = {
                 "files": [{
                     "name": "Recipe Photo",
@@ -238,6 +242,7 @@ def save_recipe_to_notion(recipe_data, whisk_id):
                     "file_upload": {"id": file_id}
                 }]
             }
+            image_type_record = "file_upload"
         else:
             logger.warning("  -> Image upload failed. Skipping image.")
 
@@ -250,9 +255,110 @@ def save_recipe_to_notion(recipe_data, whisk_id):
     )
     
     page_id = response.get('id', 'unknown')
-    logger.info(f"  -> Notion page created (ID: {page_id})")
+    if page_id != 'unknown':
+        logger.info(f"  -> Notion page created (ID: {page_id})")
+        
+        # --- 5. Update Tracker ---
+        add_or_update_record(
+            whisk_recipe_id=whisk_id,
+            notion_page_id=page_id,
+            image_type=image_type_record,
+            status="new",
+            recipe_video=False, # Default for new recipes
+            instruction_photos=False
+        )
+        return True
     
+    return False
+
+def update_recipe_image_in_notion(page_id, whisk_id, image_url, title=None):
+    """
+    Scenario B: Updates an existing recipe to use 'file_upload' image.
+    """
+    logger.info(f"  -> Updating image for Notion Page {page_id}...")
+    
+    file_id = upload_image_from_url(image_url, title=title)
+    if not file_id:
+        logger.error("  -> Failed to upload new image. Skipping update.")
+        return False
+        
+    notion_file_obj = {"type": "file_upload", "file_upload": {"id": file_id}}
+    
+    properties = {
+        "Photos": {
+            "files": [{"name": "Recipe Photo", "type": "file_upload", "file_upload": {"id": file_id}}]
+        }
+    }
+    
+    update_page_properties(
+        page_id=page_id,
+        properties=properties,
+        cover=notion_file_obj
+    )
+    
+    add_or_update_record(
+        whisk_recipe_id=whisk_id,
+        notion_page_id=page_id,
+        image_type="file_upload",
+        status="updated"
+    )
+    logger.info("  -> ✅ Recipe image updated to File Upload.")
     return True
+
+def update_recipe_video_in_notion(page_id, whisk_id, video_url):
+    """
+    New Scenario: Adds Video Link property and appends Video Block to content.
+    """
+    logger.info(f"  -> Adding Video to Notion Page {page_id}...")
+    
+    # 1. Update Property
+    properties = {
+        "Video Link": {"url": video_url}
+    }
+    update_page_properties(page_id=page_id, properties=properties)
+    
+    # 2. Append Block
+    video_block = [
+        {
+            "object": "block",
+            "type": "heading_2",
+            "heading_2": {
+                "rich_text": [{"type": "text", "text": {"content": "Video"}}],
+                "is_toggleable": True,
+                "children": [
+                    {
+                        "object": "block",
+                        "type": "video",
+                        "video": {
+                            "type": "external",
+                            "external": {"url": video_url}
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+    
+    append_block_children(page_id, video_block)
+    
+    # 3. Update Tracker
+    add_or_update_record(
+        whisk_recipe_id=whisk_id,
+        notion_page_id=page_id,
+        recipe_video=True,
+        status="updated"
+    )
+    logger.info("  -> ✅ Video added to page.")
+    return True
+
+def delete_recipe_from_notion(page_id, whisk_id):
+    """
+    Scenario: Deletes (archives) a recipe from Notion and removes from tracker.
+    """
+    logger.info(f"  -> Deleting recipe {whisk_id} (Notion: {page_id})...")
+    archive_page(page_id)
+    remove_record(whisk_id)
+    logger.info("  -> ✅ Recipe deleted.")
 
 def _calculate_total_time(data):
     p = data.get('prep_time') or 0
