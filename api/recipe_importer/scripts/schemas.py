@@ -35,3 +35,10 @@ class RecipeSchema(BaseModel):
     )
     
     imageUrl: Optional[str] = Field(None, description="The image url for the recipe image")
+    
+    # Field for video URL
+    video_url: Optional[str] = Field(None, description="URL for the recipe video (YouTube/TikTok)")
+    
+    # Optional internal fields not required by Pydantic validation but used in sync
+    instruction_images: Optional[List[dict]] = Field(default=[], description="List of step images")
+    date_added_iso: Optional[str] = Field(None, description="ISO timestamp of creation")

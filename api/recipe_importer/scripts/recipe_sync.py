@@ -111,6 +111,7 @@ def validate_instructions(details):
 def transform_whisk_to_internal(content, collections=None, details=None):
     """
     Maps Whisk content to internal RecipeSchema.
+    UPDATED: Extracts video_url from content.
     """
     internal_data = {
         "title": content.get('name'),
@@ -123,13 +124,26 @@ def transform_whisk_to_internal(content, collections=None, details=None):
         "category": [], 
         "ingredients": [],
         "instructions": [],
-        "imageUrl": None
+        "instruction_images": [],
+        "imageUrl": None,
+        "video_url": None  # [NEW]
     }
 
-    # Images
+    # Images (Main Recipe Image)
     images = content.get('images', [])
     if images:
         internal_data['imageUrl'] = images[0].get('url')
+
+    # [NEW] Video Extraction
+    recipe_videos = content.get('recipe_videos', [])
+    if recipe_videos:
+        for vid in recipe_videos:
+            if 'youtube_video' in vid:
+                internal_data['video_url'] = vid['youtube_video'].get('original_link')
+                break
+            elif 'tiktok_video' in vid:
+                internal_data['video_url'] = vid['tiktok_video'].get('original_link')
+                break
 
     # Ingredients (List View)
     raw_ingredients = content.get('ingredients', [])
@@ -139,11 +153,22 @@ def transform_whisk_to_internal(content, collections=None, details=None):
     # Instructions (Detail View)
     if details and 'recipe' in details and 'instructions' in details['recipe']:
         steps = details['recipe']['instructions'].get('steps', [])
-        for step in steps:
+        for index, step in enumerate(steps):
+            # 1. Add Step Text
             internal_data['instructions'].append({
                 "text": step.get('text'),
                 "group": step.get('group')
             })
+
+            # 2. Check for Step Images
+            step_images = step.get('images', [])
+            if step_images:
+                img_url = step_images[0].get('url')
+                if img_url:
+                    internal_data['instruction_images'].append({
+                        "url": img_url,
+                        "step_number": index + 1
+                    })
 
     # Categories
     if collections:
@@ -247,7 +272,6 @@ def run_sync(full_sync=False, notion_event_page_id=None):
                             stats["errors"] += 1
                 
                 # B: Video Update
-                # Check if Whisk has video URL
                 video_url = None
                 recipe_videos = content.get('recipe_videos', [])
                 if recipe_videos:
@@ -255,7 +279,9 @@ def run_sync(full_sync=False, notion_event_page_id=None):
                         if 'youtube_video' in vid:
                             video_url = vid['youtube_video'].get('original_link')
                             break
-                        # Can add tiktok check here if needed
+                        elif 'tiktok_video' in vid:
+                             video_url = vid['tiktok_video'].get('original_link')
+                             break
                 
                 # Logic: If video exists in Whisk AND local record says false
                 if video_url and not local_record.get('recipe_video'):
@@ -340,8 +366,8 @@ def run_sync(full_sync=False, notion_event_page_id=None):
     """
     logger.info(summary)
     
-    #if stats['rejection_details']:
-    #    logger.info(f"⚠️ Rejection Details: {stats['rejection_details']}")
+    if stats['rejection_details']:
+        logger.info(f"⚠️ Rejection Details: {stats['rejection_details']}")
 
     if notion_event_page_id:
         logger.info(f"Future Todo: Post summary to Notion Page {notion_event_page_id}")

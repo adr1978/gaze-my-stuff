@@ -176,6 +176,7 @@ def _create_toggle_block(title, items, list_type):
 def save_recipe_to_notion(recipe_data, whisk_id):
     """
     Main entry point to save a recipe to Notion using Data Source ID.
+    UPDATED: Uploads Main Image + Instruction Images + Video.
     """
     data_source_id = DATA_SOURCES.get("recipes")
     if not data_source_id:
@@ -217,34 +218,89 @@ def save_recipe_to_notion(recipe_data, whisk_id):
     if recipe_data.get('url'):
         properties["Source Link"] = {"url": recipe_data['url']}
 
+    # [NEW] Map Video Link Property
+    video_url = recipe_data.get('video_url')
+    if video_url:
+        properties["Video Link"] = {"url": video_url}
+
     # --- 2. Build Content Blocks ---
     children = build_notion_blocks(recipe_data)
-
-    # --- 3. Images (UPDATED) ---
-    img_url = recipe_data.get('imageUrl')
-    cover_payload = None
-    image_type_record = "none"
     
-    if img_url:
-        logger.info("  -> Uploading image to Notion storage...")
-        file_id = upload_image_from_url(img_url, title=recipe_title)
+    # [NEW] Append Video Block to Children if exists
+    if video_url:
+        children.append({
+            "object": "block",
+            "type": "heading_2",
+            "heading_2": {
+                "rich_text": [{"type": "text", "text": {"content": "Video"}}],
+                "is_toggleable": True,
+                "children": [
+                    {
+                        "object": "block",
+                        "type": "video",
+                        "video": {
+                            "type": "external",
+                            "external": {"url": video_url}
+                        }
+                    }
+                ]
+            }
+        })
+
+    # --- 3. Handle ALL Images (Main + Instructions) ---
+    cover_payload = None
+    all_files_payload = []
+    image_type_record = "none"
+    has_instruction_photos = False
+
+    # 3a. Main Recipe Image (Cover)
+    main_img_url = recipe_data.get('imageUrl')
+    if main_img_url:
+        logger.info("  -> Uploading Main Recipe Image...")
+        main_file_id = upload_image_from_url(main_img_url, title=recipe_title)
         
-        if file_id:
-            notion_file_obj = {
+        if main_file_id:
+            # Set as page cover
+            cover_payload = {
                 "type": "file_upload",
-                "file_upload": {"id": file_id}
+                "file_upload": {"id": main_file_id}
             }
-            cover_payload = notion_file_obj
-            properties["Photos"] = {
-                "files": [{
-                    "name": "Recipe Photo",
-                    "type": "file_upload",
-                    "file_upload": {"id": file_id}
-                }]
-            }
+            # Add to Photos property
+            all_files_payload.append({
+                "name": "Recipe Photo",
+                "type": "file_upload",
+                "file_upload": {"id": main_file_id}
+            })
             image_type_record = "file_upload"
         else:
-            logger.warning("  -> Image upload failed. Skipping image.")
+            logger.warning("  -> Main image upload failed.")
+
+    # 3b. Instruction Step Images
+    inst_images = recipe_data.get('instruction_images', [])
+    if inst_images:
+        logger.info(f"  -> Found {len(inst_images)} instruction photos. Uploading...")
+        
+        for item in inst_images:
+            step_url = item.get('url')
+            step_num = item.get('step_number')
+            step_title = f"Instruction Photo (Step {step_num})"
+            
+            # Upload
+            step_file_id = upload_image_from_url(step_url, title=step_title)
+            
+            if step_file_id:
+                all_files_payload.append({
+                    "name": step_title,
+                    "type": "file_upload",
+                    "file_upload": {"id": step_file_id}
+                })
+                has_instruction_photos = True
+    
+    # 3c. Update Photos Property if we have any files
+    if all_files_payload:
+        properties["Photos"] = {
+            "files": all_files_payload
+        }
 
     # --- 4. Create Page ---
     response = create_page_in_data_source(
@@ -264,8 +320,8 @@ def save_recipe_to_notion(recipe_data, whisk_id):
             notion_page_id=page_id,
             image_type=image_type_record,
             status="new",
-            recipe_video=False, # Default for new recipes
-            instruction_photos=False
+            recipe_video=bool(video_url), # [NEW] Set video flag
+            instruction_photos=has_instruction_photos
         )
         return True
     
