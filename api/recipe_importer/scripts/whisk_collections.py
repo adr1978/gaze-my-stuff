@@ -16,71 +16,49 @@ COLLECTIONS = {
     "Meat (Poultry)": "1050194936d28377b348b0bac230e07cb49",
     "Meat (Red)": "1050194936d2837718daa79812bb2a7da5f",
     "Puddings": "1050194936d283774219b47ad8c8e7d6825",
-    "Sandwiches": "1050194936d2837731a803afbd56abe6b72",
+    "Sandwiches": "1050194936d283770978ec69723151911e5",
     "Side Dishes": "1050194936d28377127b93483ee45beec58",
     "Vegetarian": "1050194936d283779368814889b4a9ada31",
-    # System/Fallback
-    "System": "1050194936d28377865be95390f9ee5e5c6",
+    "Lunches": "1050194936d28377640b7e8d25608033239",
+    "High Protein": "1050194936d28377cbba047c8228bd5225b"
 }
 
-# Keywords to match in recipe titles for automatic categorisation
+# Reverse Map: { "Whisk Collection ID": "Notion Category Name" }
+# Generated automatically from COLLECTIONS
+ID_TO_NAME = {v: k for k, v in COLLECTIONS.items()}
+
+# Keywords for auto-categorization (fallback)
 CATEGORY_KEYWORDS = {
-    "Bread": ["bread", "flatbread", "naan", "focaccia", "ciabatta", "baguette", "roll", "bun", "challah", "sourdough", "pita"],
-    "Christmas": ["christmas", "festive", "gingerbread", "mince pie", "yule", "advent", "stollen", "panettone"],
-    "Easter": ["easter", "hot cross", "simnel", "easter egg", "chocolate egg"],
-    "Halloween": ["halloween", "pumpkin", "spooky", "ghost", "poisoned", "severed", "witch", "zombie", "candy", "mummy", "bat", "scary"],
-    "Drinks": ["smoothie", "milkshake", "juice", "cocktail", "mocktail", "lemonade"],
-    "Fish": ["fish", "salmon", "cod", "tuna", "haddock", "prawn", "shrimp", "crab", "lobster", "shellfish", "seafood", "mackerel", "sea bass", "trout", "anchovy", "sardine"],
-    "Meat (Poultry)": ["chicken", "turkey", "duck"],
-    "Meat (Red)": ["pork", "lamb", "beef", "steak", "bacon", "ham", "chorizo", "meatball"],
-    "Puddings": ["cake", "biscuit", "tart", "crumble", "pudding", "dessert", "cupcake", 
-                 "brownie", "cookie", "cheesecake", "meringue", "mousse", "trifle", "traybake", 
-                 "shortbread", "pancake", "waffle", "flan", "doughnut", "donut", "scone", "eclair", "profiterole", 
-                 "muffin", "madeliene"],
-    "Ice Cream": ["ice cream", "gelato", "sorbet", "frozen"],
-    "Sandwiches": ["sandwich", "burger", "wrap", "panini", "sub", "baguette", "roll"],
-    "Vegetarian": ["vegetarian", "veggie", "vegan", "tofu"],
+    "Bread": ["bread", "loaf", "bun", "sourdough", "baguette", "focaccia", "roll"],
+    "Christmas": ["christmas", "festive", "turkey", "mince pie", "pudding", "stuffing"],
+    "Drinks": ["drink", "cocktail", "smoothie", "juice", "lemonade", "punch"],
+    "Easter": ["easter", "hot cross bun", "lamb", "simnel"],
+    "Fish": ["fish", "salmon", "cod", "tuna", "prawn", "shrimp", "crab", "seafood", "haddock", "bass", "trout"],
+    "Halloween": ["halloween", "pumpkin", "spooky", "ghost", "spider"],
+    "Ice Cream": ["ice cream", "sorbet", "gelato", "frozen yogurt"],
+    "Light Bites": ["starter", "snack", "appetizer", "dip", "canape", "soup", "salad"],
+    "Meat (Poultry)": ["chicken", "turkey", "duck", "goose", "pheasant"],
+    "Meat (Red)": ["beef", "steak", "lamb", "pork", "sausage", "bacon", "ham", "gammon", "venison"],
+    "Puddings": ["cake", "cookie", "brownie", "dessert", "pudding", "tart", "pie", "crumble", "mousse", "trifle", "cheesecake"],
+    "Sandwiches": ["sandwich", "wrap", "panini", "toastie", "burger", "bagel"],
+    "Side Dishes": ["side", "potato", "rice", "vegetable", "slaw", "couscous", "pasta salad"],
+    "Vegetarian": ["vegetarian", "tofu", "lentil", "chickpea", "bean", "halloumi", "paneer", "meat free", "plant based"]
 }
 
-# Categories that exclude puddings (if recipe is meat/fish/veg, don't also add to puddings)
-MAIN_DISH_CATEGORIES = ["Fish", "Meat (Poultry)", "Meat (Red)", "Vegetarian"]
+# Categories that take precedence over "Puddings" if keywords overlap
+MAIN_DISH_CATEGORIES = ["Meat (Poultry)", "Meat (Red)", "Fish"]
 
 # ---------------------------------------------------------------------------
-def get_collection_id_for_recipe(recipe_name: str) -> list:
-    """
-    Determine which collection(s) a recipe should belong to based on its name.
-    """
-    recipe_name_lower = recipe_name.lower()
-    collection_ids = []
-    matched_categories = []
-    
-    # First pass: identify all matching categories
-    for category, keywords in CATEGORY_KEYWORDS.items():
-        for keyword in keywords:
-            if keyword in recipe_name_lower:
-                matched_categories.append(category)
-                break 
-    
-    # Second pass: apply exclusion rules
-    is_main_dish = any(cat in matched_categories for cat in MAIN_DISH_CATEGORIES)
-    
-    for category in matched_categories:
-        # Skip puddings if this is a main dish
-        if category == "Puddings" and is_main_dish:
-            continue
-        
-        # Direct lookup now works because keys match
-        collection_id = COLLECTIONS.get(category)
-        if collection_id and collection_id not in collection_ids:
-            collection_ids.append(collection_id)
-    
-    return collection_ids
-
+# HELPER FUNCTIONS
 # ---------------------------------------------------------------------------
+
 def get_collection_names_for_recipe(recipe_name: str) -> list:
     """
-    Get human-readable collection names for a recipe.
+    Get human-readable collection names for a recipe based on title keywords.
     """
+    if not recipe_name:
+        return []
+        
     recipe_name_lower = recipe_name.lower()
     collection_names = []
     matched_categories = []
@@ -91,17 +69,16 @@ def get_collection_names_for_recipe(recipe_name: str) -> list:
                 matched_categories.append(category)
                 break
     
+    # Remove Puddings if it conflicts with a main dish category (e.g. "Beef and Ale Pie")
     is_main_dish = any(cat in matched_categories for cat in MAIN_DISH_CATEGORIES)
     
     for category in matched_categories:
         if category == "Puddings" and is_main_dish:
             continue
-        # No need to Title Case replace underscores anymore, keys are already pretty
         collection_names.append(category)
     
     return collection_names if collection_names else ["No automatic match"]
 
-# ---------------------------------------------------------------------------
 def get_collection_id_from_category(category_name: str) -> str:
     """
     Look up a collection ID from a category name.
@@ -119,5 +96,24 @@ def get_collection_id_from_category(category_name: str) -> str:
     # 2. Try Title Case match (e.g. "christmas" -> "Christmas")
     if clean_name.title() in COLLECTIONS:
         return COLLECTIONS[clean_name.title()]
-        
+
     return None
+
+def get_collection_id_for_recipe(recipe_name: str) -> list:
+    """
+    Returns a list of Collection IDs based on title keywords.
+    """
+    names = get_collection_names_for_recipe(recipe_name)
+    ids = []
+    for name in names:
+        if name in COLLECTIONS:
+            ids.append(COLLECTIONS[name])
+            
+    return ids
+
+def get_collection_name_by_id(collection_id: str) -> str:
+    """
+    Returns the Category Name for a given Whisk Collection ID.
+    Used for reverse mapping (Whisk -> Internal).
+    """
+    return ID_TO_NAME.get(collection_id)

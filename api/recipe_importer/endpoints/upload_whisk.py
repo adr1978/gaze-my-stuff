@@ -11,7 +11,7 @@ Endpoint: POST /api/recipe/upload-whisk
 import logging
 import json
 from fastapi import APIRouter, HTTPException
-from ..scripts.schemas import RecipeSchema as RecipeUpload
+from ..scripts.recipe_schemas import RecipeSchema as RecipeUpload
 
 # Import handlers
 import sys

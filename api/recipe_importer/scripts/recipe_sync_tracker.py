@@ -37,7 +37,7 @@ def save_tracker(data: dict):
     with open(TRACKER_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
-def add_or_update_record(whisk_recipe_id, notion_page_id, image_type=None, status="new", recipe_video=None, instruction_photos=None):
+def add_or_update_record(whisk_recipe_id, notion_page_id, image_type=None, status="new", recipe_video=None, instruction_photos=None, was_made=None):
     """
     Updates or creates a record for a recipe.
     Allows updating specific flags while preserving others if passed as None.
@@ -51,6 +51,7 @@ def add_or_update_record(whisk_recipe_id, notion_page_id, image_type=None, statu
     final_image_type = image_type if image_type is not None else existing.get("image_type", "file_upload")
     final_recipe_video = recipe_video if recipe_video is not None else existing.get("recipe_video", False)
     final_instruction_photos = instruction_photos if instruction_photos is not None else existing.get("instruction_photos", False)
+    final_was_made = was_made if was_made is not None else existing.get("was_made", False)
 
     record = {
         "whisk_recipe_id": whisk_recipe_id,
@@ -58,6 +59,7 @@ def add_or_update_record(whisk_recipe_id, notion_page_id, image_type=None, statu
         "image_type": final_image_type,
         "recipe_video": final_recipe_video,
         "instruction_photos": final_instruction_photos,
+        "was_made": final_was_made,
         "status": status,
         "last_synced": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }

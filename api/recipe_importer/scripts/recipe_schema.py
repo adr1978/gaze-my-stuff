@@ -7,6 +7,8 @@ class RecipeItem(BaseModel):
     """
     text: str = Field(..., description="The content text.")
     group: Optional[str] = Field(None, description="Optional group name (e.g. 'For the Icing').")
+    # [NEW] Support images attached directly to a step
+    image_url: Optional[str] = Field(None, description="Optional URL for an image associated with this step.")
 
 class RecipeSchema(BaseModel):
     """
@@ -39,6 +41,5 @@ class RecipeSchema(BaseModel):
     # Field for video URL
     video_url: Optional[str] = Field(None, description="URL for the recipe video (YouTube/TikTok)")
     
-    # Optional internal fields not required by Pydantic validation but used in sync
-    instruction_images: Optional[List[dict]] = Field(default=[], description="List of step images")
+    # Optional internal fields
     date_added_iso: Optional[str] = Field(None, description="ISO timestamp of creation")

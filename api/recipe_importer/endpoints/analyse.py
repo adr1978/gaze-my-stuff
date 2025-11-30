@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import List
 from itertools import groupby
-from ..scripts.schemas import RecipeSchema as RecipeData, RecipeItem
+from ..scripts.recipe_schemas import RecipeSchema as RecipeData, RecipeItem
 from ..scripts.ingredient_cleaner import clean_ingredient
 
 # Import Google GenAI SDK components

@@ -17,9 +17,10 @@ from .recipe_sync_tracker import add_or_update_record, remove_record
 
 logger = logging.getLogger("recipe_importer")
 
-def build_notion_blocks(recipe_data):
+def build_notion_blocks(recipe_data, recipe_title="Untitled"):
     """
     Constructs the page content (children blocks).
+    Uses Nested Toggle Headings structure.
     """
     children = []
 
@@ -48,7 +49,8 @@ def build_notion_blocks(recipe_data):
         items=recipe_data.get('ingredients', []),
         list_type="bulleted_list_item",
         default_group_title="For the main recipe",
-        empty_message="There are no ingredients for this recipe"
+        empty_message="There are no ingredients for this recipe",
+        recipe_title=recipe_title
     )
 
     children.append({
@@ -66,7 +68,9 @@ def build_notion_blocks(recipe_data):
         items=recipe_data.get('instructions', []),
         list_type="numbered_list_item",
         default_group_title="Main Recipe",
-        empty_message="There are no steps for this recipe"
+        empty_message="There are no steps for this recipe",
+        recipe_title=recipe_title,
+        is_instruction=True
     )
 
     children.append({
@@ -82,9 +86,10 @@ def build_notion_blocks(recipe_data):
     return children
 
 
-def _build_grouped_list(items, list_type, default_group_title, empty_message):
+def _build_grouped_list(items, list_type, default_group_title, empty_message, recipe_title="Recipe", is_instruction=False):
     """
     Helper to build grouped lists (Ingredients or Instructions).
+    Handles inline images for instructions by placing them as siblings to a toggle.
     """
     if not items:
         return [{
@@ -102,35 +107,83 @@ def _build_grouped_list(items, list_type, default_group_title, empty_message):
     
     grouped_data = {}
     for item in sorted_items:
-        text = item.get('text') if isinstance(item, dict) else item.text
-        group = (item.get('group') if isinstance(item, dict) else item.group) or None
-        
-        key = group if group else "no_group"
-        if key not in grouped_data:
-            grouped_data[key] = []
-        grouped_data[key].append(text)
+        # Handle both dict (Whisk raw) and Pydantic (Internal)
+        if isinstance(item, dict):
+            text = item.get('text')
+            group = item.get('group')
+            image_url = item.get('image_url')
+        else:
+            text = item.text
+            group = item.group
+            image_url = getattr(item, 'image_url', None)
+            
+        group_key = group if group else "no_group"
+        if group_key not in grouped_data:
+            grouped_data[group_key] = []
+            
+        grouped_data[group_key].append({
+            "text": text,
+            "image_url": image_url
+        })
 
-    # Single Group
-    if len(grouped_data) == 1:
-        only_group_items = list(grouped_data.values())[0]
-        return [
-            {
+    def build_block_list(group_items):
+        blocks = []
+        for idx, item in enumerate(group_items):
+            block = {
                 "object": "block",
                 "type": list_type,
                 list_type: {
-                    "rich_text": [{"type": "text", "text": {"content": item_text}}]
+                    "rich_text": [{"type": "text", "text": {"content": item['text']}}]
                 }
             }
-            for item_text in only_group_items
-        ]
+            
+            # Handle Inline Image (Sibling Strategy)
+            if item['image_url']:
+                logger.info(f"    -> Found inline image for step {idx+1}. Uploading...")
+                file_name = f"{recipe_title} - Step {idx+1}"
+                file_id = upload_image_from_url(item['image_url'], title=file_name)
+                
+                if file_id:
+                    toggle_block = {
+                        "object": "block",
+                        "type": "toggle",
+                        "toggle": {
+                            "rich_text": [{
+                                "type": "text", 
+                                "text": {"content": f"Step {idx+1} image"},
+                                "annotations": {
+                                    "color": "blue",
+                                    "underline": True,
+                                    "code": True 
+                                }
+                            }]
+                        }
+                    }
+                    
+                    image_block = {
+                        "object": "block",
+                        "type": "image",
+                        "image": {
+                            "type": "file_upload",
+                            "file_upload": {"id": file_id}
+                        }
+                    }
+                    
+                    block[list_type]["children"] = [toggle_block, image_block]
+            
+            blocks.append(block)
+        return blocks
 
-    # Multiple Groups
+    if len(grouped_data) == 1:
+        only_group_items = list(grouped_data.values())[0]
+        return build_block_list(only_group_items)
+
     nested_blocks = []
     
     if "no_group" in grouped_data:
         nested_blocks.append(_create_toggle_block(
             title=default_group_title,
-            items=grouped_data["no_group"],
+            children=build_block_list(grouped_data["no_group"]),
             list_type=list_type
         ))
         del grouped_data["no_group"]
@@ -138,14 +191,14 @@ def _build_grouped_list(items, list_type, default_group_title, empty_message):
     for group_title, group_items in grouped_data.items():
         nested_blocks.append(_create_toggle_block(
             title=group_title,
-            items=group_items,
+            children=build_block_list(group_items),
             list_type=list_type
         ))
         
     return nested_blocks
 
 
-def _create_toggle_block(title, items, list_type):
+def _create_toggle_block(title, children, list_type):
     return {
         "object": "block",
         "type": "toggle",
@@ -159,24 +212,14 @@ def _create_toggle_block(title, items, list_type):
                     "code": True 
                 }
             }],
-            "children": [
-                {
-                    "object": "block",
-                    "type": list_type,
-                    list_type: {
-                        "rich_text": [{"type": "text", "text": {"content": item_text}}]
-                    }
-                }
-                for item_text in items
-            ]
+            "children": children
         }
     }
 
 
-def save_recipe_to_notion(recipe_data, whisk_id):
+def save_recipe_to_notion(recipe_data, whisk_id, was_made=False):
     """
     Main entry point to save a recipe to Notion using Data Source ID.
-    UPDATED: Uploads Main Image + Instruction Images + Video.
     """
     data_source_id = DATA_SOURCES.get("recipes")
     if not data_source_id:
@@ -186,7 +229,6 @@ def save_recipe_to_notion(recipe_data, whisk_id):
     recipe_title = recipe_data.get('title', 'Untitled')
     logger.info(f"  -> Preparing Notion payload for: {recipe_title}")
     
-    # --- Determine Date Added ---
     date_added_iso = recipe_data.get('date_added_iso')
     if not date_added_iso:
         date_added_iso = datetime.now().isoformat()
@@ -201,7 +243,8 @@ def save_recipe_to_notion(recipe_data, whisk_id):
         "Total Time": {"number": _calculate_total_time(recipe_data)},
         "Prep Time": {"number": int(recipe_data.get('prep_time') or 0)},
         "Cook Time": {"number": int(recipe_data.get('cook_time') or 0)},
-        "Made?": {"checkbox": False}, 
+        # Set Made? status
+        "Made?": {"checkbox": was_made}, 
     }
 
     if recipe_data.get('category'):
@@ -218,15 +261,13 @@ def save_recipe_to_notion(recipe_data, whisk_id):
     if recipe_data.get('url'):
         properties["Source Link"] = {"url": recipe_data['url']}
 
-    # [NEW] Map Video Link Property
     video_url = recipe_data.get('video_url')
     if video_url:
         properties["Video Link"] = {"url": video_url}
 
     # --- 2. Build Content Blocks ---
-    children = build_notion_blocks(recipe_data)
+    children = build_notion_blocks(recipe_data, recipe_title)
     
-    # [NEW] Append Video Block to Children if exists
     if video_url:
         children.append({
             "object": "block",
@@ -247,60 +288,31 @@ def save_recipe_to_notion(recipe_data, whisk_id):
             }
         })
 
-    # --- 3. Handle ALL Images (Main + Instructions) ---
+    # --- 3. Handle Main Image ---
+    img_url = recipe_data.get('imageUrl')
     cover_payload = None
-    all_files_payload = []
     image_type_record = "none"
-    has_instruction_photos = False
-
-    # 3a. Main Recipe Image (Cover)
-    main_img_url = recipe_data.get('imageUrl')
-    if main_img_url:
+    
+    if img_url:
         logger.info("  -> Uploading Main Recipe Image...")
-        main_file_id = upload_image_from_url(main_img_url, title=recipe_title)
+        file_id = upload_image_from_url(img_url, title=recipe_title)
         
-        if main_file_id:
-            # Set as page cover
-            cover_payload = {
+        if file_id:
+            notion_file_obj = {
                 "type": "file_upload",
-                "file_upload": {"id": main_file_id}
+                "file_upload": {"id": file_id}
             }
-            # Add to Photos property
-            all_files_payload.append({
-                "name": "Recipe Photo",
-                "type": "file_upload",
-                "file_upload": {"id": main_file_id}
-            })
+            cover_payload = notion_file_obj
+            properties["Photos"] = {
+                "files": [{
+                    "name": "Recipe Photo",
+                    "type": "file_upload",
+                    "file_upload": {"id": file_id}
+                }]
+            }
             image_type_record = "file_upload"
         else:
             logger.warning("  -> Main image upload failed.")
-
-    # 3b. Instruction Step Images
-    inst_images = recipe_data.get('instruction_images', [])
-    if inst_images:
-        logger.info(f"  -> Found {len(inst_images)} instruction photos. Uploading...")
-        
-        for item in inst_images:
-            step_url = item.get('url')
-            step_num = item.get('step_number')
-            step_title = f"Instruction Photo (Step {step_num})"
-            
-            # Upload
-            step_file_id = upload_image_from_url(step_url, title=step_title)
-            
-            if step_file_id:
-                all_files_payload.append({
-                    "name": step_title,
-                    "type": "file_upload",
-                    "file_upload": {"id": step_file_id}
-                })
-                has_instruction_photos = True
-    
-    # 3c. Update Photos Property if we have any files
-    if all_files_payload:
-        properties["Photos"] = {
-            "files": all_files_payload
-        }
 
     # --- 4. Create Page ---
     response = create_page_in_data_source(
@@ -314,14 +326,21 @@ def save_recipe_to_notion(recipe_data, whisk_id):
     if page_id != 'unknown':
         logger.info(f"  -> Notion page created (ID: {page_id})")
         
+        has_instruction_photos = False
+        for inst in recipe_data.get('instructions', []):
+             if getattr(inst, 'image_url', None) or (isinstance(inst, dict) and inst.get('image_url')):
+                 has_instruction_photos = True
+                 break
+
         # --- 5. Update Tracker ---
         add_or_update_record(
             whisk_recipe_id=whisk_id,
             notion_page_id=page_id,
             image_type=image_type_record,
             status="new",
-            recipe_video=bool(video_url), # [NEW] Set video flag
-            instruction_photos=has_instruction_photos
+            recipe_video=bool(video_url),
+            instruction_photos=has_instruction_photos,
+            was_made=was_made # [NEW]
         )
         return True
     
@@ -363,17 +382,15 @@ def update_recipe_image_in_notion(page_id, whisk_id, image_url, title=None):
 
 def update_recipe_video_in_notion(page_id, whisk_id, video_url):
     """
-    New Scenario: Adds Video Link property and appends Video Block to content.
+    Scenario: Adds Video Link property and appends Video Block to content.
     """
     logger.info(f"  -> Adding Video to Notion Page {page_id}...")
     
-    # 1. Update Property
     properties = {
         "Video Link": {"url": video_url}
     }
     update_page_properties(page_id=page_id, properties=properties)
     
-    # 2. Append Block
     video_block = [
         {
             "object": "block",
@@ -397,7 +414,6 @@ def update_recipe_video_in_notion(page_id, whisk_id, video_url):
     
     append_block_children(page_id, video_block)
     
-    # 3. Update Tracker
     add_or_update_record(
         whisk_recipe_id=whisk_id,
         notion_page_id=page_id,
@@ -407,10 +423,27 @@ def update_recipe_video_in_notion(page_id, whisk_id, video_url):
     logger.info("  -> ✅ Video added to page.")
     return True
 
+def update_recipe_made_status_in_notion(page_id, whisk_id, was_made):
+    """
+    Scenario: Updates the 'Made?' checkbox in Notion.
+    """
+    logger.info(f"  -> Updating 'Made?' status to {was_made} for Page {page_id}...")
+    
+    properties = {
+        "Made?": {"checkbox": was_made}
+    }
+    update_page_properties(page_id=page_id, properties=properties)
+    
+    add_or_update_record(
+        whisk_recipe_id=whisk_id,
+        notion_page_id=page_id,
+        was_made=was_made, # Update flag
+        status="updated"
+    )
+    logger.info("  -> ✅ 'Made?' status updated.")
+    return True
+
 def delete_recipe_from_notion(page_id, whisk_id):
-    """
-    Scenario: Deletes (archives) a recipe from Notion and removes from tracker.
-    """
     logger.info(f"  -> Deleting recipe {whisk_id} (Notion: {page_id})...")
     archive_page(page_id)
     remove_record(whisk_id)
