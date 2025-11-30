@@ -227,7 +227,7 @@ def save_recipe_to_notion(recipe_data, whisk_id, was_made=False):
         return False
 
     recipe_title = recipe_data.get('title', 'Untitled')
-    logger.info(f"  -> Preparing Notion payload for: {recipe_title}")
+    logger.info(f"  -> Preparing Notion payload for: '{recipe_title}'")
     
     date_added_iso = recipe_data.get('date_added_iso')
     if not date_added_iso:

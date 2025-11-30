@@ -17,6 +17,7 @@ from .recipe_notion_adapter import (
     delete_recipe_from_notion
 )
 from .whisk_collections import get_collection_name_by_id
+from .email_notifier import send_sync_report # [NEW] Import email notifier
 
 # Custom Logger for Sync Job
 logger = logging.getLogger("recipe_sync_job")
@@ -164,7 +165,8 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
         "errors": 0,
         "rejected": 0,
         "retried_success": 0,
-        "rejection_details": []
+        "rejection_details": [],
+        "error_details": [] # [NEW] Track detailed errors for email
     }
 
     # --- 2. RETRY REJECTED LOGIC (EXCLUSIVE) ---
@@ -362,6 +364,8 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                                  recreation_triggered = True # Don't run A/B/C
                             else:
                                  stats["errors"] += 1
+                                 # [NEW] Capture error
+                                 stats["error_details"].append({ "id": whisk_id, "name": title or 'Unknown', "error": "Failed to re-create page for photo update" })
                         
                         else:
                             # No photos found, but we checked. 
@@ -477,12 +481,22 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                         logger.warning(f"Failed to parse added_at date: {e}")
                 
                 success = save_recipe_to_notion(recipe_data, whisk_id, was_made=was_made)
-                if success: stats["created"] += 1
-                else: stats["errors"] += 1
+                if success: 
+                    stats["created"] += 1
+                else: 
+                    stats["errors"] += 1
+                    # [NEW] Capture error
+                    stats["error_details"].append({ "id": whisk_id, "name": title or 'Unknown', "error": "Failed to save to Notion" })
 
         except Exception as e:
             logger.error(f"Error processing recipe {item.get('content', {}).get('id', 'unknown')}: {e}")
             stats["errors"] += 1
+            # [NEW] Capture exception
+            stats["error_details"].append({
+                "id": item.get('content', {}).get('id'),
+                "name": item.get('content', {}).get('name', 'Unknown'),
+                "error": str(e)
+            })
 
     # 4. Deletion (Only if Full Sync)
     if full_sync:
@@ -529,4 +543,7 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
     if notion_event_page_id:
         logger.info(f"Future Todo: Post summary to Notion Page {notion_event_page_id}")
     
+    # Send Email Report
+    send_sync_report(stats)
+
     return stats
