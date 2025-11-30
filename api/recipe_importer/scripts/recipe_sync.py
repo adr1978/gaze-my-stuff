@@ -227,7 +227,7 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                 success = save_recipe_to_notion(recipe_data, whisk_id, was_made=was_made)
                 if success: 
                     stats["retried_success"] += 1
-                    logger.info(f"     -> ✅ Successfully recovered {whisk_id}")
+                    logger.info(f"     -> ✅ Successfully recovered '{title}' (Whisk ID: {whisk_id})")
                 else: 
                     stats["errors"] += 1
 
@@ -235,7 +235,7 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                 logger.error(f"     -> Error retrying {whisk_id}: {e}")
                 stats["errors"] += 1
         
-        # [FIX] Return immediately after retry logic
+        # Return immediately after retry logic
         logger.info(f"🏁 Retry Job Complete. Recovered: {stats['retried_success']}")
         return stats
     
@@ -325,52 +325,97 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
             if local_record:
                 # If previously rejected but now valid in list view, treat as New
                 if local_record.get('status') == 'rejected':
-                     local_record = None 
+                     local_record = None # Force fall-through to Create logic
                 else:
                     updates_performed = False
-                    
-                    # A: Image Update
-                    if local_record.get('image_type') == 'external':
-                        logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
-                        #logger.info(f"Replacing referenced image with uploaded image")
-                        images = content.get('images', [])
-                        img_url = images[0].get('url') if images else None
+                    recreation_triggered = False # Flag to skip other updates if recreating
+                                        
+                    # D: Instruction Photos Update (Check First: Re-create strategy)
+                    if not local_record.get('instruction_photos'):
+                        details = fetch_recipe_details(whisk_id, access_token=access_token)
                         
-                        if img_url and notion_page_id:
-                            if update_recipe_image_in_notion(notion_page_id, whisk_id, img_url, title):
+                        has_step_photos = False
+                        if details and 'recipe' in details:
+                             steps = details['recipe'].get('instructions', {}).get('steps', [])
+                             for step in steps:
+                                 if step.get('images'):
+                                     has_step_photos = True
+                                     break
+                        
+                        if has_step_photos:
+                            logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
+                            logger.info(f"  -> Adding Instruction photos (by removing and re-creating page)...")
+                            
+                            delete_recipe_from_notion(notion_page_id, whisk_id)
+                            
+                            recipe_data = transform_whisk_to_internal(content, collections, details)
+                            
+                            added_at_ms = item.get('added_at')
+                            if added_at_ms:
+                                try:
+                                    dt = datetime.fromtimestamp(int(added_at_ms) / 1000.0)
+                                    recipe_data['date_added_iso'] = dt.isoformat()
+                                except Exception: pass
+                            
+                            if save_recipe_to_notion(recipe_data, whisk_id, was_made=was_made):
+                                 updates_performed = True
+                                 recreation_triggered = True # Don't run A/B/C
+                            else:
+                                 stats["errors"] += 1
+                        
+                        else:
+                            # No photos found, but we checked. 
+                            # Could update tracker to avoid re-checking, but for now we leave logic as is.
+                            pass
+
+                    # Only check A, B, C if we didn't just delete and re-create the page
+                    if not recreation_triggered:
+                        
+                        # A: Image Update
+                        if local_record.get('image_type') == 'external':
+                            logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
+                            #logger.info(f"Replacing referenced image with uploaded image")
+                            
+                            images = content.get('images', [])
+                            img_url = images[0].get('url') if images else None
+                            
+                            if img_url and notion_page_id:
+                                if update_recipe_image_in_notion(notion_page_id, whisk_id, img_url, title):
+                                    updates_performed = True
+                                else:
+                                    stats["errors"] += 1
+                        
+                        # B: Video Update
+                        video_url = None
+                        recipe_videos = content.get('recipe_videos', [])
+                        if recipe_videos:
+                            for vid in recipe_videos:
+                                if 'youtube_video' in vid:
+                                    video_url = vid['youtube_video'].get('original_link')
+                                    break
+                                elif 'tiktok_video' in vid:
+                                    video_url = vid['tiktok_video'].get('original_link')
+                                    break
+                        
+                        if video_url and not local_record.get('recipe_video'):
+                            logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
+                            #logger.info(f"Adding YouTube linked video to recipe")
+                            
+                            if update_recipe_video_in_notion(notion_page_id, whisk_id, video_url, title):
                                 updates_performed = True
                             else:
                                 stats["errors"] += 1
-                    
-                    # B: Video Update
-                    video_url = None
-                    recipe_videos = content.get('recipe_videos', [])
-                    if recipe_videos:
-                        for vid in recipe_videos:
-                            if 'youtube_video' in vid:
-                                video_url = vid['youtube_video'].get('original_link')
-                                break
-                            elif 'tiktok_video' in vid:
-                                video_url = vid['tiktok_video'].get('original_link')
-                                break
-                    
-                    if video_url and not local_record.get('recipe_video'):
-                        logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
-                        #logger.info(f"Adding YouTube linked video to recipe")
-                        if update_recipe_video_in_notion(notion_page_id, whisk_id, video_url, title):
-                            updates_performed = True
-                        else:
-                            stats["errors"] += 1
 
-                    # C: Was Made Update
-                    local_made = local_record.get('was_made', False)
-                    if was_made and not local_made:
-                        logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
-                        #logger.info(f"Marking recipe as 'made'")
-                        if update_recipe_made_status_in_notion(notion_page_id, whisk_id, True, title):
-                            updates_performed = True
-                        else:
-                            stats["errors"] += 1
+                        # C: Was Made Update
+                        local_made = local_record.get('was_made', False)
+                        if was_made and not local_made:
+                            logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
+                            #logger.info(f"Marking recipe as 'made'")
+                        
+                            if update_recipe_made_status_in_notion(notion_page_id, whisk_id, True, title):
+                                updates_performed = True
+                            else:
+                                stats["errors"] += 1
 
                     if updates_performed:
                         stats["updated"] += 1
@@ -472,6 +517,7 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
     Created:      {stats['created']}
     Deleted:      {stats['deleted']}
     Rejected:     {stats['rejected']}
+    Retried OK:   {stats['retried_success']}
     Errors:       {stats['errors']}
     --------------------------------------------------
     """

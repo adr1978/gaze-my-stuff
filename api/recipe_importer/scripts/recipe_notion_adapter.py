@@ -449,7 +449,7 @@ def delete_recipe_from_notion(page_id, whisk_id):
     logger.info(f"  -> Deleting recipe {whisk_id} (Notion: {page_id})...")
     archive_page(page_id)
     remove_record(whisk_id)
-    logger.info("  -> ✅ Recipe deleted.")
+    logger.info("  -> ✅ Recipe deleted from Notion.")
 
 def _calculate_total_time(data):
     p = data.get('prep_time') or 0

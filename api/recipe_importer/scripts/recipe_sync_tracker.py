@@ -85,4 +85,4 @@ def remove_record(whisk_recipe_id):
     if whisk_recipe_id in data:
         del data[whisk_recipe_id]
         save_tracker(data)
-        logger.info(f"Removed {whisk_recipe_id} from sync tracker")
+        logger.info(f"  -> Removed {whisk_recipe_id} from sync tracker")
