@@ -20,7 +20,6 @@ logger = logging.getLogger("recipe_importer")
 def build_notion_blocks(recipe_data, recipe_title="Untitled"):
     """
     Constructs the page content (children blocks).
-    Uses Nested Toggle Headings structure.
     """
     children = []
 
@@ -107,7 +106,6 @@ def _build_grouped_list(items, list_type, default_group_title, empty_message, re
     
     grouped_data = {}
     for item in sorted_items:
-        # Handle both dict (Whisk raw) and Pydantic (Internal)
         if isinstance(item, dict):
             text = item.get('text')
             group = item.get('group')
@@ -144,6 +142,7 @@ def _build_grouped_list(items, list_type, default_group_title, empty_message, re
                 file_id = upload_image_from_url(item['image_url'], title=file_name)
                 
                 if file_id:
+                    # 1. The Toggle Block
                     toggle_block = {
                         "object": "block",
                         "type": "toggle",
@@ -160,6 +159,7 @@ def _build_grouped_list(items, list_type, default_group_title, empty_message, re
                         }
                     }
                     
+                    # 2. The Image Block
                     image_block = {
                         "object": "block",
                         "type": "image",
@@ -233,7 +233,6 @@ def save_recipe_to_notion(recipe_data, whisk_id, was_made=False):
     if not date_added_iso:
         date_added_iso = datetime.now().isoformat()
 
-    # --- 1. Map Properties ---
     properties = {
         "Recipe Id": {"rich_text": [{"text": {"content": str(whisk_id)}}]},
         "Name": {"title": [{"text": {"content": recipe_title}}]},
@@ -243,7 +242,6 @@ def save_recipe_to_notion(recipe_data, whisk_id, was_made=False):
         "Total Time": {"number": _calculate_total_time(recipe_data)},
         "Prep Time": {"number": int(recipe_data.get('prep_time') or 0)},
         "Cook Time": {"number": int(recipe_data.get('cook_time') or 0)},
-        # Set Made? status
         "Made?": {"checkbox": was_made}, 
     }
 
@@ -340,7 +338,8 @@ def save_recipe_to_notion(recipe_data, whisk_id, was_made=False):
             status="new",
             recipe_video=bool(video_url),
             instruction_photos=has_instruction_photos,
-            was_made=was_made # [NEW]
+            was_made=was_made,
+            recipe_title=recipe_title
         )
         return True
     
@@ -375,12 +374,13 @@ def update_recipe_image_in_notion(page_id, whisk_id, image_url, title=None):
         whisk_recipe_id=whisk_id,
         notion_page_id=page_id,
         image_type="file_upload",
-        status="updated"
+        status="updated",
+        recipe_title=title
     )
     logger.info("  -> ✅ Recipe image updated to File Upload.")
     return True
 
-def update_recipe_video_in_notion(page_id, whisk_id, video_url):
+def update_recipe_video_in_notion(page_id, whisk_id, video_url, title=None):
     """
     Scenario: Adds Video Link property and appends Video Block to content.
     """
@@ -418,12 +418,13 @@ def update_recipe_video_in_notion(page_id, whisk_id, video_url):
         whisk_recipe_id=whisk_id,
         notion_page_id=page_id,
         recipe_video=True,
-        status="updated"
+        status="updated",
+        recipe_title=title
     )
     logger.info("  -> ✅ Video added to page.")
     return True
 
-def update_recipe_made_status_in_notion(page_id, whisk_id, was_made):
+def update_recipe_made_status_in_notion(page_id, whisk_id, was_made, title=None):
     """
     Scenario: Updates the 'Made?' checkbox in Notion.
     """
@@ -437,8 +438,9 @@ def update_recipe_made_status_in_notion(page_id, whisk_id, was_made):
     add_or_update_record(
         whisk_recipe_id=whisk_id,
         notion_page_id=page_id,
-        was_made=was_made, # Update flag
-        status="updated"
+        was_made=was_made,
+        status="updated",
+        recipe_title=title
     )
     logger.info("  -> ✅ 'Made?' status updated.")
     return True

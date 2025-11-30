@@ -96,9 +96,11 @@ def fetch_recipe_details(recipe_id, access_token=None):
 def fetch_recipe_review_status(recipe_id, access_token=None):
     """
     Checks if a recipe has been 'made' by fetching its review status.
+    Returns True if review data exists (implies 'made'), False if empty.
     """
     token = _get_token_if_missing(access_token)
     
+    # Endpoint logic from whisk2notion.txt
     url = f"https://api.whisk.com/v2/post/recipe_review/{recipe_id}/reviews"
     
     headers = {
@@ -109,12 +111,16 @@ def fetch_recipe_review_status(recipe_id, access_token=None):
         response = _make_request_with_retry('GET', url, headers)
         data = response.json()
         
+        # If empty dict/list -> Not Made
+        # If data exists -> Made
         if not data:
             return False
         
+        # Check if 'posts' key exists and has items (based on whisk2notion structure)
         if isinstance(data, dict) and 'posts' in data and len(data['posts']) > 0:
             return True
             
+        # Fallback if structure is just empty object {}
         if isinstance(data, dict) and len(data) == 0:
             return False
 

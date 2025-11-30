@@ -6,8 +6,13 @@ File: api/recipe_importer/data/sync_status.json
 import json
 import logging
 import time
-from datetime import datetime
+import sys
 from pathlib import Path
+from datetime import datetime
+
+# Add parent directory to path to allow importing sibling modules
+sys.path.append(str(Path(__file__).parent.parent))
+from notion_handlers.notion_image_uploader import sanitize_filename
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +42,7 @@ def save_tracker(data: dict):
     with open(TRACKER_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
-def add_or_update_record(whisk_recipe_id, notion_page_id, image_type=None, status="new", recipe_video=None, instruction_photos=None, was_made=None):
+def add_or_update_record(whisk_recipe_id, notion_page_id, image_type=None, status="new", recipe_video=None, instruction_photos=None, was_made=None, recipe_title=None):
     """
     Updates or creates a record for a recipe.
     Allows updating specific flags while preserving others if passed as None.
@@ -52,10 +57,17 @@ def add_or_update_record(whisk_recipe_id, notion_page_id, image_type=None, statu
     final_recipe_video = recipe_video if recipe_video is not None else existing.get("recipe_video", False)
     final_instruction_photos = instruction_photos if instruction_photos is not None else existing.get("instruction_photos", False)
     final_was_made = was_made if was_made is not None else existing.get("was_made", False)
+    
+    # Handle Title: Sanitize if provided, otherwise keep existing or unknown
+    if recipe_title:
+        final_title = sanitize_filename(recipe_title)
+    else:
+        final_title = existing.get("recipe_title", "unknown-recipe")
 
     record = {
         "whisk_recipe_id": whisk_recipe_id,
         "notion_page_id": notion_page_id,
+        "recipe_title": final_title, # [NEW] Sanitized Title
         "image_type": final_image_type,
         "recipe_video": final_recipe_video,
         "instruction_photos": final_instruction_photos,

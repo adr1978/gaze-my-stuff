@@ -16,7 +16,6 @@ from .recipe_notion_adapter import (
     update_recipe_made_status_in_notion,
     delete_recipe_from_notion
 )
-# [NEW] Import collection mapping helpers
 from .whisk_collections import get_collection_name_by_id
 
 # Custom Logger for Sync Job
@@ -41,11 +40,8 @@ def validate_list_requirements(content, collections):
     if not images or not images[0].get('url'):
         return False, "Missing Image"
 
-    # For list view validation, we check if collections array is present/valid
-    # For detail view (Scenario C), we validate the mapped category list later
     if collections is None: 
-        # If None is passed, it means we might be in a Detail view context where
-        # collections are inside 'saved' object. We defer check to Phase 2 or transform.
+        # Passed as None during retry to defer check to Detail view
         pass 
     elif not collections:
         return False, "Missing Category"
@@ -84,7 +80,7 @@ def transform_whisk_to_internal(content, collections=None, details=None):
         "category": [], 
         "ingredients": [],
         "instructions": [],
-        "instruction_images": [], # New list for step photos
+        "instruction_images": [], 
         "imageUrl": None,
         "video_url": None
     }
@@ -110,17 +106,15 @@ def transform_whisk_to_internal(content, collections=None, details=None):
     for ing in raw_ingredients:
         internal_data['ingredients'].append({"text": ing.get('text')})
 
-    # Instructions (Detail View)
+    # Instructions
     if details and 'recipe' in details and 'instructions' in details['recipe']:
         steps = details['recipe']['instructions'].get('steps', [])
         for index, step in enumerate(steps):
-            # 1. Add Step Text
             internal_data['instructions'].append({
                 "text": step.get('text'),
                 "group": step.get('group')
             })
             
-            # 2. Check for Step Images
             step_images = step.get('images', [])
             if step_images:
                 img_url = step_images[0].get('url')
@@ -130,21 +124,16 @@ def transform_whisk_to_internal(content, collections=None, details=None):
                         "step_number": index + 1
                     })
 
-    # Categories (Handling List View vs Detail View)
-    # 1. List View (collections passed directly)
+    # Categories
     if collections:
         for collection in collections:
             name = collection.get('name')
             if name:
                 internal_data['category'].append(name)
-    
-    # 2. Detail View (collections inside 'saved' object)
     elif details and 'recipe' in details:
         saved_data = details['recipe'].get('saved', {})
         collection_ids = saved_data.get('collection_ids', [])
-        
         for c_id in collection_ids:
-            # Map ID -> Name using helper from whisk_collections.py
             name = get_collection_name_by_id(c_id)
             if name:
                 internal_data['category'].append(name)
@@ -178,16 +167,21 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
         "rejection_details": []
     }
 
-    # --- 2A. RETRY REJECTED LOGIC ---
+    # --- 2. RETRY REJECTED LOGIC (EXCLUSIVE) ---
     if retry_rejected:
-        logger.info("🔄 Retrying previously rejected recipes...")
+        logger.info("🔄 RETRY MODE: Processing previously rejected recipes...")
         rejected_ids = [k for k, v in tracker.items() if v.get('status') == 'rejected']
         
         if not rejected_ids:
             logger.info("  -> No rejected recipes found to retry.")
         
         for whisk_id in rejected_ids:
-            logger.info(f"  -> Retrying {whisk_id}...")
+            # Fetch title from tracker if available, or default
+            record = tracker.get(whisk_id, {})
+            current_title = record.get('recipe_title') or 'Unknown Title'
+            
+            logger.info(f"  -> Retrying {whisk_id} ('{current_title}')...")
+            
             try:
                 # Fetch full details directly
                 details = fetch_recipe_details(whisk_id, access_token=access_token)
@@ -196,28 +190,33 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                     continue
                 
                 content = details['recipe']
+                title = content.get('name')
                 
-                # Validate Instructions
+                # [FIX] Pass None for collections so validate_list_requirements skips category check
+                # Category will be checked later after transform
+                collections = None 
+                
+                is_valid, reason = validate_list_requirements(content, collections)
+                if not is_valid:
+                     logger.warning(f"     -> Still Invalid: {reason}")
+                     continue
+                     
                 is_valid_inst, reason_inst = validate_instructions(details)
                 if not is_valid_inst:
-                     logger.warning(f"     -> Still Invalid Instructions: {reason_inst}")
+                     logger.warning(f"     -> Still Invalid: {reason_inst}")
                      continue
 
-                # Transform & Check Category (Phase 2 Validation for Category)
                 recipe_data = transform_whisk_to_internal(content, None, details)
                 
                 if not recipe_data['category']:
                     logger.warning(f"     -> Still Invalid: Missing Category (Mapped from IDs)")
                     continue
 
-                # If valid, proceed to Create
                 logger.info(f"     -> Validation passed! Creating Notion page...")
                 
-                # Check Made status
                 time.sleep(0.5)
                 was_made = fetch_recipe_review_status(whisk_id, access_token=access_token)
                 
-                # Add Date
                 added_at_ms = content.get('added_at') 
                 if added_at_ms:
                     try:
@@ -235,8 +234,14 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
             except Exception as e:
                 logger.error(f"     -> Error retrying {whisk_id}: {e}")
                 stats["errors"] += 1
+        
+        # [FIX] Return immediately after retry logic
+        logger.info(f"🏁 Retry Job Complete. Recovered: {stats['retried_success']}")
+        return stats
+    
 
-    # --- 2B. FETCH LIST ---
+    # --- 3. NORMAL SYNC LOGIC (Only runs if retry_rejected=False) ---
+    
     limit = int(os.getenv("WHISK_FETCH_LIMIT", 100))
     next_cursor = None
     all_whisk_recipes = []
@@ -262,7 +267,7 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
     logger.info(f"  -> Fetched {len(all_whisk_recipes)} recipes from Whisk.")
     processed_ids = set()
     
-    # --- 3. PROCESS RECIPES ---
+    # --- Process Recipes ---
     for item in all_whisk_recipes:
         try:
             content = item.get('content', {})
@@ -276,7 +281,9 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
             # --- VALIDATION PHASE 1 (List View) ---
             is_valid, reason = validate_list_requirements(content, collections)
             if not is_valid:
-                logger.warning(f"Rejected {whisk_id} ('{title}'): {reason}")
+                # Log rejection details
+                logger.warning(f"Rejecting recipe (Whisk ID: {whisk_id})")
+                logger.warning(f"  -> {reason} ('{title}')")
                 stats["rejected"] += 1
                 stats["rejection_details"].append({
                     "id": whisk_id,
@@ -291,7 +298,8 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                     status="rejected",
                     recipe_video=False,
                     instruction_photos=False,
-                    was_made=False
+                    was_made=False,
+                    recipe_title=title
                 )
                 continue
 
@@ -323,7 +331,8 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                     
                     # A: Image Update
                     if local_record.get('image_type') == 'external':
-                        logger.info(f"Scenario B (Image): Updating image for {whisk_id}")
+                        logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
+                        #logger.info(f"Replacing referenced image with uploaded image")
                         images = content.get('images', [])
                         img_url = images[0].get('url') if images else None
                         
@@ -346,8 +355,9 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                                 break
                     
                     if video_url and not local_record.get('recipe_video'):
-                        logger.info(f"Scenario B (Video): Adding video for {whisk_id}")
-                        if update_recipe_video_in_notion(notion_page_id, whisk_id, video_url):
+                        logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
+                        #logger.info(f"Adding YouTube linked video to recipe")
+                        if update_recipe_video_in_notion(notion_page_id, whisk_id, video_url, title):
                             updates_performed = True
                         else:
                             stats["errors"] += 1
@@ -355,8 +365,9 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                     # C: Was Made Update
                     local_made = local_record.get('was_made', False)
                     if was_made and not local_made:
-                        logger.info(f"Scenario B (Made Status): Updating 'Made?' for {whisk_id}")
-                        if update_recipe_made_status_in_notion(notion_page_id, whisk_id, True):
+                        logger.info(f"Updating existing recipe (Whisk ID: {whisk_id})")
+                        #logger.info(f"Marking recipe as 'made'")
+                        if update_recipe_made_status_in_notion(notion_page_id, whisk_id, True, title):
                             updates_performed = True
                         else:
                             stats["errors"] += 1
@@ -368,7 +379,7 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
 
             # --- NEW RECIPE ---
             if not local_record:
-                logger.info(f"Scenario C: Creating new recipe {whisk_id}")
+                logger.info(f"Creating new recipe (Whisk ID: {whisk_id})")
                 
                 details = fetch_recipe_details(whisk_id, access_token=access_token)
                 
@@ -386,28 +397,29 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
                         whisk_recipe_id=whisk_id,
                         notion_page_id=None,
                         status="rejected",
-                        was_made=False
+                        was_made=False,
+                        recipe_title=title
                     )
                     continue
 
                 # Transform (Scenario C)
-                # collections from List View are passed. Detail view logic inside transform handles fallbacks if needed.
                 recipe_data = transform_whisk_to_internal(content, collections, details)
                 
                 # Extra Safety: Check if categories were actually mapped
                 if not recipe_data['category']:
-                    logger.warning(f"  -> Skipping Creation for {whisk_id}: No valid Category mapped")
+                    logger.warning(f"  -> Skipping Creation for {whisk_id}: Missing Category")
                     stats["rejected"] += 1
                     stats["rejection_details"].append({
                         "id": whisk_id,
                         "name": title or 'Unknown',
-                        "reason": "Missing Category (Detail view lookup failed)"
+                        "reason": "Missing Category (Detail view mapping failed)"
                     })
                     add_or_update_record(
                         whisk_recipe_id=whisk_id,
                         notion_page_id=None,
                         status="rejected",
-                        was_made=False
+                        was_made=False,
+                        recipe_title=title
                     )
                     continue
 
@@ -460,12 +472,14 @@ def run_sync(full_sync=False, retry_rejected=False, notion_event_page_id=None):
     Created:      {stats['created']}
     Deleted:      {stats['deleted']}
     Rejected:     {stats['rejected']}
-    Retried OK:   {stats['retried_success']}
     Errors:       {stats['errors']}
     --------------------------------------------------
     """
     logger.info(summary)
     
+    #if stats['rejection_details']:
+    #    logger.info(f"⚠️ Rejection Details: {stats['rejection_details']}")
+
     if notion_event_page_id:
         logger.info(f"Future Todo: Post summary to Notion Page {notion_event_page_id}")
     

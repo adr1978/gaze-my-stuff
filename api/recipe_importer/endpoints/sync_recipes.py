@@ -6,15 +6,11 @@ logger = logging.getLogger("recipe_importer")
 
 router = APIRouter()
 
-# Helper to extract page ID from Notion webhook payload (Future use)
+# Helper to extract page ID from Notion webhook payload
 async def extract_notion_page_id(request: Request):
     try:
         body = await request.json()
-        # Notion automations usually send the page object that triggered it.
-        # Structure varies, but often { "data": { "id": "..." } } or root level "id"
-        # For now we just log it safely.
-        # logger.info(f"Webhook Body: {body}") 
-        return body.get("data", {}).get("id") # Example extraction
+        return body.get("data", {}).get("id")
     except Exception:
         return None
 
@@ -22,24 +18,31 @@ async def extract_notion_page_id(request: Request):
 async def trigger_sync_webhook(
     background_tasks: BackgroundTasks, 
     request: Request,
-    full_sync: bool = False
+    full_sync: bool = False,
+    retry_rejected: bool = False  # [FIX] Ensure this is present to capture ?retry_rejected=true
 ):
     """
     Webhook endpoint to trigger synchronization.
-    URL: /api/recipe/webhook/recipes/sync (Assuming prefix /api/recipe in main.py)
-    
-    Accepts Notion Automation payload.
+    URL: /api/recipe/webhook/recipes/sync
     """
     # Try to get the source page ID (if triggered by Notion)
     source_page_id = await extract_notion_page_id(request)
     
-    logger.info(f"Received Sync Webhook (Full Sync: {full_sync}, Source Page: {source_page_id})")
+    logger.info(f"Received Sync Webhook (Full Sync: {full_sync}, Retry Rejected: {retry_rejected}, Source: {source_page_id})")
     
-    # Pass the source page ID to the runner
-    background_tasks.add_task(run_sync, full_sync=full_sync, notion_event_page_id=source_page_id)
+    # Pass arguments to the runner
+    background_tasks.add_task(
+        run_sync, 
+        full_sync=full_sync, 
+        retry_rejected=retry_rejected,
+        notion_event_page_id=source_page_id
+    )
     
     return {
         "status": "started", 
         "message": "Sync process started in background.",
-        "source_page": source_page_id
+        "config": {
+            "full_sync": full_sync,
+            "retry_rejected": retry_rejected
+        }
     }
