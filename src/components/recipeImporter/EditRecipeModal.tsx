@@ -27,7 +27,6 @@ interface RecipeData {
   instructions: RecipeItem[];
   description: string | null;
   source: string | null;
-  // UPDATED: Category array
   category: string[];
 }
 
@@ -64,6 +63,7 @@ const toText = (items: RecipeItem[]): string => {
   return text;
 };
 
+// Standard text parser (Literal: splits only on user-provided newlines)
 const fromText = (text: string): RecipeItem[] => {
   const lines = text.split('\n');
   const items: RecipeItem[] = [];
@@ -71,6 +71,28 @@ const fromText = (text: string): RecipeItem[] => {
   lines.forEach(line => {
     const trimmed = line.trim();
     if (!trimmed) return;
+    if (trimmed.endsWith(':') && trimmed.length > 1) {
+      currentGroup = trimmed.slice(0, -1);
+    } else {
+      items.push({ text: trimmed, group: currentGroup });
+    }
+  });
+  return items;
+};
+
+// Specialized parser (Smart: splits sentences into new lines)
+const fromInstructionsText = (text: string): RecipeItem[] => {
+  // Pre-process: Split sentences that end with punctuation followed by a space and a capital letter.
+  const processedText = text.replace(/([.?!])\s+(?=[A-Z])/g, "$1\n");
+  
+  const lines = processedText.split('\n');
+  const items: RecipeItem[] = [];
+  let currentGroup: string | null = null;
+  
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    
     if (trimmed.endsWith(':') && trimmed.length > 1) {
       currentGroup = trimmed.slice(0, -1);
     } else {
@@ -96,6 +118,9 @@ export function EditRecipeModal({
 
   const [ingText, setIngText] = useState("");
   const [instText, setInstText] = useState("");
+  
+  // NEW: State for checkbox
+  const [splitInstructions, setSplitInstructions] = useState(true);
 
   useEffect(() => {
     if (isOpen && editedRecipe) {
@@ -114,11 +139,22 @@ export function EditRecipeModal({
   const handleInstChange = (val: string) => {
     setInstText(val);
     if (editedRecipe) {
-      setEditedRecipe({ ...editedRecipe, instructions: fromText(val) });
+      // Determine which parser to use based on checkbox state
+      const parser = splitInstructions ? fromInstructionsText : fromText;
+      setEditedRecipe({ ...editedRecipe, instructions: parser(val) });
     }
   };
 
-  // UPDATED: Handle multi-select checkboxes
+  // NEW: Handle toggling the split mode
+  const handleSplitToggle = (checked: boolean) => {
+    setSplitInstructions(checked);
+    if (editedRecipe) {
+      // Re-parse the current text with the new setting immediately
+      const parser = checked ? fromInstructionsText : fromText;
+      setEditedRecipe({ ...editedRecipe, instructions: parser(instText) });
+    }
+  };
+
   const handleCategoryToggle = (category: string, checked: boolean) => {
     if (!editedRecipe) return;
     const currentCategories = editedRecipe.category || [];
@@ -223,7 +259,7 @@ export function EditRecipeModal({
                     />
                   </div>
 
-                  {/* UPDATED: Multi-select Categories */}
+                  {/* Multi-select Categories */}
                   <div className="space-y-2">
                     <Label htmlFor="edit-category">Categories</Label>
                     <Popover>
@@ -372,6 +408,20 @@ export function EditRecipeModal({
                     onChange={(e) => handleInstChange(e.target.value)}
                     placeholder={`Mix ingredients.\n\nCook's Tip:\nDon't overmix.`}
                   />
+                  {/* NEW Checkbox control */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="split-instructions" 
+                      checked={splitInstructions}
+                      onCheckedChange={handleSplitToggle}
+                    />
+                    <label
+                      htmlFor="split-instructions"
+                      className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
+                    >
+                      Auto-split instructions by sentence?
+                    </label>
+                  </div>
                 </div>
               </div>
             )}
