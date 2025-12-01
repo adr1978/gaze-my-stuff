@@ -243,10 +243,10 @@ def send_sync_report(stats):
 
     # Only send if there's something negative to report
     if not rejections and not errors:
-        logger.info("📧 No issues to report. Skipping email.")
+        #logger.info("📧 No issues to report. Skipping email.")
         return
 
-    logger.info(f"📧 Sending sync report (Rejections: {len(rejections)}, Errors: {len(errors)})...")
+    logger.info(f"📭 Sending sync report (Rejections: {len(rejections)}, Errors: {len(errors)})...")
 
     subject = f"Whisk Recipe Sync Alert: {len(rejections)} Rejected, {len(errors)} Errors"
     html_body = generate_email_html(stats, rejections, errors)
@@ -264,6 +264,6 @@ def send_sync_report(stats):
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
         
-        logger.info("✅ Email report sent successfully.")
+        logger.info("  -> ✅ Email report sent successfully.")
     except Exception as e:
-        logger.error(f"❌ Failed to send email report: {e}")
+        logger.error(f"  -> ❌ Failed to send email report: {e}")
